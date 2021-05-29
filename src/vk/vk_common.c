@@ -1363,7 +1363,6 @@ static void CreatePipelines()
 	for (int i = 0; i < RP_COUNT; ++i)
 	{
 		vk_drawModelPipelineFan[i].topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		vk_drawModelPipelineFan[i].blendOpts.blendEnable = VK_TRUE;
 		QVk_CreatePipeline(samplerUboDsLayouts, 2, &vertInfoRGB_RGBA_RG, &vk_drawModelPipelineFan[i], &vk_renderpasses[i], shaders, 2);
 		QVk_DebugSetObjectName((uint64_t)vk_drawModelPipelineFan[i].layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
 			va("Pipeline Layout: draw model: fan (%s)", renderpassObjectNames[i]));
