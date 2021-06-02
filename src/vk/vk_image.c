@@ -846,9 +846,75 @@ static void Vk_LightScaleTexture (byte *in, int inwidth, int inheight)
 
 /*
 ===============
+Vk_Upload32Native
+
+Returns number of mip levels and scales native resolution
+if vk_picmip is set. Does not use power of 2 scaling.
+===============
+*/
+static uint32_t Vk_Upload32Native (byte *data, int width, int height, imagetype_t type,
+							 byte **texBuffer, int *upload_width, int *upload_height)
+{
+	int	scaled_width = width, scaled_height = height;
+	int	miplevel = 1;
+
+	*texBuffer = NULL;
+
+	if (type != it_pic)
+	{
+		// let people sample down the world textures for speed
+		scaled_width >>= (int)vk_picmip->value;
+		scaled_height >>= (int)vk_picmip->value;
+	}
+
+	if (scaled_width < 1)
+		scaled_width = 1;
+	if (scaled_height < 1)
+		scaled_height = 1;
+
+	if (scaled_width == width && scaled_height == height)
+	{
+		// We can just send the data back and avoid an extra allocation/copy
+		*texBuffer = data;
+	}
+	else
+	{
+		*texBuffer = malloc(scaled_width * scaled_height * 4);
+		if (!*texBuffer)
+			ri.Sys_Error(ERR_DROP, "%s: too big", __func__);
+
+		ResizeSTB(data, width, height,
+				  *texBuffer, scaled_width, scaled_height);
+	}
+
+	*upload_width = scaled_width;
+	*upload_height = scaled_height;
+
+	// world textures
+	if (type != it_pic && type != it_sky)
+	{
+		Vk_LightScaleTexture(*texBuffer, scaled_width, scaled_height);
+	}
+
+	while (scaled_width > 1 || scaled_height > 1)
+	{
+		scaled_width >>= 1;
+		scaled_height >>= 1;
+		if (scaled_width < 1)
+			scaled_width = 1;
+		if (scaled_height < 1)
+			scaled_height = 1;
+		miplevel++;
+	}
+
+	return miplevel;
+}
+
+/*
+===============
 Vk_Upload32
 
-Returns number of mip levels
+Returns number of mip levels and scales to nearest power of 2.
 ===============
 */
 static uint32_t Vk_Upload32 (byte *data, int width, int height, imagetype_t type,
@@ -977,8 +1043,12 @@ static uint32_t Vk_Upload8 (byte *data, int width, int height, imagetype_t type,
 		SmoothColorImage(trans, s, s >> 7);
 	}
 
-	miplevel = Vk_Upload32((byte *)trans, width, height, type, texBuffer, upload_width, upload_height);
-	free(trans);
+	miplevel = Vk_Upload32Native((byte *)trans, width, height, type, texBuffer, upload_width, upload_height);
+
+	// Only free if *texBuffer isn't the image data we sent
+	if (!texBuffer || *texBuffer != (byte *)trans)
+		free(trans);
+
 	return miplevel;
 }
 
@@ -1058,7 +1128,7 @@ Vk_LoadPic(char *name, byte *pic, int width, int realwidth,
 		}
 	}
 	else
-		image->vk_texture.mipLevels = Vk_Upload32(pic, width, height, image->type, &texBuffer, &upload_width, &upload_height);
+		image->vk_texture.mipLevels = Vk_Upload32Native(pic, width, height, image->type, &texBuffer, &upload_width, &upload_height);
 
 	image->upload_width = upload_width;		// after power of 2 and scales
 	image->upload_height = upload_height;
@@ -1075,7 +1145,7 @@ Vk_LoadPic(char *name, byte *pic, int width, int realwidth,
 	QVk_DebugSetObjectName((uint64_t)image->vk_texture.resource.memory,
 		VK_OBJECT_TYPE_DEVICE_MEMORY, "Memory: game textures");
 
-	if (texBuffer)
+	if (texBuffer && texBuffer != pic)
 	{
 		free(texBuffer);
 	}
