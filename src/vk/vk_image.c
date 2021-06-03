@@ -917,6 +917,7 @@ Vk_Upload32
 Returns number of mip levels and scales to nearest power of 2.
 ===============
 */
+#if 0
 static uint32_t Vk_Upload32 (byte *data, int width, int height, imagetype_t type,
 							 byte **texBuffer, int *upload_width, int *upload_height)
 {
@@ -977,6 +978,7 @@ static uint32_t Vk_Upload32 (byte *data, int width, int height, imagetype_t type
 
 	return miplevel;
 }
+#endif
 
 /*
 ===============
