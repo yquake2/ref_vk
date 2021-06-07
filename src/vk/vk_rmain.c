@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "header/local.h"
 
-#define	REF_VERSION	"Yamagi Quake II Vulkan Refresher (based on vkQuake2 v1.4.3)"
+#define	REF_VERSION	"Yamagi Quake II Vulkan Refresher " VKVERSION " (based on vkQuake2 v1.4.3)"
 
 // world rendered and ready to render 2d elements
 static qboolean	world_rendered;
@@ -1312,7 +1312,9 @@ static qboolean RE_Init( void )
 {
 
 	R_Printf(PRINT_ALL, "Refresh: " REF_VERSION "\n");
-	R_Printf(PRINT_ALL, "Client: " YQ2VERSION "\n\n");
+	R_Printf(PRINT_ALL, "Platform: " YQ2OSTYPE "\n");
+	R_Printf(PRINT_ALL, "Architecture: " YQ2ARCH "\n");
+	R_Printf(PRINT_ALL, "Build date: " BUILD_DATE "\n\n");
 
 	R_Register();
 
@@ -1623,7 +1625,7 @@ RE_InitContext(void *win)
 	}
 
 	/* Window title - set here so we can display renderer name in it */
-	snprintf(title, sizeof(title), "Yamagi Quake II %s - Vulkan Render", YQ2VERSION);
+	snprintf(title, sizeof(title), "Yamagi Quake II - Vulkan Render");
 	SDL_SetWindowTitle(window, title);
 
 	// window is ready, initialize Vulkan now

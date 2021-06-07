@@ -32,8 +32,7 @@
 #include "shared.h"
 #include "crc.h"
 
-#define YQ2VERSION "8.00pre"
-#define BASEDIRNAME "baseq2"
+#define VKVERSION "1.0"
 
 #ifndef YQ2OSTYPE
 #error YQ2OSTYPE should be defined by the build system
@@ -45,12 +44,6 @@
 
 #ifndef BUILD_DATE
 #define BUILD_DATE __DATE__
-#endif
-
-#ifdef _WIN32
- #define CFGDIR "YamagiQ2"
-#else
- #define CFGDIR ".yq2"
 #endif
 
 /* ================================================================== */
