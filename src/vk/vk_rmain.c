@@ -1383,36 +1383,9 @@ RE_BeginFrame( float camera_separation )
 		return;
 	}
 
-	/* Some GPU drivers set a maximum extent size of 0x0 when
-	   the window is minimized. But a swapchain with an extent
-	   size of 0x0 is invalid. This leads to the following
-	   problem:
-
-	   1. The window is minimized, the extent size changes and
-	      the Vulkan state get's corrupted. QVk_EndFrame()
-	      above or QVk_BeginFrame() below detect the Vulkan
-	      state as corrupted, set vk_frameStated to false and
-	      request a restart by setting vk_restartNeeded to
-	      true.
-	   2. RE_EndFrame() triggers the restart. QVk_Shutdown()
-	      is successfull, but QVk_Init() can't create a valid
-	      swapchains and errors out. An incomplete internal
-	      renderer state is left behind. The only way out is
-	      to trigger a full render restart.
-	   3. The full renderer restart would lead to a restart
-	      loop: Restart -> QVk_Init() fails -> restart -> ...
-	      The only alternative is not to restart. Instead the
-	      renderer could error out, that would print an error
-	      message and quit the client.
-	  
-	    Work around this by not starting the frame or restarting
-	    the renderer, as long as the maximum extent size is 0x0.
-	    This is part 1 (the state corruption war detect in the
-	    last frame), part 2 (the state corruption was detected in
-	    the current frame) is in RE_EndFrame(). */
-	if (vk_restartNeeded)
+	if (vk_recreateSwapchainNeeded)
 	{
-		if (!QVk_CheckExtent())
+		if (QVk_RecreateSwapchain() != true)
 		{
 			vk_frameStarted = false;
 			return;
@@ -1420,8 +1393,7 @@ RE_BeginFrame( float camera_separation )
 	}
 
 	// if ri.Sys_Error() had been issued mid-frame, we might end up here without properly submitting the image, so call QVk_EndFrame to be safe
-	if (QVk_EndFrame(true) != VK_SUCCESS)
-		vk_restartNeeded = true;
+	QVk_EndFrame(true);
 
 	/*
 	** change modes if necessary
@@ -1448,9 +1420,7 @@ RE_BeginFrame( float camera_separation )
 		}
 	}
 
-	if (QVk_BeginFrame(&vk_viewport, &vk_scissor) != VK_SUCCESS)
-		vk_restartNeeded = true;
-	else
+	if (QVk_BeginFrame(&vk_viewport, &vk_scissor) == VK_SUCCESS)
 		QVk_BeginRenderpass(RP_WORLD);
 }
 
@@ -1462,23 +1432,10 @@ RE_EndFrame
 static void
 RE_EndFrame( void )
 {
-	if (QVk_EndFrame(false) != VK_SUCCESS)
-		vk_restartNeeded = true;
+	QVk_EndFrame(false);
 
 	// world has not rendered yet
 	world_rendered = false;
-
-	/* Part two of the 'maximum extent size may be 0x0'
-	 * work around. See the explanation in RE_BeginFrame()
-	 * for details. */
-	if (vk_restartNeeded)
-	{
-		if (QVk_CheckExtent())
-		{
-			QVk_Restart();
-			vk_restartNeeded = false;
-		}
-	}
 }
 
 /*
