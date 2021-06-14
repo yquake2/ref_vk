@@ -270,13 +270,11 @@ RE_Draw_StretchRaw
 */
 extern unsigned	r_rawpalette[256];
 extern qvktexture_t vk_rawTexture;
-static int scaled_size = 512;
 
 void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data)
 {
 
 	int	i, j;
-	int	hscale, vscale;
 	unsigned *dest;
 	byte *source;
 	byte *image_scaled;
@@ -313,45 +311,36 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 		image_scaled = data;
 	}
 
-	if (vk_rawTexture.resource.image == VK_NULL_HANDLE)
-	{
-		// get power of two image size,
-		// could be updated only size only after recreate texture
-		for (scaled_size = 512; scaled_size < cols && scaled_size < rows; scaled_size <<= 1)
-			;
-	}
-
-	raw_image32 = malloc(scaled_size * scaled_size * sizeof(unsigned));
-
-	hscale = cols * 0x10000 / scaled_size;
-	vscale = rows * 0x10000 / scaled_size;
+	raw_image32 = malloc(cols * rows * sizeof(unsigned));
 
 	source = image_scaled;
 	dest = raw_image32;
-	for (i = 0; i < scaled_size; i++)
+	for (i = 0; i < rows; ++i)
 	{
-		for (j = 0; j < scaled_size; j++)
+		int rowOffset = i * cols;
+		for (j = 0; j < cols; ++j)
 		{
-			*dest = r_rawpalette[*(source + ((j * hscale) >> 16))];
-			dest ++;
+			byte palIdx = source[rowOffset + j];
+			dest[rowOffset + j] = r_rawpalette[palIdx];
 		}
-		source = image_scaled + (((i * vscale) >> 16) * cols);
 	}
 
 	if (vk_retexturing->value)
 	{
 		free(image_scaled);
-		SmoothColorImage(raw_image32, scaled_size * scaled_size, scaled_size >> 7);
+
+		int scaled_size = cols * rows;
+		SmoothColorImage(raw_image32, scaled_size, (scaled_size) >> 7);
 	}
 
 	if (vk_rawTexture.resource.image != VK_NULL_HANDLE)
 	{
-		QVk_UpdateTextureData(&vk_rawTexture, (unsigned char*)raw_image32, 0, 0, scaled_size, scaled_size);
+		QVk_UpdateTextureData(&vk_rawTexture, (unsigned char*)raw_image32, 0, 0, cols, rows);
 	}
 	else
 	{
 		QVVKTEXTURE_CLEAR(vk_rawTexture);
-		QVk_CreateTexture(&vk_rawTexture, (unsigned char*)raw_image32, scaled_size, scaled_size,
+		QVk_CreateTexture(&vk_rawTexture, (unsigned char*)raw_image32, cols, rows,
 			vk_current_sampler, false);
 		QVk_DebugSetObjectName((uint64_t)vk_rawTexture.resource.image,
 			VK_OBJECT_TYPE_IMAGE, "Image: raw texture");

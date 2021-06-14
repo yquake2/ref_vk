@@ -123,8 +123,8 @@ static uint32_t vk_imageIndex = 0;
 static int vk_activeStagingBuffer = 0;
 // started rendering frame?
 qboolean vk_frameStarted = false;
-// the renderer needs to be restarted.
-qboolean vk_restartNeeded = false;
+// the swap chain needs to be rebuilt.
+qboolean vk_recreateSwapchainNeeded = false;
 // is QVk initialized?
 qboolean vk_initialized = false;
 
@@ -1363,7 +1363,6 @@ static void CreatePipelines()
 	for (int i = 0; i < RP_COUNT; ++i)
 	{
 		vk_drawModelPipelineFan[i].topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		vk_drawModelPipelineFan[i].blendOpts.blendEnable = VK_TRUE;
 		QVk_CreatePipeline(samplerUboDsLayouts, 2, &vertInfoRGB_RGBA_RG, &vk_drawModelPipelineFan[i], &vk_renderpasses[i], shaders, 2);
 		QVk_DebugSetObjectName((uint64_t)vk_drawModelPipelineFan[i].layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
 			va("Pipeline Layout: draw model: fan (%s)", renderpassObjectNames[i]));
@@ -2071,18 +2070,10 @@ VkResult QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor)
 
 	ReleaseSwapBuffers();
 
-	static int restartcount;
 	VkResult result = vkAcquireNextImageKHR(vk_device.logical, vk_swapchain.sc, 500000000, vk_imageAvailableSemaphores[vk_activeBufferIdx], VK_NULL_HANDLE, &vk_imageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_SURFACE_LOST_KHR || result == VK_TIMEOUT)
 	{
-		if (restartcount > 2)
-		{
-			Sys_Error("%s(): tried to restart 3 times after vkAcquireNextImageKHR: %s", __func__, QVk_GetError(result));
-		}
-		else
-		{
-			restartcount++;
-		}
+		vk_recreateSwapchainNeeded = true;
 
 		// for VK_OUT_OF_DATE_KHR and VK_SUBOPTIMAL_KHR it'd be fine to just rebuild the swapchain but let's take the easy way out and restart Vulkan.
 		R_Printf(PRINT_ALL, "%s(): received %s after vkAcquireNextImageKHR - restarting video!\n", __func__, QVk_GetError(result));
@@ -2093,7 +2084,6 @@ VkResult QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor)
 		Sys_Error("%s(): unexpected error after vkAcquireNextImageKHR: %s", __func__, QVk_GetError(result));
 	}
 
-	restartcount = 0;
 	vk_activeCmdbuffer = vk_commandbuffers[vk_activeBufferIdx];
 
 	// swap dynamic buffers
@@ -2185,7 +2175,7 @@ VkResult QVk_EndFrame(qboolean force)
 	if (renderResult == VK_ERROR_OUT_OF_DATE_KHR || renderResult == VK_SUBOPTIMAL_KHR || renderResult == VK_ERROR_SURFACE_LOST_KHR)
 	{
 		R_Printf(PRINT_ALL, "%s(): received %s after vkQueuePresentKHR - will restart video!\n", __func__, QVk_GetError(renderResult));
-		vk_restartNeeded = true;
+		vk_recreateSwapchainNeeded = true;
 	}
 	else if (renderResult != VK_SUCCESS)
 	{
@@ -2266,22 +2256,45 @@ void QVk_BeginRenderpass(qvkrenderpasstype_t rpType)
 	vk_state.current_renderpass = rpType;
 }
 
-#if 0
-void QVk_RecreateSwapchain()
+qboolean QVk_RecreateSwapchain()
 {
+	VkResult result = VK_SUCCESS;
 	vkDeviceWaitIdle( vk_device.logical );
+
 	DestroyFramebuffers();
 	DestroyImageViews();
-	VK_VERIFY(QVk_CreateSwapchain());
+
+	if (!QVk_CheckExtent())
+		return false;
+
+	VK_VERIFY(result = QVk_CreateSwapchain());
+
+	if (result != VK_SUCCESS)
+		return false;
+
 	vk_viewport.width = (float)vid.width;
 	vk_viewport.height = (float)vid.height;
 	vk_scissor.extent = vk_swapchain.extent;
+
 	DestroyDrawBuffers();
 	CreateDrawBuffers();
-	VK_VERIFY(CreateImageViews());
-	VK_VERIFY(CreateFramebuffers());
+
+	VK_VERIFY(result = CreateImageViews());
+
+	if (result != VK_SUCCESS)
+		return false;
+
+	VK_VERIFY(result = CreateFramebuffers());
+
+	if (result != VK_SUCCESS)
+		return false;
+
+	QVk_UpdateTextureSampler(&vk_colorbuffer, S_NEAREST_UNNORMALIZED, false);
+	QVk_UpdateTextureSampler(&vk_colorbufferWarp, S_NEAREST_UNNORMALIZED, false);
+
+	vk_recreateSwapchainNeeded = false;
+	return true;
 }
-#endif
 
 uint8_t *QVk_GetVertexBuffer(VkDeviceSize size, VkBuffer *dstBuffer, VkDeviceSize *dstOffset)
 {

@@ -239,7 +239,7 @@ VkResult QVk_CreateSwapchain()
 		return res;
 
 	VK_VERIFY(vkGetSwapchainImagesKHR(vk_device.logical, vk_swapchain.sc, &imageCount, NULL));
-	vk_swapchain.images = (VkImage *)malloc(imageCount * sizeof(VkImage));
+	vk_swapchain.images = (VkImage *)realloc(vk_swapchain.images, imageCount * sizeof(VkImage));
 	vk_swapchain.imageCount = imageCount;
 	res = vkGetSwapchainImagesKHR(vk_device.logical, vk_swapchain.sc, &imageCount, vk_swapchain.images);
 

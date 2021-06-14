@@ -253,8 +253,8 @@ extern qvktexture_t vk_colorbuffer;
 extern qvktexture_t vk_colorbufferWarp;
 // indicator if the frame is currently being rendered
 extern qboolean vk_frameStarted;
-// Indicates if the renderer needs to be restarted.
-extern qboolean vk_restartNeeded;
+// Indicates if the swap chain needs to be rebuilt.
+extern qboolean vk_recreateSwapchainNeeded;
 // is QVk initialized?
 extern qboolean vk_initialized;
 
@@ -295,6 +295,7 @@ const char*	QVk_GetError(VkResult errorCode);
 VkResult	QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor);
 VkResult	QVk_EndFrame(qboolean force);
 void		QVk_BeginRenderpass(qvkrenderpasstype_t rpType);
+qboolean 	QVk_RecreateSwapchain();
 void		QVk_FreeStagingBuffer(qvkstagingbuffer_t *buffer);
 VkResult	QVk_CreateBuffer(VkDeviceSize size, qvkbuffer_t *dstBuffer, const qvkbufferopts_t options);
 void		QVk_FreeBuffer(qvkbuffer_t *buffer);
