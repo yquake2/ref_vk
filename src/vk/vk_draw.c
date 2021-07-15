@@ -270,6 +270,8 @@ RE_Draw_StretchRaw
 */
 extern unsigned	r_rawpalette[256];
 extern qvktexture_t vk_rawTexture;
+static int vk_rawTexture_height;
+static int vk_rawTexture_width;
 
 void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data)
 {
@@ -333,12 +335,22 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 		SmoothColorImage(raw_image32, scaled_size, (scaled_size) >> 7);
 	}
 
+	if (vk_rawTexture.resource.image != VK_NULL_HANDLE &&
+	    (vk_rawTexture_width != cols || vk_rawTexture_height != rows))
+	{
+		QVk_ReleaseTexture(&vk_rawTexture);
+		QVVKTEXTURE_CLEAR(vk_rawTexture);
+	}
+
 	if (vk_rawTexture.resource.image != VK_NULL_HANDLE)
 	{
 		QVk_UpdateTextureData(&vk_rawTexture, (unsigned char*)raw_image32, 0, 0, cols, rows);
 	}
 	else
 	{
+		vk_rawTexture_width = cols;
+		vk_rawTexture_height = rows;
+
 		QVVKTEXTURE_CLEAR(vk_rawTexture);
 		QVk_CreateTexture(&vk_rawTexture, (unsigned char*)raw_image32, cols, rows,
 			vk_current_sampler, false);

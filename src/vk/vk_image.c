@@ -476,7 +476,7 @@ void QVk_UpdateTextureData(qvktexture_t *texture, const unsigned char *data, uin
 	}
 }
 
-static void QVk_ReleaseTexture(qvktexture_t *texture)
+void QVk_ReleaseTexture(qvktexture_t *texture)
 {
 	QVk_SubmitStagingBuffers();
 	if (vk_device.logical != VK_NULL_HANDLE)
@@ -584,7 +584,7 @@ void	Vk_ImageList_f (void)
 
 	for (i = 0, image = vktextures; i < numvktextures; i++, image++)
 	{
-		char *in_use = "";
+		const char *in_use = "";
 
 		if (image->vk_texture.resource.image == VK_NULL_HANDLE)
 			continue;
