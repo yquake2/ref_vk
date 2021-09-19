@@ -982,7 +982,7 @@ cluster
 */
 void R_MarkLeaves (void)
 {
-	byte	*vis;
+	const byte	*vis;
 	byte	fatvis[MAX_MAP_LEAFS/8];
 	mnode_t	*node;
 	int		i;
