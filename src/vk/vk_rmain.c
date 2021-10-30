@@ -124,7 +124,8 @@ cvar_t	*vk_aniso;
 cvar_t	*vk_mip_nearfilter;
 cvar_t	*vk_sampleshading;
 cvar_t	*vk_device_idx;
-cvar_t	*vk_retexturing;
+cvar_t	*r_retexturing;
+cvar_t	*r_scale8bittextures;
 static cvar_t	*vk_underwater;
 cvar_t	*vk_nolerp_list;
 cvar_t  *r_fixsurfsky;
@@ -1186,7 +1187,8 @@ R_Register( void )
 	vk_mip_nearfilter = ri.Cvar_Get("vk_mip_nearfilter", "0", CVAR_ARCHIVE);
 	vk_sampleshading = ri.Cvar_Get("vk_sampleshading", "1", CVAR_ARCHIVE);
 	vk_device_idx = ri.Cvar_Get("vk_device", "-1", CVAR_ARCHIVE);
-	vk_retexturing = ri.Cvar_Get("r_retexturing", "1", CVAR_ARCHIVE);
+	r_retexturing = ri.Cvar_Get("r_retexturing", "1", CVAR_ARCHIVE);
+	r_scale8bittextures = ri.Cvar_Get("r_scale8bittextures", "0", CVAR_ARCHIVE);
 	vk_underwater = ri.Cvar_Get("vk_underwater", "1", CVAR_ARCHIVE);
 	/* don't bilerp characters and crosshairs */
 	vk_nolerp_list = ri.Cvar_Get("r_nolerp_list", "pics/conchars.pcx pics/ch1.pcx pics/ch2.pcx pics/ch3.pcx", 0);
@@ -1377,7 +1379,7 @@ RE_BeginFrame( float camera_separation )
 	world_rendered = false;
 
 	/* VK hasn't been initialized yet. I'm pretty sure that
-	   we can't get here without having called QVk_Init(), 
+	   we can't get here without having called QVk_Init(),
 	   but better save than sorry. */
 	if (!vk_initialized)
 	{

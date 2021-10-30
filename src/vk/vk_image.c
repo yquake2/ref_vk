@@ -1040,7 +1040,7 @@ static uint32_t Vk_Upload8 (byte *data, int width, int height, imagetype_t type,
 	}
 
 	// optimize 8bit images only when we forced such logic
-	if (vk_retexturing->value >= 2)
+	if (r_scale8bittextures->value)
 	{
 		SmoothColorImage(trans, s, s >> 7);
 	}
@@ -1117,7 +1117,7 @@ Vk_LoadPic(char *name, byte *pic, int width, int realwidth,
 	if (bits == 8)
 	{
 		// resize 8bit images only when we forced such logic
-		if (vk_retexturing->value >= 2)
+		if (r_scale8bittextures->value)
 		{
 			byte *image_converted = malloc(width * height * 4);
 			scale2x(pic, image_converted, width, height);
@@ -1314,7 +1314,7 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 	image_t	*image = NULL;
 
 	// with retexturing
-	if (vk_retexturing->value)
+	if (r_retexturing->value)
 	{
 		image = Vk_LoadHiColorImage(name, namewe, ext, type);
 	}

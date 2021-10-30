@@ -285,7 +285,7 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 	if (!vk_frameStarted)
 		return;
 
-	if (vk_retexturing->value)
+	if (r_retexturing->value)
 	{
 		// triple scaling
 		if (cols < (vid.width / 3) || rows < (vid.height / 3))
@@ -327,7 +327,7 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 		}
 	}
 
-	if (vk_retexturing->value)
+	if (r_retexturing->value)
 	{
 		free(image_scaled);
 
