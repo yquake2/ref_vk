@@ -127,7 +127,8 @@ cvar_t	*vk_device_idx;
 cvar_t	*r_retexturing;
 cvar_t	*r_scale8bittextures;
 static cvar_t	*vk_underwater;
-cvar_t	*vk_nolerp_list;
+cvar_t	*r_nolerp_list;
+cvar_t	*r_2D_unfiltered;
 cvar_t  *r_fixsurfsky;
 
 cvar_t	*vid_fullscreen;
@@ -1191,7 +1192,9 @@ R_Register( void )
 	r_scale8bittextures = ri.Cvar_Get("r_scale8bittextures", "0", CVAR_ARCHIVE);
 	vk_underwater = ri.Cvar_Get("vk_underwater", "1", CVAR_ARCHIVE);
 	/* don't bilerp characters and crosshairs */
-	vk_nolerp_list = ri.Cvar_Get("r_nolerp_list", "pics/conchars.pcx pics/ch1.pcx pics/ch2.pcx pics/ch3.pcx", 0);
+	r_nolerp_list = ri.Cvar_Get("r_nolerp_list", "pics/conchars.pcx pics/ch1.pcx pics/ch2.pcx pics/ch3.pcx", 0);
+	/* don't bilerp any 2D elements */
+	r_2D_unfiltered = ri.Cvar_Get("r_2D_unfiltered", "0", CVAR_ARCHIVE);
 	r_fixsurfsky = ri.Cvar_Get("r_fixsurfsky", "0", CVAR_ARCHIVE);
 
 	// clamp vk_msaa to accepted range so that video menu doesn't crash on us
@@ -1402,26 +1405,26 @@ RE_BeginFrame( float camera_separation )
 	/*
 	** change modes if necessary
 	*/
-	if (r_mode->modified || vk_msaa->modified || r_clear->modified || vk_picmip->modified ||
-		vk_validation->modified || vk_texturemode->modified || vk_lmaptexturemode->modified ||
-		vk_aniso->modified || vk_mip_nearfilter->modified || vk_sampleshading->modified ||
-		r_vsync->modified || vk_device_idx->modified || vk_overbrightbits->modified)
+	if (vk_texturemode->modified || vk_lmaptexturemode->modified ||
+		r_nolerp_list->modified || r_2D_unfiltered->modified ||
+		vk_aniso->modified)
 	{
-		if (vk_texturemode->modified || vk_lmaptexturemode->modified || vk_aniso->modified)
+		if (vk_texturemode->modified || vk_aniso->modified ||
+			r_nolerp_list->modified || r_2D_unfiltered->modified)
 		{
-			if (vk_texturemode->modified || vk_aniso->modified)
-			{
-				Vk_TextureMode(vk_texturemode->string);
-				vk_texturemode->modified = false;
-			}
-			if (vk_lmaptexturemode->modified || vk_aniso->modified)
-			{
-				Vk_LmapTextureMode(vk_lmaptexturemode->string);
-				vk_lmaptexturemode->modified = false;
-			}
-
-			vk_aniso->modified = false;
+			Vk_TextureMode(vk_texturemode->string);
+			vk_texturemode->modified = false;
 		}
+
+		if (vk_lmaptexturemode->modified || vk_aniso->modified)
+		{
+			Vk_LmapTextureMode(vk_lmaptexturemode->string);
+			vk_lmaptexturemode->modified = false;
+		}
+
+		vk_aniso->modified = false;
+		r_nolerp_list->modified = false;
+		r_2D_unfiltered->modified = false;
 	}
 
 	if (QVk_BeginFrame(&vk_viewport, &vk_scissor) == VK_SUCCESS)

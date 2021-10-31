@@ -671,8 +671,22 @@ void Vk_TextureMode( char *string )
 	vkDeviceWaitIdle(vk_device.logical);
 	for (j = 0, image = vktextures; j < numvktextures; j++, image++)
 	{
-		// skip console characters - we want them unfiltered at all times
-		if (image->vk_texture.resource.image != VK_NULL_HANDLE && Q_stricmp(image->name, "pics/conchars.pcx"))
+		qboolean nolerp = false;
+
+		if (image->vk_texture.resource.image == VK_NULL_HANDLE)
+			continue;
+
+		if (r_2D_unfiltered->value && image->type == it_pic)
+		{
+			nolerp = true;
+		}
+		else if (r_nolerp_list != NULL && r_nolerp_list->string != NULL)
+		{
+			// skip console characters - we want them unfiltered at all times
+			nolerp = strstr(r_nolerp_list->string, image->name) != NULL;
+		}
+
+		if(!nolerp)
 			QVk_UpdateTextureSampler(&image->vk_texture, i, image->vk_texture.clampToEdge);
 	}
 
@@ -1073,9 +1087,13 @@ Vk_LoadPic(char *name, byte *pic, int width, int realwidth,
 
 	qboolean nolerp = false;
 
-	if (vk_nolerp_list != NULL && vk_nolerp_list->string != NULL)
+	if (r_2D_unfiltered->value && type == it_pic)
 	{
-		nolerp = strstr(vk_nolerp_list->string, name) != NULL;
+		nolerp = true;
+	}
+	else if (r_nolerp_list != NULL && r_nolerp_list->string != NULL)
+	{
+		nolerp = strstr(r_nolerp_list->string, name) != NULL;
 	}
 
 	{
