@@ -46,6 +46,10 @@ YQ2_ARCH ?= $(PROCESSOR_ARCHITECTURE)
 endif
 endif # windows but MINGW_CHOST not defined
 else
+ifneq ($(YQ2_OSTYPE), Darwin)
+else
+YQ2_ARCH ?= $(shell uname -m)
+endif
 # Normalize some abiguous YQ2_ARCH strings
 YQ2_ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/^arm.*/arm/')
 endif
@@ -235,11 +239,7 @@ override LDFLAGS += -shared
 # ----------
 
 # Extra LDFLAGS for SDL
-ifeq ($(YQ2_OSTYPE), Darwin)
-SDLLDFLAGS := -lSDL2
-else # not Darwin
 SDLLDFLAGS := $(shell sdl2-config --libs)
-endif # Darwin
 
 # The renderer libs don't need libSDL2main, libmingw32 or -mwindows.
 ifeq ($(YQ2_OSTYPE), Windows)
@@ -280,6 +280,11 @@ ref_vk:
 	@echo "===> Building ref_vk.dll"
 	${Q}mkdir -p release
 	$(MAKE) release/ref_vk.dll
+else ifeq ($(YQ2_OSTYPE), Darwin)
+ref_vk:
+	@echo "===> Building ref_vk.dlylib"
+	${Q}mkdir -p release
+	$(MAKE) release/ref_vk.dylib
 else
 ref_vk:
 	@echo "===> Building ref_vk.so"
@@ -353,6 +358,10 @@ ifeq ($(YQ2_OSTYPE), Windows)
 release/ref_vk.dll : $(REFVK_OBJS)
 	@echo "===> LD $@"
 	${Q}$(CC) $(REFVK_OBJS) $(LDFLAGS) $(DLL_SDLLDFLAGS) -o $@
+else ifeq ($(YQ2_OSTYPE), Darwin)
+release/ref_vk.dylib : $(REFVK_OBJS)
+	@echo "===> LD $@"
+	${Q}$(CC) $(LDFLAGS) $(REFVK_OBJS) $(LDLIBS) $(SDLLDFLAGS) -o $@
 else
 release/ref_vk.so : $(REFVK_OBJS)
 	@echo "===> LD $@"
