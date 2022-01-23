@@ -47,11 +47,11 @@ endif
 endif # windows but MINGW_CHOST not defined
 else
 ifneq ($(YQ2_OSTYPE), Darwin)
+# Normalize some abiguous YQ2_ARCH strings
+YQ2_ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/^arm.*/arm/')
 else
 YQ2_ARCH ?= $(shell uname -m)
 endif
-# Normalize some abiguous YQ2_ARCH strings
-YQ2_ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/^arm.*/arm/')
 endif
 
 # On Windows / MinGW $(CC) is undefined by default.
@@ -88,10 +88,10 @@ endif
 ifdef DEBUG
 CFLAGS ?= -O0 -g -Wall -pipe
 ifdef ASAN
-CFLAGS += -fsanitize=address
+override CFLAGS += -fsanitize=address -DUSE_SANITIZER
 endif
 ifdef UBSAN
-CFLAGS += -fsanitize=undefined
+override CFLAGS += -fsanitize=undefined -DUSE_SANITIZER
 endif
 else
 CFLAGS ?= -O2 -Wall -pipe -fomit-frame-pointer
@@ -120,17 +120,30 @@ endif
 
 # ----------
 
+# ARM needs a sane minimum architecture. We need the `yield`
+# opcode, arm6k is the first iteration that supports it. arm6k
+# is also the first Raspberry PI generation and older hardware
+# is likely too slow to run the game. We're not enforcing the
+# minimum architecture, but if you're build for something older
+# like arm5 the `yield` opcode isn't compiled in and the game
+# (especially q2ded) will consume more CPU time than necessary.
+ifeq ($(YQ2_ARCH), arm)
+CFLAGS += -march=armv6k
+endif
+
+# ----------
+
 # Switch of some annoying warnings.
 ifeq ($(COMPILER), clang)
 	# -Wno-missing-braces because otherwise clang complains
 	#  about totally valid 'vec3_t bla = {0}' constructs.
-	CFLAGS += -Wno-missing-braces
+	override CFLAGS += -Wno-missing-braces
 else ifeq ($(COMPILER), gcc)
 	# GCC 8.0 or higher.
 	ifeq ($(shell test $(COMPILERVER) -ge 80000; echo $$?),0)
 	    # -Wno-format-truncation and -Wno-format-overflow
 		# because GCC spams about 50 false positives.
-    	CFLAGS += -Wno-format-truncation -Wno-format-overflow
+		override CFLAGS += -Wno-format-truncation -Wno-format-overflow
 	endif
 endif
 
@@ -144,7 +157,7 @@ override CFLAGS += -DYQ2OSTYPE=\"$(YQ2_OSTYPE)\" -DYQ2ARCH=\"$(YQ2_ARCH)\"
 # For reproduceable builds, look here for details:
 # https://reproducible-builds.org/specs/source-date-epoch/
 ifdef SOURCE_DATE_EPOCH
-CFLAGS += -DBUILD_DATE=\"$(shell date --utc --date="@${SOURCE_DATE_EPOCH}" +"%b %_d %Y" | sed -e 's/ /\\ /g')\"
+override CFLAGS += -DBUILD_DATE=\"$(shell date --utc --date="@${SOURCE_DATE_EPOCH}" +"%b %_d %Y" | sed -e 's/ /\\ /g')\"
 endif
 
 # ----------
@@ -200,41 +213,45 @@ endif
 
 # Link address sanitizer if requested.
 ifdef ASAN
-LDFLAGS += -fsanitize=address
+override LDFLAGS += -fsanitize=address
 endif
 
 # Link undefined behavior sanitizer if requested.
 ifdef UBSAN
-LDFLAGS += -fsanitize=undefined
+override LDFLAGS += -fsanitize=undefined
 endif
 
 # Required libraries.
 ifeq ($(YQ2_OSTYPE),Linux)
-override LDFLAGS += -lm -ldl -rdynamic
+LDLIBS ?= -lm -ldl -rdynamic
 else ifeq ($(YQ2_OSTYPE),FreeBSD)
-override LDFLAGS += -lm
+LDLIBS ?= -lm
 else ifeq ($(YQ2_OSTYPE),NetBSD)
-override LDFLAGS += -lm
+LDLIBS ?= -lm
 else ifeq ($(YQ2_OSTYPE),OpenBSD)
-override LDFLAGS += -lm
+LDLIBS ?= -lm
 else ifeq ($(YQ2_OSTYPE),Windows)
-override LDFLAGS += -lws2_32 -lwinmm -static-libgcc
+LDLIBS ?= -lws2_32 -lwinmm -static-libgcc
 else ifeq ($(YQ2_OSTYPE), Darwin)
-override LDFLAGS += -arch $(YQ2_ARCH)
+LDLIBS ?= -arch $(YQ2_ARCH)
 else ifeq ($(YQ2_OSTYPE), Haiku)
-override LDFLAGS += -lm
+LDLIBS ?= -lm
+else ifeq ($(YQ2_OSTYPE), SunOS)
+LDLIBS ?= -lm
 endif
 
+# ASAN and UBSAN must not be linked
+# with --no-undefined. OSX and OpenBSD
+# don't support it at all.
+ifndef ASAN
+ifndef UBSAN
 ifneq ($(YQ2_OSTYPE), Darwin)
 ifneq ($(YQ2_OSTYPE), OpenBSD)
-# For some reason the OSX & OpenBSD
-# linker doesn't support this...
 override LDFLAGS += -Wl,--no-undefined
 endif
 endif
-
-# It's a shared library.
-override LDFLAGS += -shared
+endif
+endif
 
 # ----------
 
@@ -247,9 +264,9 @@ DLL_SDLLDFLAGS = $(subst -mwindows,,$(subst -lmingw32,,$(subst -lSDL2main,,$(SDL
 endif
 
 # ----------
+
 # When make is invoked by "make VERBOSE=1" print
 # the compiler and linker commands.
-
 ifdef VERBOSE
 Q :=
 else
@@ -259,7 +276,7 @@ endif
 # ----------
 
 # Phony targets
-.PHONY : all clean xatrix
+.PHONY : all
 
 # ----------
 
@@ -271,6 +288,10 @@ all: ref_vk
 # Cleanup
 clean:
 	@echo "===> CLEAN"
+	${Q}rm -Rf build release/*
+
+cleanall:
+	@echo "===> CLEAN"
 	${Q}rm -Rf build release
 
 # ----------
@@ -280,11 +301,17 @@ ref_vk:
 	@echo "===> Building ref_vk.dll"
 	${Q}mkdir -p release
 	$(MAKE) release/ref_vk.dll
+
+release/ref_vk.dll : LDFLAGS += -shared
+
 else ifeq ($(YQ2_OSTYPE), Darwin)
 ref_vk:
 	@echo "===> Building ref_vk.dlylib"
 	${Q}mkdir -p release
 	$(MAKE) release/ref_vk.dylib
+
+release/ref_vk.dylib : LDFLAGS += -shared
+
 else
 ref_vk:
 	@echo "===> Building ref_vk.so"
@@ -292,7 +319,9 @@ ref_vk:
 	$(MAKE) release/ref_vk.so
 
 release/ref_vk.so : CFLAGS += -fPIC
-endif
+release/ref_vk.so : LDFLAGS += -shared
+
+endif # OS specific ref_vk stuff
 
 build/%.o: %.c
 	@echo "===> CC $<"
@@ -357,7 +386,7 @@ REFVK_DEPS= $(REFVK_OBJS:.o=.d)
 ifeq ($(YQ2_OSTYPE), Windows)
 release/ref_vk.dll : $(REFVK_OBJS)
 	@echo "===> LD $@"
-	${Q}$(CC) $(REFVK_OBJS) $(LDFLAGS) $(DLL_SDLLDFLAGS) -o $@
+	${Q}$(CC) $(LDFLAGS) $(REFVK_OBJS) $(LDLIBS) $(DLL_SDLLDFLAGS) -o $@
 else ifeq ($(YQ2_OSTYPE), Darwin)
 release/ref_vk.dylib : $(REFVK_OBJS)
 	@echo "===> LD $@"
@@ -365,7 +394,7 @@ release/ref_vk.dylib : $(REFVK_OBJS)
 else
 release/ref_vk.so : $(REFVK_OBJS)
 	@echo "===> LD $@"
-	${Q}$(CC) $(REFVK_OBJS) $(LDFLAGS) $(SDLLDFLAGS) -o $@
+	${Q}$(CC) $(LDFLAGS) $(REFVK_OBJS) $(LDLIBS) $(SDLLDFLAGS) -o $@
 endif
 
 # ----------
