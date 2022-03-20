@@ -147,7 +147,9 @@ extern	cvar_t	*vk_device_idx;
 extern	cvar_t	*r_retexturing;
 extern	cvar_t	*r_scale8bittextures;
 extern	cvar_t	*r_nolerp_list;
+extern	cvar_t	*r_lerp_list;
 extern	cvar_t	*r_2D_unfiltered;
+extern	cvar_t	*r_videos_unfiltered;
 extern	cvar_t	*vk_pixel_size;
 extern	cvar_t	*r_fixsurfsky;
 

@@ -128,8 +128,10 @@ cvar_t	*r_retexturing;
 cvar_t	*r_scale8bittextures;
 static cvar_t	*vk_underwater;
 cvar_t	*r_nolerp_list;
+cvar_t	*r_lerp_list;
 cvar_t	*r_2D_unfiltered;
-cvar_t  *r_fixsurfsky;
+cvar_t	*r_videos_unfiltered;
+cvar_t	*r_fixsurfsky;
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
@@ -1192,9 +1194,13 @@ R_Register( void )
 	r_scale8bittextures = ri.Cvar_Get("r_scale8bittextures", "0", CVAR_ARCHIVE);
 	vk_underwater = ri.Cvar_Get("vk_underwater", "1", CVAR_ARCHIVE);
 	/* don't bilerp characters and crosshairs */
-	r_nolerp_list = ri.Cvar_Get("r_nolerp_list", "pics/conchars.pcx pics/ch1.pcx pics/ch2.pcx pics/ch3.pcx", 0);
+	r_nolerp_list = ri.Cvar_Get("r_nolerp_list", "pics/conchars.pcx pics/ch1.pcx pics/ch2.pcx pics/ch3.pcx", CVAR_ARCHIVE);
+	/* textures that should always be filtered, even if r_2D_unfiltered or an unfiltered gl mode is used */
+	r_lerp_list = ri.Cvar_Get("r_lerp_list", "", CVAR_ARCHIVE);
 	/* don't bilerp any 2D elements */
 	r_2D_unfiltered = ri.Cvar_Get("r_2D_unfiltered", "0", CVAR_ARCHIVE);
+	/* don't bilerp videos */
+	r_videos_unfiltered = ri.Cvar_Get("r_videos_unfiltered", "0", CVAR_ARCHIVE);
 	r_fixsurfsky = ri.Cvar_Get("r_fixsurfsky", "0", CVAR_ARCHIVE);
 
 	// clamp vk_msaa to accepted range so that video menu doesn't crash on us
@@ -1407,6 +1413,7 @@ RE_BeginFrame( float camera_separation )
 	*/
 	if (vk_texturemode->modified || vk_lmaptexturemode->modified ||
 		r_nolerp_list->modified || r_2D_unfiltered->modified ||
+		r_lerp_list->modified || r_videos_unfiltered->modified ||
 		vk_aniso->modified)
 	{
 		if (vk_texturemode->modified || vk_aniso->modified ||
@@ -1424,7 +1431,9 @@ RE_BeginFrame( float camera_separation )
 
 		vk_aniso->modified = false;
 		r_nolerp_list->modified = false;
+		r_lerp_list->modified = false;
 		r_2D_unfiltered->modified = false;
+		r_videos_unfiltered->modified = false;
 	}
 
 	if (QVk_BeginFrame(&vk_viewport, &vk_scissor) == VK_SUCCESS)

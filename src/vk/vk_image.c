@@ -649,6 +649,9 @@ void Vk_TextureMode( char *string )
 	int		i,j;
 	image_t	*image;
 	static char prev_mode[32] = { "VK_MIPMAP_LINEAR" };
+	const char* nolerplist = r_nolerp_list->string;
+	const char* lerplist = r_lerp_list->string;
+	qboolean unfiltered2D = r_2D_unfiltered->value != 0;
 
 	for (i = 0; i < NUM_VK_MODES; i++)
 	{
@@ -669,6 +672,8 @@ void Vk_TextureMode( char *string )
 	vk_current_sampler = i;
 
 	vkDeviceWaitIdle(vk_device.logical);
+
+	/* change all the existing mipmap texture objects */
 	for (j = 0, image = vktextures; j < numvktextures; j++, image++)
 	{
 		qboolean nolerp = false;
@@ -676,14 +681,15 @@ void Vk_TextureMode( char *string )
 		if (image->vk_texture.resource.image == VK_NULL_HANDLE)
 			continue;
 
-		if (r_2D_unfiltered->value && image->type == it_pic)
+		/* r_2D_unfiltered and r_nolerp_list allow rendering stuff unfiltered even if gl_filter_* is filtered */
+		if (unfiltered2D && image->type == it_pic)
+		{
+			// exception to that exception: stuff on the r_lerp_list
+			nolerp = (lerplist== NULL) || (strstr(lerplist, image->name) == NULL);
+		}
+		else if (nolerplist != NULL && strstr(nolerplist, image->name) != NULL)
 		{
 			nolerp = true;
-		}
-		else if (r_nolerp_list != NULL && r_nolerp_list->string != NULL)
-		{
-			// skip console characters - we want them unfiltered at all times
-			nolerp = strstr(r_nolerp_list->string, image->name) != NULL;
 		}
 
 		if(!nolerp)
@@ -1089,7 +1095,9 @@ Vk_LoadPic(char *name, byte *pic, int width, int realwidth,
 
 	if (r_2D_unfiltered->value && type == it_pic)
 	{
-		nolerp = true;
+		// if r_2D_unfiltered is true(ish), nolerp should usually be true,
+		// *unless* the texture is on the r_lerp_list
+		nolerp = (r_lerp_list->string == NULL) || (strstr(r_lerp_list->string, name) == NULL);
 	}
 	else if (r_nolerp_list != NULL && r_nolerp_list->string != NULL)
 	{

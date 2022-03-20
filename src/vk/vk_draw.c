@@ -353,7 +353,8 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 
 		QVVKTEXTURE_CLEAR(vk_rawTexture);
 		QVk_CreateTexture(&vk_rawTexture, (unsigned char*)raw_image32, cols, rows,
-			vk_current_sampler, false);
+			(r_videos_unfiltered->value == 0) ? vk_current_sampler : S_NEAREST,
+			false);
 		QVk_DebugSetObjectName((uint64_t)vk_rawTexture.resource.image,
 			VK_OBJECT_TYPE_IMAGE, "Image: raw texture");
 		QVk_DebugSetObjectName((uint64_t)vk_rawTexture.imageView,
