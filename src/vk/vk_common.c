@@ -1723,7 +1723,7 @@ qboolean QVk_Init(void)
 	};
 
 	uint32_t extCount;
-	const char **wantedExtensions;
+	char **wantedExtensions;
 	memset(vk_config.supported_present_modes, 0, sizeof(vk_config.supported_present_modes));
 	memset(vk_config.extensions, 0, sizeof(vk_config.extensions));
 	memset(vk_config.layers, 0, sizeof(vk_config.layers));
@@ -1752,11 +1752,12 @@ qboolean QVk_Init(void)
 	if (vk_validation->value)
 		extCount++;
 
-	wantedExtensions = malloc(extCount * sizeof(const char *));
-	if (!SDL_Vulkan_GetInstanceExtensions(vk_window, &extCount, wantedExtensions))
+	wantedExtensions = malloc(extCount * sizeof(char *));
+	if (!SDL_Vulkan_GetInstanceExtensions(vk_window, &extCount, (const char **)wantedExtensions))
 	{
 		R_Printf(PRINT_ALL, "%s() SDL_Vulkan_GetInstanceExtensions failed: %s",
 				__func__, SDL_GetError());
+		free(wantedExtensions);
 		return false;
 	}
 
