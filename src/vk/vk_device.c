@@ -44,7 +44,8 @@ static qboolean deviceExtensionsSupported(const VkPhysicalDevice *physicalDevice
 }
 
 // internal helper
-static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferredIdx, int count)
+static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferredIdx,
+								  int count, VkPhysicalDeviceType deviceType)
 {
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
@@ -61,7 +62,7 @@ static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferred
 
 		// prefer discrete GPU but if it's the only one available then don't be picky
 		// also - if the user specifies a preferred device, select it
-		qboolean bestProperties = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+		qboolean bestProperties = deviceProperties.deviceType == deviceType;
 		if (preferredIdx == i || (bestProperties && preferredIdx < 0) || count == 1)
 		{
 			uint32_t formatCount = 0;
@@ -130,7 +131,16 @@ static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferred
 // internal helper
 static qboolean selectPhysicalDevice(int preferredDeviceIdx)
 {
+	VkPhysicalDeviceType typePriorities[] = {
+		VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+		VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,
+		VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
+		VK_PHYSICAL_DEVICE_TYPE_CPU,
+		VK_PHYSICAL_DEVICE_TYPE_OTHER
+	};
 	uint32_t physicalDeviceCount = 0;
+	int i;
+
 	VK_VERIFY(vkEnumeratePhysicalDevices(vk_instance, &physicalDeviceCount, NULL));
 
 	if (physicalDeviceCount == 0)
@@ -144,7 +154,14 @@ static qboolean selectPhysicalDevice(int preferredDeviceIdx)
 	VkPhysicalDevice *physicalDevices = (VkPhysicalDevice *)malloc(physicalDeviceCount * sizeof(VkPhysicalDevice));
 	VK_VERIFY(vkEnumeratePhysicalDevices(vk_instance, &physicalDeviceCount, physicalDevices));
 
-	getBestPhysicalDevice(physicalDevices, preferredDeviceIdx < physicalDeviceCount ? preferredDeviceIdx : -1, physicalDeviceCount);
+	for (i=0; i < sizeof(typePriorities) / sizeof(*typePriorities); i ++)
+	{
+		getBestPhysicalDevice(physicalDevices, preferredDeviceIdx < physicalDeviceCount ? preferredDeviceIdx : -1,
+							  physicalDeviceCount, typePriorities[i]);
+		if (vk_device.physical != VK_NULL_HANDLE)
+			break;
+	}
+
 	free(physicalDevices);
 
 	if (vk_device.physical == VK_NULL_HANDLE)
