@@ -1824,13 +1824,13 @@ qboolean QVk_Init(void)
 	VkResult res = vkCreateInstance(&createInfo, NULL, &vk_instance);
 	free(wantedExtensions);
 
-	volkLoadInstance(vk_instance);
 
 	if (res != VK_SUCCESS)
 	{
 		R_Printf(PRINT_ALL, "%s(): Could not create Vulkan instance: %s\n", __func__, QVk_GetError(res));
 		return false;
 	}
+	volkLoadInstance(vk_instance);
 	R_Printf(PRINT_ALL, "...created Vulkan instance\n");
 
 	if (vk_validation->value)
