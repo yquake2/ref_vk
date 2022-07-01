@@ -1822,14 +1822,29 @@ qboolean QVk_Init(void)
 	}
 
 	VkResult res = vkCreateInstance(&createInfo, NULL, &vk_instance);
-	free(wantedExtensions);
 
 
 	if (res != VK_SUCCESS)
 	{
+		if (res == VK_ERROR_LAYER_NOT_PRESENT && vk_validation->value) {
+			// we give a "last try" if the validation layer fails
+			// before falling back to a GL renderer
+			createInfo.enabledLayerCount = 0;
+			createInfo.ppEnabledLayerNames = 0;
+			createInfo.pNext = NULL;
+			memset(vk_config.layers, 0, sizeof(vk_config.layers));
+			ri.Cvar_Set("vk_validation", "0");
+			R_Printf(PRINT_ALL, "%s(): Could not create Vulkan instance, disabling vk_validation\n", __func__);
+			if (vkCreateInstance(&createInfo, NULL, &vk_instance) == VK_SUCCESS) {
+				goto done;
+			}
+		}
 		R_Printf(PRINT_ALL, "%s(): Could not create Vulkan instance: %s\n", __func__, QVk_GetError(res));
+		free(wantedExtensions);
 		return false;
 	}
+done:
+	free(wantedExtensions);
 	volkLoadInstance(vk_instance);
 	R_Printf(PRINT_ALL, "...created Vulkan instance\n");
 
