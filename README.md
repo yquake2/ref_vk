@@ -109,3 +109,11 @@ by a `vid_restart`.
 
 * **vk_underwater**: Warp the scene if underwater. Set to `0` to disable
   the effect. Defaults to `1`.
+
+## Console Variables (MacOS)
+
+* **vk_molten_metalbuffers**: enable/disable Metal buffers to bind textures
+  more efficiently (>= Big Sur). (default: `0`)
+
+* **vk_molten_fastmath**: enable/disable float point op optimisations.
+  (default: `0`)
