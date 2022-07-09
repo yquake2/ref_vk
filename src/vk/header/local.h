@@ -37,6 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../volk/volk.h"
 #include "qvk.h"
 
+#if defined(__APPLE__)
+#include <MoltenVK/vk_mvk_moltenvk.h>
+#include <dlfcn.h>
+#endif
+
 // verify if VkResult is VK_SUCCESS
 #define VK_VERIFY(x) { \
 	VkResult res = (x); \
@@ -144,6 +149,10 @@ extern	cvar_t	*vk_lmaptexturemode;
 extern	cvar_t	*vk_aniso;
 extern	cvar_t	*vk_sampleshading;
 extern	cvar_t	*vk_device_idx;
+#if defined(__APPLE__)
+extern  cvar_t  *vk_molten_fastmath;
+extern  cvar_t  *vk_molten_metalbuffers;
+#endif
 extern	cvar_t	*r_retexturing;
 extern	cvar_t	*r_scale8bittextures;
 extern	cvar_t	*r_nolerp_list;

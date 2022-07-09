@@ -100,6 +100,10 @@ cvar_t	*vk_picmip;
 cvar_t	*vk_skymip;
 cvar_t	*vk_flashblend;
 cvar_t	*vk_finish;
+#if defined(__APPLE__)
+cvar_t  *vk_molten_fastmath;
+cvar_t  *vk_molten_metalbuffers;
+#endif
 cvar_t	*r_clear;
 cvar_t	*r_lockpvs;
 static cvar_t	*vk_polyblend;
@@ -1190,6 +1194,10 @@ R_Register( void )
 	vk_mip_nearfilter = ri.Cvar_Get("vk_mip_nearfilter", "0", CVAR_ARCHIVE);
 	vk_sampleshading = ri.Cvar_Get("vk_sampleshading", "1", CVAR_ARCHIVE);
 	vk_device_idx = ri.Cvar_Get("vk_device", "-1", CVAR_ARCHIVE);
+#if defined(__APPLE__)
+	vk_molten_fastmath = ri.Cvar_Get("vk_molten_fastmath", "0", CVAR_ARCHIVE);
+	vk_molten_metalbuffers = ri.Cvar_Get("vk_molten_metalbuffer", "0", CVAR_ARCHIVE);
+#endif
 	r_retexturing = ri.Cvar_Get("r_retexturing", "1", CVAR_ARCHIVE);
 	r_scale8bittextures = ri.Cvar_Get("r_scale8bittextures", "0", CVAR_ARCHIVE);
 	vk_underwater = ri.Cvar_Get("vk_underwater", "1", CVAR_ARCHIVE);
