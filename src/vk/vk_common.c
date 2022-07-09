@@ -1787,41 +1787,33 @@ qboolean QVk_Init(void)
 	};
 
 #if defined(__APPLE__)
-	void *molten = dlopen("libMoltenVK.dylib", RTLD_NOW|RTLD_LOCAL);
-	if (molten)
+	MVKConfiguration vk_molten_config;
+	size_t vk_molten_len = sizeof(MVKConfiguration);
+	memset(&vk_molten_config, 0, vk_molten_len);
+	// Preferably getting the existing configuration to fill the most vital
+	// data instead of "smartly" setting by hand.
+	// We do not pass vk_instance here as we change before its creation
+	// anyway, the api ignore it.
+	if (qvkGetMoltenVKConfigurationMVK(VK_NULL_HANDLE, &vk_molten_config, &vk_molten_len) != VK_SUCCESS)
 	{
-		PFN_vkGetMoltenVKConfigurationMVK vkGetMoltenVKConfigurationMVK = 
-			(PFN_vkGetMoltenVKConfigurationMVK)dlsym(molten, "vkGetMoltenVKConfigurationMVK");
-		PFN_vkSetMoltenVKConfigurationMVK vkSetMoltenVKConfigurationMVK =
-			(PFN_vkSetMoltenVKConfigurationMVK)dlsym(molten, "vkSetMoltenVKConfigurationMVK");
-		MVKConfiguration vk_molten_config;
-		size_t vk_molten_len = sizeof(MVKConfiguration);
-		memset(&vk_molten_config, 0, vk_molten_len);
-		// Preferably getting the existing configuration to fill the most vital
-		// data instead of "smartly" setting by hand.
-		// We do not pass vk_instance here as we change before its creation
-		// anyway, the api ignore it.
-		if (vkGetMoltenVKConfigurationMVK(VK_NULL_HANDLE, &vk_molten_config, &vk_molten_len) != VK_SUCCESS)
+		R_Printf(PRINT_ALL, "%s(): Could not fetch the MoltenVK configuration\n", __func__);
+		return false;
+	}
+
+	R_Printf(PRINT_ALL, "%s(): Molten fast math %d\n", __func__, vk_molten_config.fastMathEnabled);
+	R_Printf(PRINT_ALL, "%s(): Molten Metal buffers %d\n", __func__, vk_molten_config.useMetalArgumentBuffers);
+
+	VkBool32 fastMath = vk_molten_fastmath->value > 0 ? VK_TRUE : VK_FALSE;
+	VkBool32 metalBuffers = vk_molten_metalbuffers->value > 0 ? VK_TRUE : VK_FALSE;
+	// unsure of the lost device resuming option value yet might need further testing
+	// also a watermark is available, more fit for demo but might be invading tough
+
+	if (vk_molten_config.fastMathEnabled != fastMath || vk_molten_config.useMetalArgumentBuffers != metalBuffers) {
+		vk_molten_config.fastMathEnabled = fastMath;
+		vk_molten_config.useMetalArgumentBuffers = metalBuffers;
+		if (qvkSetMoltenVKConfigurationMVK(VK_NULL_HANDLE, &vk_molten_config, &vk_molten_len) != VK_SUCCESS)
 		{
-			R_Printf(PRINT_ALL, "%s(): Could not fetch the MoltenVK configuration\n", __func__);
-			return false;
-		}
-
-		R_Printf(PRINT_ALL, "%s(): Molten fast math %d\n", __func__, vk_molten_config.fastMathEnabled);
-		R_Printf(PRINT_ALL, "%s(): Molten Metal buffers %d\n", __func__, vk_molten_config.useMetalArgumentBuffers);
-
-		VkBool32 fastMath = vk_molten_fastmath->value > 0 ? VK_TRUE : VK_FALSE;
-		VkBool32 metalBuffers = vk_molten_metalbuffers->value > 0 ? VK_TRUE : VK_FALSE;
-		// unsure of the lost device resuming option value yet might need further testing
-		// also a watermark is available, more fit for demo but might be invading tough
-
-		if (vk_molten_config.fastMathEnabled != fastMath || vk_molten_config.useMetalArgumentBuffers != metalBuffers) {
-			vk_molten_config.fastMathEnabled = fastMath;
-			vk_molten_config.useMetalArgumentBuffers = metalBuffers;
-			if (vkSetMoltenVKConfigurationMVK(VK_NULL_HANDLE, &vk_molten_config, &vk_molten_len) != VK_SUCCESS)
-			{
-				R_Printf(PRINT_ALL, "%s(): Could not update the MoltenVK configuration\n", __func__);
-			}
+			R_Printf(PRINT_ALL, "%s(): Could not update the MoltenVK configuration\n", __func__);
 		}
 	}
 #endif

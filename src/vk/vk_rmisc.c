@@ -262,6 +262,12 @@ void Vk_Strings_f(void)
 	R_Printf(PRINT_ALL, "   deviceID: %d\n", vk_device.properties.deviceID);
 	R_Printf(PRINT_ALL, "   vendorID: 0x%X (%s)\n",
 		vk_device.properties.vendorID, vk_config.vendor_name);
+#if defined(__APPLE__)
+	R_Printf(PRINT_ALL, "   mslVersion: %d.%d.%d\n",
+		VK_VERSION_MAJOR(vk_device.metalFeatures.mslVersion),
+		VK_VERSION_MINOR(vk_device.metalFeatures.mslVersion),
+		VK_VERSION_PATCH(vk_device.metalFeatures.mslVersion));
+#endif
 	R_Printf(PRINT_ALL, "   deviceType: %s\n", vk_config.device_type);
 	R_Printf(PRINT_ALL, "   gfx/present/transfer: %d/%d/%d\n",
 		vk_device.gfxFamilyIndex,

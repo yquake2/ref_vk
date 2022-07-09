@@ -141,6 +141,12 @@ cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
 static cvar_t	*viewsize;
 
+#if defined(__APPLE__)
+PFN_vkGetPhysicalDeviceMetalFeaturesMVK qvkGetPhysicalDeviceMetalFeaturesMVK;
+PFN_vkGetMoltenVKConfigurationMVK qvkGetMoltenVKConfigurationMVK;
+PFN_vkSetMoltenVKConfigurationMVK qvkSetMoltenVKConfigurationMVK;
+#endif
+
 /*
 =================
 R_CullBox
@@ -1652,6 +1658,20 @@ static int RE_PrepareForWindow(void)
 	}
 
 	volkInitializeCustom(SDL_Vulkan_GetVkGetInstanceProcAddr());
+#if defined(__APPLE__)
+	void *molten = dlopen("libMoltenVK.dylib", RTLD_LOCAL | RTLD_NOW);
+	if (!molten)
+	{
+		return -1;
+	}
+
+	qvkGetPhysicalDeviceMetalFeaturesMVK =
+		(PFN_vkGetPhysicalDeviceMetalFeaturesMVK)dlsym(molten, "vkGetPhysicalDeviceMetalFeaturesMVK");
+	qvkGetMoltenVKConfigurationMVK =
+		(PFN_vkGetMoltenVKConfigurationMVK)dlsym(molten, "vkGetMoltenVKConfigurationMVK");
+	qvkSetMoltenVKConfigurationMVK =
+		(PFN_vkSetMoltenVKConfigurationMVK)dlsym(molten, "vkSetMoltenVKConfigurationMVK");
+#endif
 
 	return SDL_WINDOW_VULKAN;
 }

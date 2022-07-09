@@ -49,12 +49,19 @@ static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferred
 {
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
+#if defined(__APPLE__)
+	MVKPhysicalDeviceMetalFeatures deviceMetalFeatures;
+	size_t featuresSize = sizeof(MVKPhysicalDeviceMetalFeatures);
+#endif
 	uint32_t queueFamilyCount = 0;
 
 	for (int i = 0; i < count; ++i)
 	{
 		vkGetPhysicalDeviceProperties(devices[i], &deviceProperties);
 		vkGetPhysicalDeviceFeatures(devices[i], &deviceFeatures);
+#if defined(__APPLE__)
+		qvkGetPhysicalDeviceMetalFeaturesMVK(devices[i], &deviceMetalFeatures, &featuresSize);
+#endif
 		vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &queueFamilyCount, NULL);
 
 		if (queueFamilyCount == 0)
@@ -122,6 +129,9 @@ static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferred
 				vk_device.physical = devices[i];
 				vk_device.properties = deviceProperties;
 				vk_device.features = deviceFeatures;
+#if defined(__APPLE__)
+				vk_device.metalFeatures = deviceMetalFeatures;
+#endif
 				return;
 			}
 		}

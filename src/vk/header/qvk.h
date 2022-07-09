@@ -33,6 +33,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "util.h"
 #include "shaders.h"
 
+#if defined(__APPLE__)
+#undef VK_NO_PROTOTYPES
+#define VK_NO_PROTOTYPES 1
+#include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
+
 // Vulkan device
 typedef struct
 {
@@ -41,6 +47,9 @@ typedef struct
 	VkPhysicalDeviceMemoryProperties mem_properties;
 	VkPhysicalDeviceProperties properties;
 	VkPhysicalDeviceFeatures   features;
+#if defined(__APPLE__)
+	MVKPhysicalDeviceMetalFeatures metalFeatures;
+#endif
 	VkQueue gfxQueue;
 	VkQueue presentQueue;
 	VkQueue transferQueue;
@@ -266,6 +275,11 @@ extern PFN_vkSetDebugUtilsObjectTagEXT qvkSetDebugUtilsObjectTagEXT;
 extern PFN_vkCmdBeginDebugUtilsLabelEXT qvkCmdBeginDebugUtilsLabelEXT;
 extern PFN_vkCmdEndDebugUtilsLabelEXT qvkCmdEndDebugUtilsLabelEXT;
 extern PFN_vkCmdInsertDebugUtilsLabelEXT qvkInsertDebugUtilsLabelEXT;
+#if defined(__APPLE__)
+extern PFN_vkGetPhysicalDeviceMetalFeaturesMVK qvkGetPhysicalDeviceMetalFeaturesMVK;
+extern PFN_vkGetMoltenVKConfigurationMVK qvkGetMoltenVKConfigurationMVK;
+extern PFN_vkSetMoltenVKConfigurationMVK qvkSetMoltenVKConfigurationMVK;
+#endif
 
 // The Interface Functions (tm)
 void		QVk_SetWindow(SDL_Window*);
