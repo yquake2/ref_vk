@@ -22,6 +22,13 @@ Copy the library next to your Yamagi Quake II executable. You can select
 Vulkan through the video menu or by cvar with `vid_renderer vk` followed
 by a `vid_restart`.
 
+If you have run into issues, please attach output logs with OS/driver version
+and device name to the bug report. [List](https://openbenchmarking.org/test/pts/yquake2)
+of currently tested devices for the reference.
+
+Note: Game saves outputs to `Documents\YamagiQ2\stdout.txt` under
+windows.
+
 
 ## Console Variables
 
