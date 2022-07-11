@@ -148,7 +148,7 @@ static void SubdividePolygon (int numverts, float *verts)
 	poly->verts[0][4] = total_t/numverts;
 
 	// copy first vertex to last
-	memcpy (poly->verts[i+1], poly->verts[1], sizeof(poly->verts[0]));
+	memmove (poly->verts[i+1], poly->verts[1], sizeof(poly->verts[0]));
 }
 
 /*

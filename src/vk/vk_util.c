@@ -63,8 +63,7 @@ vulkan_memory_init(void)
 {
 	memory_block_threshold = MEMORY_THRESHOLD;
 	used_memory_size = 1024; // Size of buffers history
-	used_memory = malloc(used_memory_size * sizeof(MemoryResource_t));
-	memset(used_memory, 0, used_memory_size * sizeof(MemoryResource_t));
+	used_memory = calloc(used_memory_size, sizeof(MemoryResource_t));
 }
 
 static void
@@ -345,7 +344,7 @@ memory_create(VkDeviceSize size,
 				VkDeviceSize new_size = ROUNDUP(size, used_memory[pos].alignment);
 
 				// split to several blocks
-				memcpy(&used_memory[new_pos], &used_memory[pos], sizeof(MemoryResource_t));
+				memmove(&used_memory[new_pos], &used_memory[pos], sizeof(MemoryResource_t));
 				used_memory[new_pos].offset = used_memory[pos].offset + new_size;
 				used_memory[new_pos].size = used_memory[pos].size - new_size;
 
