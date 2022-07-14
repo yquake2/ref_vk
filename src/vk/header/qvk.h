@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "local.h"
 #include "util.h"
 #include "shaders.h"
+#include "vk_mem_alloc.h"
 
 #if defined(__APPLE__)
 #undef VK_NO_PROTOTYPES
@@ -53,6 +54,7 @@ typedef struct
 	VkQueue gfxQueue;
 	VkQueue presentQueue;
 	VkQueue transferQueue;
+	VmaAllocator allocator;
 	int gfxFamilyIndex;
 	int presentFamilyIndex;
 	int transferFamilyIndex;
@@ -136,6 +138,9 @@ typedef struct
 	VkDeviceSize currentOffset;
 
 	BufferResource_t resource;
+	VkBuffer buffer;
+	VmaAllocation allocation;
+	VmaAllocationInfo allocInfo;
 	void *pMappedData;
 } qvkbuffer_t;
 
@@ -148,6 +153,9 @@ typedef struct
 	qboolean submitted;
 
 	BufferResource_t resource;
+	VkBuffer buffer;
+	VmaAllocation allocation;
+	VmaAllocationInfo allocInfo;
 	void *pMappedData;
 } qvkstagingbuffer_t;
 
@@ -157,6 +165,8 @@ typedef struct
 	VkBufferUsageFlags usage;
 	VkMemoryPropertyFlags reqMemFlags;
 	VkMemoryPropertyFlags prefMemFlags;
+	VmaMemoryUsage vmaUsage;
+	VmaAllocationCreateFlags vmaFlags;
 } qvkbufferopts_t;
 
 // Vulkan pipeline

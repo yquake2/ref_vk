@@ -1632,6 +1632,8 @@ void QVk_Shutdown( void )
 		// free all memory
 		vulkan_memory_delete();
 
+		if (vk_device.allocator != VK_NULL_HANDLE)
+			vmaDestroyAllocator(vk_device.allocator);
 		if (vk_device.logical != VK_NULL_HANDLE)
 			vkDestroyDevice(vk_device.logical, NULL);
 		if(vk_surface != VK_NULL_HANDLE)
@@ -1918,6 +1920,25 @@ qboolean QVk_Init(void)
 	if (vk_validation->value)
 		vulkan_memory_types_show();
 
+	vk_device.allocator = VK_NULL_HANDLE;
+	VmaAllocatorCreateInfo deviceAllocator;
+	// Needed since we instantiate in dynamic mode
+	VmaVulkanFunctions deviceAllocatorFunctions;
+	memset(&deviceAllocator, 0, sizeof(deviceAllocator));
+	memset(&deviceAllocatorFunctions, 0, sizeof(deviceAllocatorFunctions));
+	deviceAllocatorFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+	deviceAllocatorFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+	deviceAllocator.pVulkanFunctions = &deviceAllocatorFunctions;
+	deviceAllocator.physicalDevice = vk_device.physical;
+	deviceAllocator.device = vk_device.logical;
+	deviceAllocator.instance = vk_instance;
+	deviceAllocator.vulkanApiVersion = vk_device.properties.apiVersion;
+	res = vmaCreateAllocator(&deviceAllocator, &vk_device.allocator);
+	if (res != VK_SUCCESS)
+	{
+		R_Printf(PRINT_ALL, "%s(): Could not create VMA allocator\n", __func__);
+		return false;
+	}
 	// setup swapchain
 	res = QVk_CreateSwapchain();
 	if (res != VK_SUCCESS)

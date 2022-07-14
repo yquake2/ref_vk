@@ -97,6 +97,8 @@ else
 CFLAGS ?= -O2 -Wall -pipe -fomit-frame-pointer
 endif
 
+CXXFLAGS = $(CFLAGS) -std=c++11
+
 # Always needed are:
 #  -fno-strict-aliasing since the source doesn't comply
 #   with strict aliasing rules and it's next to impossible
@@ -223,21 +225,21 @@ endif
 
 # Required libraries.
 ifeq ($(YQ2_OSTYPE),Linux)
-LDLIBS ?= -lm -ldl -rdynamic
+LDLIBS ?= -lm -ldl -lstdc++ -rdynamic
 else ifeq ($(YQ2_OSTYPE),FreeBSD)
-LDLIBS ?= -lm
+LDLIBS ?= -lm -lc++
 else ifeq ($(YQ2_OSTYPE),NetBSD)
-LDLIBS ?= -lm
+LDLIBS ?= -lm -lstdc++
 else ifeq ($(YQ2_OSTYPE),OpenBSD)
-LDLIBS ?= -lm
+LDLIBS ?= -lm -lc++
 else ifeq ($(YQ2_OSTYPE),Windows)
 LDLIBS ?= -lws2_32 -lwinmm -static-libgcc
 else ifeq ($(YQ2_OSTYPE), Darwin)
-LDLIBS ?= -arch $(YQ2_ARCH)
+LDLIBS ?= -arch $(YQ2_ARCH) -lc++
 else ifeq ($(YQ2_OSTYPE), Haiku)
-LDLIBS ?= -lm
+LDLIBS ?= -lm -lstdc++
 else ifeq ($(YQ2_OSTYPE), SunOS)
-LDLIBS ?= -lm
+LDLIBS ?= -lm -lstdc++
 endif
 
 # ASAN and UBSAN must not be linked
@@ -328,6 +330,11 @@ build/%.o: %.c
 	${Q}mkdir -p $(@D)
 	${Q}$(CC) -c $(CFLAGS) $(SDLCFLAGS) $(INCLUDE) -o $@ $<
 
+build/%.o: %.cpp
+	@echo "===> CXX $<"
+	${Q}mkdir -p $(@D)
+	${Q}$(CXX) -c $(CXXFLAGS) $(SDLCFLAGS) $(INCLUDE) -o $@ $<
+
 # ----------
 
 REFVK_OBJS_ := \
@@ -338,6 +345,7 @@ REFVK_OBJS_ := \
 	src/vk/vk_draw.o \
 	src/vk/vk_image.o \
 	src/vk/vk_light.o \
+	src/vk/vk_mem_alloc.o \
 	src/vk/vk_mesh.o \
 	src/vk/vk_model.o \
 	src/vk/vk_pipeline.o \
