@@ -311,7 +311,7 @@ static VkSampleCountFlagBits GetSampleCount(int msaa, VkSampleCountFlagBits supp
 		step ++;
 	}
 
-	R_Printf(PRINT_ALL, "MSAAx%d is used...\n", value);
+	R_Printf(PRINT_ALL, "...MSAAx%d is used\n", value);
 
 	return msaaModes[step];
 }
