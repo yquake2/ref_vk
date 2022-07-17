@@ -70,17 +70,18 @@ static void
 memory_type_print(VkMemoryPropertyFlags mem_prop)
 {
 #define MPSTR(r, prop) \
-	if((prop & VK_ ##r) != 0) \
-		{ R_Printf(PRINT_ALL, " %s", "VK_"#r); };
+	if((prop & VK_MEMORY_PROPERTY_ ##r) != 0) \
+		{ R_Printf(PRINT_ALL, " %s", "VK_MEMORY_PROPERTY_"#r); }; \
 
-	MPSTR(MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mem_prop);
-	MPSTR(MEMORY_PROPERTY_HOST_VISIBLE_BIT, mem_prop);
-	MPSTR(MEMORY_PROPERTY_HOST_COHERENT_BIT, mem_prop);
-	MPSTR(MEMORY_PROPERTY_HOST_CACHED_BIT, mem_prop);
-	MPSTR(MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, mem_prop);
-	MPSTR(MEMORY_PROPERTY_PROTECTED_BIT, mem_prop);
-	MPSTR(MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD, mem_prop);
-	MPSTR(MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD, mem_prop);
+	MPSTR(DEVICE_LOCAL_BIT, mem_prop);
+	MPSTR(HOST_VISIBLE_BIT, mem_prop);
+	MPSTR(HOST_COHERENT_BIT, mem_prop);
+	MPSTR(HOST_CACHED_BIT, mem_prop);
+	MPSTR(LAZILY_ALLOCATED_BIT, mem_prop);
+	MPSTR(PROTECTED_BIT, mem_prop);
+	MPSTR(DEVICE_COHERENT_BIT_AMD, mem_prop);
+	MPSTR(DEVICE_UNCACHED_BIT_AMD, mem_prop);
+	MPSTR(RDMA_CAPABLE_BIT_NV, mem_prop);
 
 #undef PMSTR
 }
