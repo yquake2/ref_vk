@@ -1752,6 +1752,10 @@ qboolean QVk_Init(void)
 	if (vk_validation->value)
 		extCount++;
 
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+	extCount++;
+#endif
+
 	wantedExtensions = malloc(extCount * sizeof(char *));
 	if (!SDL_Vulkan_GetInstanceExtensions(vk_window, &extCount, (const char **)wantedExtensions))
 	{
@@ -1768,6 +1772,11 @@ qboolean QVk_Init(void)
 		wantedExtensions[extCount - 1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
 	}
 
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+	extCount++;
+	wantedExtensions[extCount - 1] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
+#endif
+
 	R_Printf(PRINT_ALL, "Enabled extensions: ");
 	for (int i = 0; i < extCount; i++)
 	{
@@ -1780,6 +1789,9 @@ qboolean QVk_Init(void)
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 		.pNext = NULL,
 		.pApplicationInfo = &appInfo,
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+		.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+#endif
 		.enabledLayerCount = 0,
 		.ppEnabledLayerNames = NULL,
 		.enabledExtensionCount = extCount,

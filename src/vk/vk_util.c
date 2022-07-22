@@ -22,59 +22,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <assert.h>
 
-/*
-Returns number of bits set to 1 in (v).
-
-On specific platforms and compilers you can use instrinsics like:
-
-Visual Studio:
-    return __popcnt(v);
-GCC, Clang:
-    return static_cast<uint32_t>(__builtin_popcount(v));
-*/
-static inline uint32_t count_bits_set(uint32_t v)
-{
-#ifdef __builtin_popcount
-	return __builtin_popcount(v);
-#else
-	uint32_t c = v - ((v >> 1) & 0x55555555);
-	c = ((c >> 2) & 0x33333333) + (c & 0x33333333);
-	c = ((c >> 4) + c) & 0x0F0F0F0F;
-	c = ((c >> 8) + c) & 0x00FF00FF;
-	c = ((c >> 16) + c) & 0x0000FFFF;
-	return c;
-#endif
-}
-
 static uint32_t
-get_memory_type(uint32_t mem_req_type_bits,
-								  VkMemoryPropertyFlags mem_prop,
-								  VkMemoryPropertyFlags mem_pref)
+get_memory_type(uint32_t mem_req_type_bits, VkMemoryPropertyFlags mem_prop)
 {
-	uint32_t mem_type_index = VK_MAX_MEMORY_TYPES;
-	int max_cost = 0;
-
-	// update prefered with requiredVK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-	mem_pref |= mem_prop;
 	for(uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
 		if(mem_req_type_bits & (1 << i)) {
-			// This memory type contains mem_prop.
 			if((vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_prop) == mem_prop)
-			{
-				// Calculate cost as number of bits from preferredFlags present in this memory type.
-				int curr_cost = count_bits_set(
-					vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_pref);
-
-				// Remember memory type with lowest cost.
-				if(curr_cost >= max_cost)
-				{
-					mem_type_index = i;
-					max_cost = curr_cost;
-				}
-			}
+				return i;
 		}
 	}
-	return mem_type_index;
+	return -1;
 }
 
 typedef struct MemoryResource_s {
@@ -434,9 +391,15 @@ memory_create_by_property(VkMemoryRequirements* mem_reqs,
 	VkMemoryPropertyFlags host_visible;
 
 	memory_index = get_memory_type(mem_reqs->memoryTypeBits,
-		mem_properties, mem_preferences);
-
-	if (memory_index == VK_MAX_MEMORY_TYPES)
+		mem_properties | mem_preferences);
+	// prefered memory allocation
+	if (memory_index == -1)
+	{
+		memory_index = get_memory_type(mem_reqs->memoryTypeBits,
+			mem_properties);
+	}
+	// strictly required
+	if (memory_index == -1)
 	{
 		R_Printf(PRINT_ALL, "%s:%d: Have not found required memory type.\n",
 			__func__, __LINE__);
