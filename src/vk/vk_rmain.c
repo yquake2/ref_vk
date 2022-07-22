@@ -421,7 +421,7 @@ void R_DrawEntitiesOnList (void)
 ** Vk_DrawParticles
 **
 */
-void Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned colortable[768])
+void Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned *colortable)
 {
 	typedef struct {
 		float x,y,z,r,g,b,a,u,v;
