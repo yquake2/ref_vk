@@ -76,11 +76,14 @@ static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferred
 			uint32_t presentModesCount = 0;
 
 			// check if requested device extensions are present
-			qboolean extSupported = deviceExtensionsSupported(&devices[i], VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-
+			if (!deviceExtensionsSupported(&devices[i], VK_KHR_SWAPCHAIN_EXTENSION_NAME))
 			// no required extensions? try next device
-			if (!extSupported)
 				continue;
+
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+			if (!deviceExtensionsSupported(&devices[i], VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+				continue;
+#endif
 
 			// if extensions are fine, query surface formats and present modes to see if the device can be used
 			VK_VERIFY(vkGetPhysicalDeviceSurfaceFormatsKHR(devices[i], vk_surface, &formatCount, NULL));
@@ -232,13 +235,18 @@ static VkResult createLogicalDevice()
 		queueCreateInfo[numQueues++].queueFamilyIndex = vk_device.transferFamilyIndex;
 	}
 
-	const char *deviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+	const char *deviceExtensions[] = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+		VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+#endif
+	};
 
 	VkDeviceCreateInfo deviceCreateInfo = {
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 		.pEnabledFeatures = &wantedDeviceFeatures,
 		.ppEnabledExtensionNames = deviceExtensions,
-		.enabledExtensionCount = 1,
+		.enabledExtensionCount = sizeof(deviceExtensions) / sizeof(deviceExtensions[0]),
 		.enabledLayerCount = 0,
 		.ppEnabledLayerNames = NULL,
 		.queueCreateInfoCount = numQueues,
