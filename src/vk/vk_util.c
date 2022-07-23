@@ -61,6 +61,10 @@ get_memory_type(uint32_t mem_req_type_bits,
 			// This memory type contains mem_prop.
 			if((vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_prop) == mem_prop)
 			{
+#if defined(__APPLE__)
+				// code has some flags issues with MoltenVK
+				return i;
+#else
 				// Calculate cost as number of bits from preferredFlags present in this memory type.
 				int curr_cost = count_bits_set(
 					vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_pref);
@@ -71,6 +75,7 @@ get_memory_type(uint32_t mem_req_type_bits,
 					mem_type_index = i;
 					max_cost = curr_cost;
 				}
+#endif
 			}
 		}
 	}
