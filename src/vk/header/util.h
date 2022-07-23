@@ -49,7 +49,8 @@ typedef struct ImageResource_s {
 VkResult buffer_create(BufferResource_t *buf,
 		VkBufferCreateInfo buf_create_info,
 		VkMemoryPropertyFlags mem_properties,
-		VkMemoryPropertyFlags mem_preferences);
+		VkMemoryPropertyFlags mem_preferences,
+		VkMemoryPropertyFlags mem_skip);
 
 VkResult buffer_destroy(BufferResource_t *buf);
 void buffer_unmap(BufferResource_t *buf);
@@ -60,7 +61,8 @@ VkResult buffer_invalidate(BufferResource_t *buf);
 VkResult image_create(ImageResource_t *img,
 		VkImageCreateInfo img_create_info,
 		VkMemoryPropertyFlags mem_properties,
-		VkMemoryPropertyFlags mem_preferences);
+		VkMemoryPropertyFlags mem_preferences,
+		VkMemoryPropertyFlags mem_skip);
 VkResult image_destroy(ImageResource_t *img);
 
 void vulkan_memory_init(void);

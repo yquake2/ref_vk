@@ -99,7 +99,8 @@ QVk_CreateBuffer(VkDeviceSize size, qvkbuffer_t *dstBuffer,
 
 	dstBuffer->currentOffset = 0;
 	return buffer_create(&dstBuffer->resource, bcInfo,
-						 options.reqMemFlags, options.prefMemFlags);
+						 options.reqMemFlags, options.prefMemFlags,
+						 /*skip memory*/ 0);
 }
 
 void
@@ -136,7 +137,7 @@ QVk_CreateStagingBuffer(VkDeviceSize size, qvkstagingbuffer_t *dstBuffer,
 
 	dstBuffer->currentOffset = 0;
 	return buffer_create(&dstBuffer->resource, bcInfo, reqMemFlags,
-						 prefMemFlags);
+						 prefMemFlags, /*skip memory*/ 0);
 }
 
 VkResult

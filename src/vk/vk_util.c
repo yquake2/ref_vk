@@ -49,17 +49,27 @@ static inline uint32_t count_bits_set(uint32_t v)
 static uint32_t
 get_memory_type(uint32_t mem_req_type_bits,
 								  VkMemoryPropertyFlags mem_prop,
-								  VkMemoryPropertyFlags mem_pref)
+								  VkMemoryPropertyFlags mem_pref,
+								  VkMemoryPropertyFlags mem_skip)
 {
 	uint32_t mem_type_index = VK_MAX_MEMORY_TYPES;
 	int max_cost = 0;
 
-	// update prefered with requiredVK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+	// update prefered with required
 	mem_pref |= mem_prop;
+	// skip for host visible memory
+	if (mem_pref & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+	{
+		mem_skip |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+	}
+
 	for(uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
 		if(mem_req_type_bits & (1 << i)) {
-			// This memory type contains mem_prop.
-			if((vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_prop) == mem_prop)
+			// This memory type contains mem_prop and no mem_skip
+			if(
+				(vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_prop) == mem_prop &&
+				!(vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_skip)
+			)
 			{
 #if defined(__APPLE__)
 				// code has some flags issues with MoltenVK
@@ -432,6 +442,7 @@ static VkResult
 memory_create_by_property(VkMemoryRequirements* mem_reqs,
 		VkMemoryPropertyFlags mem_properties,
 		VkMemoryPropertyFlags mem_preferences,
+		VkMemoryPropertyFlags mem_skip,
 		VkDeviceMemory *memory,
 		VkDeviceSize *offset)
 {
@@ -439,7 +450,7 @@ memory_create_by_property(VkMemoryRequirements* mem_reqs,
 	VkMemoryPropertyFlags host_visible;
 
 	memory_index = get_memory_type(mem_reqs->memoryTypeBits,
-		mem_properties, mem_preferences);
+		mem_properties, mem_preferences, mem_skip);
 
 	if (memory_index == VK_MAX_MEMORY_TYPES)
 	{
@@ -460,7 +471,8 @@ VkResult
 buffer_create(BufferResource_t *buf,
 		VkBufferCreateInfo buf_create_info,
 		VkMemoryPropertyFlags mem_properties,
-		VkMemoryPropertyFlags mem_preferences)
+		VkMemoryPropertyFlags mem_preferences,
+		VkMemoryPropertyFlags mem_skip)
 {
 	assert(buf_create_info.size > 0);
 	assert(buf);
@@ -481,7 +493,7 @@ buffer_create(BufferResource_t *buf,
 	vkGetBufferMemoryRequirements(vk_device.logical, buf->buffer, &mem_reqs);
 
 	result = memory_create_by_property(&mem_reqs, mem_properties, mem_preferences,
-		&buf->memory, &buf->offset);
+		mem_skip, &buf->memory, &buf->offset);
 	if(result != VK_SUCCESS) {
 		R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
 			__func__, __LINE__, QVk_GetError(result));
@@ -514,7 +526,8 @@ VkResult
 image_create(ImageResource_t *img,
 		VkImageCreateInfo img_create_info,
 		VkMemoryPropertyFlags mem_properties,
-		VkMemoryPropertyFlags mem_preferences)
+		VkMemoryPropertyFlags mem_preferences,
+		VkMemoryPropertyFlags mem_skip)
 {
 	assert(img);
 	VkResult result = VK_SUCCESS;
@@ -532,7 +545,7 @@ image_create(ImageResource_t *img,
 	img->size = mem_reqs.size;
 
 	result = memory_create_by_property(&mem_reqs, mem_properties, mem_preferences,
-		&img->memory, &img->offset);
+		mem_skip, &img->memory, &img->offset);
 	if(result != VK_SUCCESS) {
 		R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
 			__func__, __LINE__, QVk_GetError(result));

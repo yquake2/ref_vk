@@ -316,6 +316,7 @@ VkResult QVk_CreateImageView(const VkImage *image, VkImageAspectFlags aspectFlag
 
 VkResult QVk_CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, qvktexture_t *texture)
 {
+	VkMemoryPropertyFlags mem_skip = 0;
 	VkImageCreateInfo imageInfo = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 		.imageType = VK_IMAGE_TYPE_2D,
@@ -341,11 +342,17 @@ VkResult QVk_CreateImage(uint32_t width, uint32_t height, VkFormat format, VkIma
 		imageInfo.pQueueFamilyIndices = queueFamilies;
 	}
 
+	if (!(usage & VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT))
+	{
+		mem_skip |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+	}
+
 	texture->sharingMode = imageInfo.sharingMode;
 	return image_create(
 		&texture->resource, imageInfo,
 		/*mem_properties*/ 0,
-		/*mem_preferences*/ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		/*mem_preferences*/ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		/*mem_skip*/ mem_skip);
 }
 
 void QVk_CreateDepthBuffer(VkSampleCountFlagBits sampleCount, qvktexture_t *depthBuffer)
@@ -517,7 +524,10 @@ void QVk_ReadPixels(uint8_t *dstBuffer, const VkOffset2D *offset, const VkExtent
 		.pQueueFamilyIndices = NULL,
 	};
 
-	VK_VERIFY(buffer_create(&buff, bcInfo, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VK_MEMORY_PROPERTY_HOST_CACHED_BIT));
+	VK_VERIFY(buffer_create(&buff, bcInfo,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+		0));
 
 	cmdBuffer = QVk_CreateCommandBuffer(&vk_commandPool[vk_activeBufferIdx], VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 	VK_VERIFY(QVk_BeginCommand(&cmdBuffer));
