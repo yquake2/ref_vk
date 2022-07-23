@@ -80,7 +80,7 @@ static void getBestPhysicalDevice(const VkPhysicalDevice *devices, int preferred
 			// no required extensions? try next device
 				continue;
 
-#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) && defined(__APPLE__)
 			if (!deviceExtensionsSupported(&devices[i], VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
 				continue;
 #endif
@@ -237,7 +237,7 @@ static VkResult createLogicalDevice()
 
 	const char *deviceExtensions[] = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)
+#if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) && defined(__APPLE__)
 		VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
 #endif
 	};
