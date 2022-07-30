@@ -348,6 +348,7 @@ void Cbuf_InsertFromDefer(void);
 typedef void (*xcommand_t)(void);
 
 void Cmd_Init(void);
+void Cmd_Shutdown(void);
 
 void Cmd_AddCommand(char *cmd_name, xcommand_t function);
 
@@ -670,6 +671,7 @@ char **FS_ListFiles2(char *findname, int *numfiles,
 void FS_FreeList(char **list, int nfiles);
 
 void FS_InitFilesystem(void);
+void FS_ShutdownFilesystem(void);
 void FS_BuildGameSpecificSearchPath(char *dir);
 char *FS_Gamedir(void);
 char *FS_NextPath(char *prevpath);
@@ -702,11 +704,11 @@ void FS_CreatePath(char *path);
 
 void Com_BeginRedirect(int target, char *buffer, int buffersize, void (*flush)(int, char *));
 void Com_EndRedirect(void);
-void Com_Printf(char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void Com_DPrintf(char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void Com_Printf(char *fmt, ...) PRINTF_ATTR(1, 2);
+void Com_DPrintf(char *fmt, ...) PRINTF_ATTR(1, 2);
 void Com_VPrintf(int print_level, const char *fmt, va_list argptr); /* print_level is PRINT_ALL or PRINT_DEVELOPER */
-void Com_MDPrintf(char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-YQ2_ATTR_NORETURN void Com_Error(int code, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void Com_MDPrintf(char *fmt, ...) PRINTF_ATTR(1, 2);
+YQ2_ATTR_NORETURN void Com_Error(int code, char *fmt, ...) PRINTF_ATTR(2, 3);
 YQ2_ATTR_NORETURN void Com_Quit(void);
 
 /* Ugly work around for unsupported
@@ -771,7 +773,6 @@ void Z_FreeTags(int tag);
 void Qcommon_Init(int argc, char **argv);
 void Qcommon_ExecConfigs(qboolean addEarlyCmds);
 const char* Qcommon_GetInitialGame(void);
-void Qcommon_Frame(int msec);
 void Qcommon_Shutdown(void);
 
 #define NUMVERTEXNORMALS 162
@@ -816,7 +817,7 @@ void *Sys_GetGameAPI(void *parms);
 void Sys_UnloadGame(void);
 void Sys_GetWorkDir(char *buffer, size_t len);
 qboolean Sys_SetWorkDir(char *path);
-void Sys_Realpath(const char *in, char *out, size_t size);
+qboolean Sys_Realpath(const char *in, char *out, size_t size);
 
 // Windows only (system.c)
 #ifdef _WIN32
