@@ -88,7 +88,8 @@ const byte *Mod_ClusterPVS (int cluster, const model_t *model)
 Mod_Reallocate
 ===============
 */
-void Mod_Reallocate (void)
+static void
+Mod_Reallocate (void)
 {
 	if ((models_known_max >= (mod_max * 4)) && (models_known != NULL))
 	{

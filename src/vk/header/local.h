@@ -149,6 +149,7 @@ extern	cvar_t	*vk_lmaptexturemode;
 extern	cvar_t	*vk_aniso;
 extern	cvar_t	*vk_sampleshading;
 extern	cvar_t	*vk_device_idx;
+extern	cvar_t	*vk_mip_nearfilter;
 #if defined(__APPLE__)
 extern  cvar_t  *vk_molten_fastmath;
 extern  cvar_t  *vk_molten_metalbuffers;
@@ -179,6 +180,14 @@ extern	model_t	*r_worldmodel;
 
 extern	unsigned	d_8to24table[256];
 
+extern	unsigned	r_rawpalette[256];
+extern	qvktexture_t	vk_rawTexture;
+extern	int	vk_activeBufferIdx;
+extern	float	r_view_matrix[16];
+extern	float	r_projection_matrix[16];
+extern	float	r_viewproj_matrix[16];
+extern	vec3_t	lightspot;
+
 extern	int		registration_sequence;
 extern	qvksampler_t vk_current_sampler;
 extern	qvksampler_t vk_current_lmap_sampler;
@@ -186,12 +195,17 @@ extern	qvksampler_t vk_current_lmap_sampler;
 void	 RE_Shutdown( void );
 
 void Vk_ScreenShot_f (void);
+void Vk_Strings_f(void);
+void Vk_Mem_f(void);
+
 void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel);
 void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel);
 void R_DrawSpriteModel (entity_t *currententity, model_t *currentmodel);
 void R_DrawBeam (entity_t *currententity);
 void R_DrawWorld (void);
 void R_RenderDlights (void);
+void R_SetCacheState( msurface_t *surf );
+void R_BuildLightMap (msurface_t *surf, byte *dest, int stride);
 void R_DrawAlphaSurfaces (void);
 void RE_InitParticleTexture (void);
 void Draw_InitLocal (void);
@@ -345,5 +359,8 @@ extern lmappolyvert_t	*lmappolyverts_buffer;
 void	Mesh_Init (void);
 void	Mesh_Free (void);
 int Mesh_VertsRealloc(int count);
+
+// All renders should export such function
+Q2_DLL_EXPORTED refexport_t GetRefAPI(refimport_t imp);
 
 #endif

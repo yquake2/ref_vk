@@ -73,10 +73,6 @@ static float r_avertexnormal_dots[SHADEDOT_QUANT][256] = {
 
 float	*shadedots = r_avertexnormal_dots[0];
 
-extern float r_view_matrix[16];
-extern float r_projection_matrix[16];
-extern float r_viewproj_matrix[16];
-
 // correction matrix with "hacked depth" for models with RF_DEPTHHACK flag set
 static float r_vulkan_correction_dh[16] = {
 	1.f,  0.f, 0.f, 0.f,
@@ -516,8 +512,6 @@ static void Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *s
 Vk_DrawAliasShadow
 =============
 */
-extern	vec3_t			lightspot;
-
 static void Vk_DrawAliasShadow (dmdl_t *paliashdr, int posenum, float *modelMatrix, entity_t *currententity)
 {
 	int		*order;

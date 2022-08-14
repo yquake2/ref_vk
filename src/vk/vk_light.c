@@ -34,7 +34,8 @@ DYNAMIC LIGHTS BLEND RENDERING
 =============================================================================
 */
 
-void R_RenderDlight (dlight_t *light)
+static void
+R_RenderDlight (dlight_t *light)
 {
 	int		i, j;
 	float	rad;

@@ -32,7 +32,6 @@ static byte			 intensitytable[256];
 static unsigned char overbrightable[256];
 
 static cvar_t	*intensity;
-extern cvar_t	*vk_mip_nearfilter;
 
 unsigned	d_8to24table[256];
 
@@ -511,7 +510,6 @@ void QVk_ReadPixels(uint8_t *dstBuffer, const VkOffset2D *offset, const VkExtent
 	BufferResource_t buff;
 	uint8_t *pMappedData;
 	VkCommandBuffer cmdBuffer;
-	extern int vk_activeBufferIdx;
 
 	VkBufferCreateInfo bcInfo = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,

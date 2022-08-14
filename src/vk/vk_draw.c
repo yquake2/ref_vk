@@ -268,8 +268,6 @@ void RE_Draw_FadeScreen (void)
 RE_Draw_StretchRaw
 =============
 */
-extern unsigned	r_rawpalette[256];
-extern qvktexture_t vk_rawTexture;
 static int vk_rawTexture_height;
 static int vk_rawTexture_width;
 

@@ -29,7 +29,7 @@
 #ifndef CO_COMMON_H
 #define CO_COMMON_H
 
-#include "shared.h"
+#include "shared_safe.h"
 #include "crc.h"
 
 #define VKVERSION "1.0"

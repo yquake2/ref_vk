@@ -49,9 +49,6 @@ int			c_brush_polys, c_alias_polys;
 
 static float		v_blend[4];	// final blending color
 
-void Vk_Strings_f(void);
-void Vk_Mem_f(void);
-
 //
 // view origin
 //
@@ -260,7 +257,8 @@ void R_DrawSpriteModel (entity_t *currententity, model_t *currentmodel)
 R_DrawNullModel
 =============
 */
-void R_DrawNullModel (entity_t *currententity)
+static void
+R_DrawNullModel (entity_t *currententity)
 {
 	vec3_t	shadelight;
 	int		i,j;
@@ -331,7 +329,8 @@ void R_DrawNullModel (entity_t *currententity)
 R_DrawEntitiesOnList
 =============
 */
-void R_DrawEntitiesOnList (void)
+static void
+R_DrawEntitiesOnList (void)
 {
 	int		i;
 
@@ -421,7 +420,8 @@ void R_DrawEntitiesOnList (void)
 ** Vk_DrawParticles
 **
 */
-void Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned *colortable)
+static void
+Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned *colortable)
 {
 	typedef struct {
 		float x,y,z,r,g,b,a,u,v;
@@ -535,7 +535,8 @@ void Vk_DrawParticles(int num_particles, const particle_t particles[], const uns
 R_DrawParticles
 ===============
 */
-void R_DrawParticles (void)
+static void
+R_DrawParticles (void)
 {
 	if (vk_custom_particles->value == 1)
 	{
@@ -614,7 +615,8 @@ void R_DrawParticles (void)
 R_PolyBlend
 ============
 */
-void R_PolyBlend (void)
+static void
+R_PolyBlend (void)
 {
 	if (!vk_polyblend->value)
 		return;
@@ -671,7 +673,8 @@ R_SetFrustum (float fovx, float fovy)
 R_SetupFrame
 ===============
 */
-void R_SetupFrame (void)
+static void
+R_SetupFrame (void)
 {
 	int i;
 	mleaf_t	*leaf;
@@ -1270,7 +1273,8 @@ Vkimp_SetMode(int *pwidth, int *pheight, int mode, int fullscreen)
 R_SetMode
 ==================
 */
-qboolean R_SetMode (void)
+static qboolean
+R_SetMode (void)
 {
 	rserr_t err;
 	int fullscreen;
