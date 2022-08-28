@@ -38,7 +38,7 @@ int		registration_sequence;
 Mod_PointInLeaf
 ===============
 */
-mleaf_t *Mod_PointInLeaf (vec3_t p, model_t *model)
+mleaf_t *Mod_PointInLeaf (const vec3_t p, model_t *model)
 {
 	mnode_t		*node;
 

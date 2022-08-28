@@ -1016,7 +1016,7 @@ Returns number of mip levels
 ===============
 */
 
-static uint32_t Vk_Upload8 (byte *data, int width, int height, imagetype_t type,
+static uint32_t Vk_Upload8 (const byte *data, int width, int height, imagetype_t type,
 							byte **texBuffer, int *upload_width, int *upload_height)
 {
 	unsigned	*trans;

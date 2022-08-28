@@ -1680,6 +1680,12 @@ static int RE_PrepareForWindow(void)
 	return SDL_WINDOW_VULKAN;
 }
 
+static void
+RE_SetSky (char *name, float rotate, vec3_t axis)
+{
+	RE_SetSky_s (name, rotate, axis);
+}
+
 /*
 ===============
 GetRefAPI

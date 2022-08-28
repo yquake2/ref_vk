@@ -456,7 +456,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	int			i, j, size;
 	byte		*lightmap;
 	float		scale[4];
-	int			nummaps;
+	int			mapscount;
 	float		*bl;
 
 	if ( surf->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP) )
@@ -477,14 +477,14 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	}
 
 	// count the # of maps
-	for ( nummaps = 0 ; nummaps < MAXLIGHTMAPS && surf->styles[nummaps] != 255 ;
-		 nummaps++)
+	for ( mapscount = 0 ; mapscount < MAXLIGHTMAPS && surf->styles[mapscount] != 255 ;
+		 mapscount++)
 		;
 
 	lightmap = surf->samples;
 
 	// add all the lightmaps
-	if ( nummaps == 1 )
+	if ( mapscount == 1 )
 	{
 		int maps;
 

@@ -238,7 +238,9 @@ void Mesh_Free (void)
 }
 
 
-static void Vk_LerpVerts( int nverts, dtrivertx_t *v, dtrivertx_t *ov, dtrivertx_t *verts, float *lerp, float move[3], float frontv[3], float backv[3], entity_t *currententity )
+static void Vk_LerpVerts( int nverts, dtrivertx_t *v, dtrivertx_t *ov, dtrivertx_t *verts,
+	float *lerp, const float move[3], const float frontv[3], const float backv[3],
+	entity_t *currententity )
 {
 	int i;
 
@@ -760,11 +762,12 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 	int			leftHandOffset = 0;
 	dmdl_t		*paliashdr;
 	float		an;
-	vec3_t		bbox[8];
 	float		prev_viewproj[16];
 
 	if ( !( currententity->flags & RF_WEAPONMODEL ) )
 	{
+		vec3_t	bbox[8];
+
 		if ( R_CullAliasModel( bbox, currententity, currentmodel ) )
 			return;
 	}

@@ -215,7 +215,7 @@ void R_RotateForEntity (entity_t *e, float *mvMatrix);
 void R_MarkLeaves (void);
 
 void EmitWaterPolys (msurface_t *fa, image_t *texture,
-				   float *modelMatrix, float *color,
+				   float *modelMatrix, const float *color,
 				   qboolean solid_surface);
 void R_AddSkySurface (msurface_t *fa);
 void R_ClearSkyBox (void);
@@ -259,7 +259,7 @@ qboolean Vk_ImageHasFreeSpace(void);
 void	RE_BeginRegistration (char *model);
 struct model_s	*RE_RegisterModel (char *name);
 struct image_s	*RE_RegisterSkin (char *name);
-void	RE_SetSky (char *name, float rotate, vec3_t axis);
+void	RE_SetSky_s (const char *name, float rotate, const vec3_t axis);
 void	RE_EndRegistration (void);
 
 void Mat_Identity(float *matrix);

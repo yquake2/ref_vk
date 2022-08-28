@@ -111,7 +111,7 @@ static VkPresentModeKHR getSwapPresentMode(const VkPresentModeKHR *presentModes,
 // internal helper
 static VkCompositeAlphaFlagBitsKHR getSupportedCompositeAlpha(VkCompositeAlphaFlagsKHR supportedFlags)
 {
-	VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[] = {
+	const VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[] = {
 		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 		VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
 		VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,

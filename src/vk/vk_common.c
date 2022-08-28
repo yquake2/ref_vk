@@ -294,7 +294,7 @@ static VkSampleCountFlagBits GetSampleCount(int msaa, VkSampleCountFlagBits supp
 {
 	int step = 0, value = 64;
 
-	static VkSampleCountFlagBits msaaModes[] = {
+	const VkSampleCountFlagBits msaaModes[] = {
 		VK_SAMPLE_COUNT_64_BIT,
 		VK_SAMPLE_COUNT_32_BIT,
 		VK_SAMPLE_COUNT_16_BIT,

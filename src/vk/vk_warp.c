@@ -201,7 +201,7 @@ Does a water warp on the pre-fragmented vkpoly_t chain
 */
 void
 EmitWaterPolys (msurface_t *fa, image_t *texture, float *modelMatrix,
-			  float *color, qboolean solid_surface)
+			  const float *color, qboolean solid_surface)
 {
 	vkpoly_t	*p, *bp;
 	float		*v;
@@ -686,12 +686,12 @@ void R_DrawSkyBox (void)
 
 /*
 ============
-RE_SetSky
+RE_SetSky_s
 ============
 */
 // 3dstudio environment map names
 static char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
-void RE_SetSky (char *name, float rotate, vec3_t axis)
+void RE_SetSky_s (const char *name, float rotate, const vec3_t axis)
 {
 	int		i;
 	char	pathname[MAX_QPATH];
