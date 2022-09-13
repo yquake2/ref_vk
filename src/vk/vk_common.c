@@ -289,20 +289,20 @@ VkFormat QVk_FindDepthFormat()
 	return VK_FORMAT_D16_UNORM;
 }
 
+static const VkSampleCountFlagBits msaaModes[] = {
+	VK_SAMPLE_COUNT_64_BIT,
+	VK_SAMPLE_COUNT_32_BIT,
+	VK_SAMPLE_COUNT_16_BIT,
+	VK_SAMPLE_COUNT_8_BIT,
+	VK_SAMPLE_COUNT_4_BIT,
+	VK_SAMPLE_COUNT_2_BIT,
+	VK_SAMPLE_COUNT_1_BIT
+};
+
 // internal helper
 static VkSampleCountFlagBits GetSampleCount(int msaa, VkSampleCountFlagBits supportedMsaa)
 {
 	int step = 0, value = 64;
-
-	const VkSampleCountFlagBits msaaModes[] = {
-		VK_SAMPLE_COUNT_64_BIT,
-		VK_SAMPLE_COUNT_32_BIT,
-		VK_SAMPLE_COUNT_16_BIT,
-		VK_SAMPLE_COUNT_8_BIT,
-		VK_SAMPLE_COUNT_4_BIT,
-		VK_SAMPLE_COUNT_2_BIT,
-		VK_SAMPLE_COUNT_1_BIT
-	};
 
 	while ((msaa < value && value > 1) ||
 		   ((supportedMsaa & msaaModes[step]) != msaaModes[step]))

@@ -108,16 +108,16 @@ static VkPresentModeKHR getSwapPresentMode(const VkPresentModeKHR *presentModes,
 	return usedPresentMode;
 }
 
+static const VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[] = {
+	VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+	VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+	VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+	VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
+};
+
 // internal helper
 static VkCompositeAlphaFlagBitsKHR getSupportedCompositeAlpha(VkCompositeAlphaFlagsKHR supportedFlags)
 {
-	const VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[] = {
-		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-		VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-		VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
-		VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
-	};
-
 	for (int i = 0; i < 4; ++i)
 	{
 		if (supportedFlags & compositeAlphaFlags[i])

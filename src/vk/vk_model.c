@@ -202,7 +202,8 @@ void Mod_FreeModelsKnown (void)
 Mod_LoadLighting
 =================
 */
-static void Mod_LoadLighting (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadLighting (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	if (!l->filelen)
 	{
@@ -219,7 +220,8 @@ static void Mod_LoadLighting (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadVisibility
 =================
 */
-static void Mod_LoadVisibility (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadVisibility (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	int		i;
 
@@ -245,7 +247,8 @@ static void Mod_LoadVisibility (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadVertexes
 =================
 */
-static void Mod_LoadVertexes (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadVertexes (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	dvertex_t	*in;
 	mvertex_t	*out;
@@ -277,7 +280,8 @@ static void Mod_LoadVertexes (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadSubmodels
 =================
 */
-static void Mod_LoadSubmodels (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	dmodel_t	*in;
 	model_t	*out;
@@ -338,7 +342,8 @@ static void Mod_LoadSubmodels (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadEdges
 =================
 */
-static void Mod_LoadEdges (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadEdges (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	dedge_t *in;
 	medge_t *out;
@@ -369,7 +374,8 @@ static void Mod_LoadEdges (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadTexinfo
 =================
 */
-static void Mod_LoadTexinfo (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadTexinfo (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	texinfo_t *in;
 	mtexinfo_t *out, *step;
@@ -484,7 +490,8 @@ static void CalcSurfaceExtents (model_t *loadmodel, msurface_t *s)
 	}
 }
 
-static int calcTexinfoAndFacesSize(const lump_t *fl, byte *mod_base, const lump_t *tl)
+static int
+calcTexinfoAndFacesSize(const lump_t *fl, const byte *mod_base, const lump_t *tl)
 {
 	dface_t* face_in = (void *)(mod_base + fl->fileofs);
 	texinfo_t* texinfo_in = (void *)(mod_base + tl->fileofs);
@@ -564,7 +571,8 @@ static int calcTexinfoAndFacesSize(const lump_t *fl, byte *mod_base, const lump_
 Mod_LoadFaces
 =================
 */
-static void Mod_LoadFaces (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadFaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	dface_t		*in;
 	msurface_t 	*out;
@@ -680,7 +688,8 @@ static void Mod_SetParent (mnode_t *node, mnode_t *parent)
 Mod_LoadNodes
 =================
 */
-static void Mod_LoadNodes (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadNodes (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	int			i, j, count;
 	dnode_t		*in;
@@ -734,7 +743,8 @@ static void Mod_LoadNodes (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadLeafs
 =================
 */
-static void Mod_LoadLeafs (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadLeafs (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	dleaf_t 	*in;
 	mleaf_t 	*out;
@@ -798,7 +808,8 @@ static void Mod_LoadLeafs (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadMarksurfaces
 =================
 */
-static void Mod_LoadMarksurfaces (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadMarksurfaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	int		i, count;
 	short		*in;
@@ -836,7 +847,8 @@ static void Mod_LoadMarksurfaces (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadSurfedges
 =================
 */
-static void Mod_LoadSurfedges (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadSurfedges (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	int		i, count;
 	int		*in, *out;
@@ -868,7 +880,8 @@ static void Mod_LoadSurfedges (model_t *loadmodel, byte *mod_base, lump_t *l)
 Mod_LoadPlanes
 =================
 */
-static void Mod_LoadPlanes (model_t *loadmodel, byte *mod_base, lump_t *l)
+static void
+Mod_LoadPlanes (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	int			i;
 	cplane_t	*out;
@@ -933,7 +946,8 @@ static int calcLumpHunkSize(const lump_t *l, int inSize, int outSize)
 Mod_LoadBrushModel
 =================
 */
-static void Mod_LoadBrushModel (model_t *loadmodel, void *buffer, int modfilelen)
+static void
+Mod_LoadBrushModel (model_t *loadmodel, const void *buffer, int modfilelen)
 {
 	int			i;
 	dheader_t	*header;
@@ -1006,7 +1020,8 @@ ALIAS MODELS
 Mod_LoadAliasModel
 =================
 */
-static void Mod_LoadAliasModel (model_t *mod, void *buffer, int modfilelen)
+static void
+Mod_LoadAliasModel (model_t *mod, const void *buffer, int modfilelen)
 {
 	int		i, j;
 	dmdl_t		*pinmodel, *pheader;
@@ -1141,9 +1156,7 @@ static void Mod_LoadAliasModel (model_t *mod, void *buffer, int modfilelen)
 	if (poutcmd[pheader->num_glcmds-1] != 0)
 	{
 		R_Printf(PRINT_ALL, "%s: Entity %s has possible last element issues with %d verts.\n",
-			__func__,
-			mod->name,
-			poutcmd[pheader->num_glcmds-1]);
+			__func__, mod->name, poutcmd[pheader->num_glcmds-1]);
 	}
 
 	// register all skins
@@ -1176,7 +1189,8 @@ SPRITE MODELS
 Mod_LoadSpriteModel
 =================
 */
-static void Mod_LoadSpriteModel (model_t *mod, void *buffer, int modfilelen)
+static void
+Mod_LoadSpriteModel (model_t *mod, const void *buffer, int modfilelen)
 {
 	dsprite_t	*sprin, *sprout;
 	int			i;
@@ -1225,7 +1239,8 @@ Mod_ForName
 Loads in a model for the given name
 ==================
 */
-static model_t *Mod_ForName (char *name, model_t *parent_model, qboolean crash)
+static model_t *
+Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 {
 	model_t	*mod;
 	unsigned *buf;
