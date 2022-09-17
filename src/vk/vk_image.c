@@ -1091,7 +1091,7 @@ This is also used as an entry point for the generated r_notexture
 ================
 */
 image_t *
-Vk_LoadPic(char *name, byte *pic, int width, int realwidth,
+Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	   int height, int realheight, imagetype_t type,
 	   int bits)
 {
@@ -1450,15 +1450,14 @@ image_t	*Vk_FindImage (char *name, imagetype_t type)
 	}
 
 	len = strlen(name);
-
-	/* Remove the extension */
-	memset(namewe, 0, 256);
-	memcpy(namewe, name, len - (strlen(ext) + 1));
-
 	if (len < 5)
 	{
 		return NULL;
 	}
+
+	/* Remove the extension */
+	memset(namewe, 0, 256);
+	memcpy(namewe, name, len - (strlen(ext) + 1));
 
 	/* fix backslashes */
 	while ((ptr = strchr(name, '\\')))
