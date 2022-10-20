@@ -350,6 +350,7 @@ REFVK_OBJS_ := \
 	src/vk/vk_warp.o \
 	src/vk/vk_util.o \
 	src/vk/volk/volk.o \
+	src/files/models.o \
 	src/files/pcx.o \
 	src/files/stb.o \
 	src/files/wal.o \
