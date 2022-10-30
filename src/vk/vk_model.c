@@ -947,7 +947,7 @@ Mod_LoadBrushModel
 =================
 */
 static void
-Mod_LoadBrushModel (model_t *loadmodel, const void *buffer, int modfilelen)
+Mod_LoadBrushModel (model_t *mod, const void *buffer, int modfilelen)
 {
 	int			i;
 	dheader_t	*header;
@@ -960,7 +960,7 @@ Mod_LoadBrushModel (model_t *loadmodel, const void *buffer, int modfilelen)
 	if (i != BSPVERSION)
 	{
 		ri.Sys_Error(ERR_DROP, "%s: %s has wrong version number (%i should be %i)",
-				__func__, loadmodel->name, i, BSPVERSION);
+				__func__, mod->name, i, BSPVERSION);
 	}
 
 	// swap all the lumps
@@ -988,23 +988,23 @@ Mod_LoadBrushModel (model_t *loadmodel, const void *buffer, int modfilelen)
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_NODES], sizeof(dnode_t), sizeof(mnode_t));
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_MODELS], sizeof(dmodel_t), sizeof(model_t));
 
-	loadmodel->extradata = Hunk_Begin(hunkSize);
-	loadmodel->type = mod_brush;
-	loadmodel->numframes = 2;		// regular and alternate animation
+	mod->extradata = Hunk_Begin(hunkSize);
+	mod->type = mod_brush;
+	mod->numframes = 2;		// regular and alternate animation
 
 	// load into heap
-	Mod_LoadVertexes (loadmodel, mod_base, &header->lumps[LUMP_VERTEXES]);
-	Mod_LoadEdges (loadmodel, mod_base, &header->lumps[LUMP_EDGES]);
-	Mod_LoadSurfedges (loadmodel, mod_base, &header->lumps[LUMP_SURFEDGES]);
-	Mod_LoadLighting (loadmodel, mod_base, &header->lumps[LUMP_LIGHTING]);
-	Mod_LoadPlanes (loadmodel, mod_base, &header->lumps[LUMP_PLANES]);
-	Mod_LoadTexinfo (loadmodel, mod_base, &header->lumps[LUMP_TEXINFO]);
-	Mod_LoadFaces (loadmodel, mod_base, &header->lumps[LUMP_FACES]);
-	Mod_LoadMarksurfaces (loadmodel, mod_base, &header->lumps[LUMP_LEAFFACES]);
-	Mod_LoadVisibility (loadmodel, mod_base, &header->lumps[LUMP_VISIBILITY]);
-	Mod_LoadLeafs (loadmodel, mod_base, &header->lumps[LUMP_LEAFS]);
-	Mod_LoadNodes (loadmodel, mod_base, &header->lumps[LUMP_NODES]);
-	Mod_LoadSubmodels (loadmodel, mod_base, &header->lumps[LUMP_MODELS]);
+	Mod_LoadVertexes (mod, mod_base, &header->lumps[LUMP_VERTEXES]);
+	Mod_LoadEdges (mod, mod_base, &header->lumps[LUMP_EDGES]);
+	Mod_LoadSurfedges (mod, mod_base, &header->lumps[LUMP_SURFEDGES]);
+	Mod_LoadLighting (mod, mod_base, &header->lumps[LUMP_LIGHTING]);
+	Mod_LoadPlanes (mod, mod_base, &header->lumps[LUMP_PLANES]);
+	Mod_LoadTexinfo (mod, mod_base, &header->lumps[LUMP_TEXINFO]);
+	Mod_LoadFaces (mod, mod_base, &header->lumps[LUMP_FACES]);
+	Mod_LoadMarksurfaces (mod, mod_base, &header->lumps[LUMP_LEAFFACES]);
+	Mod_LoadVisibility (mod, mod_base, &header->lumps[LUMP_VISIBILITY]);
+	Mod_LoadLeafs (mod, mod_base, &header->lumps[LUMP_LEAFS]);
+	Mod_LoadNodes (mod, mod_base, &header->lumps[LUMP_NODES]);
+	Mod_LoadSubmodels (mod, mod_base, &header->lumps[LUMP_MODELS]);
 }
 
 //=============================================================================
@@ -1303,7 +1303,8 @@ void RE_EndRegistration (void)
 		if (!mod->name[0])
 			continue;
 		if (mod->registration_sequence != registration_sequence)
-		{	// don't need this model
+		{
+			/* don't need this model */
 			Mod_Free (mod);
 		}
 	}
