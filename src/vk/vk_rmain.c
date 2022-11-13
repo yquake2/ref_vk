@@ -430,7 +430,7 @@ Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned
 	const particle_t *p;
 	int				i;
 	vec3_t			up, right;
-	byte			color[4];
+	YQ2_ALIGNAS_TYPE(unsigned) byte	color[4];
 	pvertex*	currentvertex;
 
 	if (!num_particles)
