@@ -1148,6 +1148,9 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	if (type == it_skin && bits == 8)
 		FloodFillSkin(pic, width, height);
 
+	upload_width = realwidth;
+	upload_height = realheight;
+
 	if (bits == 8)
 	{
 		// resize 8bit images only when we forced such logic
