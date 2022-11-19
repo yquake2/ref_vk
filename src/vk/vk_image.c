@@ -1135,6 +1135,7 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	image->registration_sequence = registration_sequence;
 	// zero-clear Vulkan texture handle
 	QVVKTEXTURE_CLEAR(image->vk_texture);
+	texBuffer = 0;
 	image->width = realwidth;
 	image->height = realheight;
 	image->type = type;
