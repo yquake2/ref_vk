@@ -76,7 +76,7 @@ void QVk_CreateValidationLayers()
 		.pUserData = NULL
 	};
 
-	if (vk_validation->value > 1)
+	if (r_validation->value > 1)
 	{
 		callbackInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;

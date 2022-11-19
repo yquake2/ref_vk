@@ -183,7 +183,7 @@ Mesh_Free
 */
 void Mesh_Free (void)
 {
-	if (vk_validation->value > 1)
+	if (r_validation->value > 1)
 	{
 		R_Printf(PRINT_ALL, "%s: Deallocated %d mesh verts\n",
 			__func__, verts_count);

@@ -32,9 +32,9 @@ windows.
 
 ## Console Variables
 
-* **vk_validation**: Toggle validation layers:
+* **r_validation**: Toggle validation layers:
   * `0` - disabled (default in Release)
-  * `1` - only errors and warnings
+  * `1` - only errors and warnings, show image load issues
   * `2` - best-practices validation
 
 * **vk_strings**: Print some basic Vulkan/GPU information.

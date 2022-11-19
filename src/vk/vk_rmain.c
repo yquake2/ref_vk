@@ -92,7 +92,7 @@ static cvar_t	*r_customheight;
 cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
 cvar_t	*vk_overbrightbits;
-cvar_t	*vk_validation;
+cvar_t	*r_validation;
 cvar_t	*vk_picmip;
 cvar_t	*vk_skymip;
 cvar_t	*vk_flashblend;
@@ -1174,7 +1174,7 @@ R_Register( void )
 	r_customheight = ri.Cvar_Get("r_customheight", "768", CVAR_ARCHIVE);
 
 	vk_overbrightbits = ri.Cvar_Get("vk_overbrightbits", "1.0", CVAR_ARCHIVE);
-	vk_validation = ri.Cvar_Get("vk_validation", "0", CVAR_ARCHIVE);
+	r_validation = ri.Cvar_Get("r_validation", "0", CVAR_ARCHIVE);
 	vk_picmip = ri.Cvar_Get("vk_picmip", "0", 0);
 	vk_skymip = ri.Cvar_Get("vk_skymip", "0", 0);
 	vk_flashblend = ri.Cvar_Get("vk_flashblend", "0", 0);
@@ -1287,7 +1287,7 @@ R_SetMode (void)
 
 	vk_msaa->modified = false;
 	r_clear->modified = false;
-	vk_validation->modified = false;
+	r_validation->modified = false;
 	vk_mip_nearfilter->modified = false;
 	vk_sampleshading->modified = false;
 	vk_device_idx->modified = false;

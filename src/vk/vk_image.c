@@ -1149,7 +1149,7 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 
 	// update count of loaded images
 	img_loaded ++;
-	if (vk_validation->value)
+	if (r_validation->value)
 	{
 		R_Printf(PRINT_ALL, "%s: Load %s[%d]\n", __func__, image->name, img_loaded);
 	}
@@ -1500,7 +1500,7 @@ image_t	*Vk_FindImage (char *name, imagetype_t type)
 	//
 	image = Vk_LoadImage(name, namewe, ext, type);
 
-	if (!image && vk_validation->value)
+	if (!image && r_validation->value)
 	{
 		R_Printf(PRINT_ALL, "%s: can't load %s\n", __func__, name);
 	}
@@ -1577,7 +1577,7 @@ void Vk_FreeUnusedImages (void)
 		if (image->type == it_pic)
 			continue;		// don't free pics
 
-		if (vk_validation->value)
+		if (r_validation->value)
 		{
 			R_Printf(PRINT_ALL, "%s: Unload %s[%d]\n", __func__, image->name, img_loaded);
 		}
@@ -1709,7 +1709,7 @@ void	Vk_ShutdownImages (void)
 		if (!image->registration_sequence)
 			continue;		// free image_t slot
 
-		if (vk_validation->value)
+		if (r_validation->value)
 		{
 			R_Printf(PRINT_ALL, "%s: Unload %s[%d]\n", __func__, image->name, img_loaded);
 		}

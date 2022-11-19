@@ -148,7 +148,7 @@ static void Mod_Free (model_t *mod)
 		return;
 	}
 
-	if (vk_validation->value)
+	if (r_validation->value)
 	{
 		R_Printf(PRINT_ALL, "%s: Unload %s[%d]\n", __func__, mod->name, mod_loaded);
 	}
@@ -1078,7 +1078,7 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 					__func__, mod->name);
 		}
 
-		if (vk_validation->value)
+		if (r_validation->value)
 		{
 			R_Printf(PRINT_ALL, "%s: Can't load %s\n", __func__, mod->name);
 		}
@@ -1088,7 +1088,7 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 
 	// update count of loaded models
 	mod_loaded ++;
-	if (vk_validation->value)
+	if (r_validation->value)
 	{
 		R_Printf(PRINT_ALL, "%s: Load %s[%d]\n", __func__, mod->name, mod_loaded);
 	}

@@ -134,7 +134,7 @@ extern	cvar_t	*r_gunfov;
 extern	cvar_t	*r_farsee;
 
 extern	cvar_t	*vk_overbrightbits;
-extern	cvar_t	*vk_validation;
+extern	cvar_t	*r_validation;
 extern	cvar_t	*vk_picmip;
 extern	cvar_t	*vk_skymip;
 extern	cvar_t	*vk_flashblend;
