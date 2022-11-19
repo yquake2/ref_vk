@@ -238,7 +238,7 @@ qboolean	RE_EndWorldRenderpass( void );
 struct image_s *RE_RegisterSkin (char *name);
 
 image_t *Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
-		    int height, int realheight, imagetype_t type,
+		    int height, int realheight, size_t data_size, imagetype_t type,
 		    int bits);
 image_t	*Vk_FindImage (char *name, imagetype_t type);
 void	Vk_TextureMode( char *string );

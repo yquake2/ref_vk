@@ -1092,11 +1092,11 @@ This is also used as an entry point for the generated r_notexture
 */
 image_t *
 Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
-	   int height, int realheight, imagetype_t type,
+	   int height, int realheight, size_t data_size, imagetype_t type,
 	   int bits)
 {
 	image_t		*image;
-	byte		*texBuffer;
+	byte		*texBuffer = NULL;
 	int		upload_width, upload_height;
 
 	qboolean nolerp = false;
@@ -1135,10 +1135,18 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	image->registration_sequence = registration_sequence;
 	// zero-clear Vulkan texture handle
 	QVVKTEXTURE_CLEAR(image->vk_texture);
-	texBuffer = 0;
-	image->width = realwidth;
-	image->height = realheight;
 	image->type = type;
+	if (realwidth && realheight)
+	{
+		image->width = realwidth;
+		image->height = realheight;
+	}
+	else
+	{
+		image->width = width;
+		image->height = height;
+	}
+
 	// update count of loaded images
 	img_loaded ++;
 	if (vk_validation->value)
@@ -1235,6 +1243,7 @@ static image_t *Vk_LoadWal (char *name, imagetype_t type)
 	image = Vk_LoadPic(name, (byte *)mt + ofs,
 			   width, width,
 			   height, height,
+			   height * width,
 			   type, 8);
 
 	ri.FS_FreeFile ((void *)mt);
@@ -1303,7 +1312,11 @@ Vk_LoadM8(char *origname, imagetype_t type)
 		image_buffer[i * 4 + 3] = value == 255 ? 0 : 255;
 	}
 
-	image = Vk_LoadPic(name, image_buffer, width, width, height, height, type, 32);
+	image = Vk_LoadPic(name, image_buffer,
+		width, width,
+		height, height,
+		width * height,
+		type, 32);
 	free(image_buffer);
 
 	ri.FS_FreeFile((void *)mt);
@@ -1351,6 +1364,7 @@ Vk_LoadHiColorImage(char *name, const char* namewe, const char *ext, imagetype_t
 			image = Vk_LoadPic(name, pic,
 					   width, realwidth,
 					   height, realheight,
+					   width * height,
 					   type, 32);
 		}
 	}
@@ -1394,6 +1408,7 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 			image = Vk_LoadPic(name, pic,
 					   width, width,
 					   height, height,
+					   width * height,
 					   type, 8);
 
 			if (palette)
@@ -1416,6 +1431,7 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 			image = Vk_LoadPic(name, pic,
 					   width, width,
 					   height, height,
+					   width * height,
 					   type, 32);
 		}
 
@@ -1430,7 +1446,7 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 ===============
 Vk_FindImage
 
-Finds or loads the given image
+Finds or loads the given image or NULL
 ===============
 */
 image_t	*Vk_FindImage (char *name, imagetype_t type)
@@ -1460,7 +1476,7 @@ image_t	*Vk_FindImage (char *name, imagetype_t type)
 	}
 
 	/* Remove the extension */
-	memset(namewe, 0, 256);
+	memset(namewe, 0, sizeof(namewe));
 	memcpy(namewe, name, len - (strlen(ext) + 1));
 
 	/* fix backslashes */
@@ -1482,9 +1498,15 @@ image_t	*Vk_FindImage (char *name, imagetype_t type)
 	//
 	// load the pic from disk
 	//
-	return Vk_LoadImage(name, namewe, ext, type);
-}
+	image = Vk_LoadImage(name, namewe, ext, type);
 
+	if (!image && vk_validation->value)
+	{
+		R_Printf(PRINT_ALL, "%s: can't load %s\n", __func__, name);
+	}
+
+	return image;
+}
 
 /*
 ===============
