@@ -980,7 +980,7 @@ cluster
 void R_MarkLeaves (void)
 {
 	const byte	*vis;
-	byte	fatvis[MAX_MAP_LEAFS/8];
+	YQ2_ALIGNAS_TYPE(int) byte fatvis[MAX_MAP_LEAFS/8];
 	mnode_t	*node;
 	int		i;
 	mleaf_t	*leaf;
