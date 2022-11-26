@@ -134,7 +134,9 @@ memory_type_print(VkMemoryPropertyFlags mem_prop)
 	MPSTR(PROTECTED_BIT, mem_prop);
 	MPSTR(DEVICE_COHERENT_BIT_AMD, mem_prop);
 	MPSTR(DEVICE_UNCACHED_BIT_AMD, mem_prop);
+#ifdef VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV
 	MPSTR(RDMA_CAPABLE_BIT_NV, mem_prop);
+#endif
 
 #undef PMSTR
 }
