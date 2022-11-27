@@ -719,7 +719,7 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 	//
 	// load the file
 	//
-	modfilelen = ri.FS_LoadFile (mod->name, (void **)&buf);
+	modfilelen = Mod_LoadFile (mod->name, &buf);
 	if (!buf)
 	{
 		if (crash)
@@ -752,8 +752,10 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 	switch (LittleLong(*(unsigned *)buf))
 	{
 	case IDALIASHEADER:
+		/* fall through */
+	case IDMDLHEADER:
 		{
-			mod->extradata = Mod_LoadMD2(mod->name, buf, modfilelen,
+			mod->extradata = Mod_LoadAliasModel(mod->name, buf, modfilelen,
 				mod->mins, mod->maxs,
 				(struct image_s **)mod->skins, (findimage_t)Vk_FindImage,
 				&(mod->type));

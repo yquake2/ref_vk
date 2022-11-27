@@ -89,8 +89,6 @@ typedef enum
 
 #include "model.h"
 
-#define	MAX_LBM_HEIGHT		480
-
 #define BACKFACE_EPSILON	0.01
 
 
