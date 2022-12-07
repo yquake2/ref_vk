@@ -715,9 +715,11 @@ YQ2_ATTR_NORETURN void Com_Quit(void);
  * format specifiers unter mingw. */
 #ifdef WIN32
 #define YQ2_COM_PRId64 "%I64d"
+#define YQ2_COM_PRIu64 "%I64u"
 #define YQ2_COM_PRIdS "%Id"
 #else
 #define YQ2_COM_PRId64 "%ld"
+#define YQ2_COM_PRIu64 "%llu"
 #define YQ2_COM_PRIdS "%zd"
 #endif
 
