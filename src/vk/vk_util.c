@@ -360,6 +360,11 @@ memory_block_allocate(VkDeviceSize size,
 			used_memory[pos].used = VK_FALSE;
 			*block_pos = pos;
 		}
+		else
+		{
+			R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
+				__func__, __LINE__, QVk_GetError(result));
+		}
 		return result;
 	}
 
@@ -494,6 +499,11 @@ buffer_create(BufferResource_t *buf,
 	if(result != VK_SUCCESS) {
 		R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
 			__func__, __LINE__, QVk_GetError(result));
+		R_Printf(PRINT_ALL, "Memory properties with:\n");
+		memory_type_print(mem_properties);
+		R_Printf(PRINT_ALL, "Memory preferences with:\n");
+		memory_type_print(mem_preferences);
+		R_Printf(PRINT_ALL, "\n");
 		goto fail_mem_alloc;
 	}
 
@@ -546,6 +556,11 @@ image_create(ImageResource_t *img,
 	if(result != VK_SUCCESS) {
 		R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
 			__func__, __LINE__, QVk_GetError(result));
+		R_Printf(PRINT_ALL, "Memory properties with:\n");
+		memory_type_print(mem_properties);
+		R_Printf(PRINT_ALL, "Memory preferences with:\n");
+		memory_type_print(mem_preferences);
+		R_Printf(PRINT_ALL, "\n");
 		goto fail_mem_alloc;
 	}
 
