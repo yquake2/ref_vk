@@ -713,17 +713,12 @@ YQ2_ATTR_NORETURN void Com_Quit(void);
 
 /* Ugly work around for unsupported
  * format specifiers unter mingw. */
+#define YQ2_COM_PRId64 PRId64
+#define YQ2_COM_PRIu64 PRIu64
+
 #ifdef WIN32
-#define YQ2_COM_PRId64 "%I64d"
-#define YQ2_COM_PRIu64 "%I64u"
 #define YQ2_COM_PRIdS "%Id"
 #else
-#define YQ2_COM_PRId64 "%ld"
-#if defined(__APPLE__)
-#define YQ2_COM_PRIu64 "%llu"
-#else
-#define YQ2_COM_PRIu64 "%lu"
-#endif
 #define YQ2_COM_PRIdS "%zd"
 #endif
 

@@ -37,6 +37,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <inttypes.h>
 
 #ifdef true
  #undef true
