@@ -6,10 +6,11 @@ This is the vkQuake2 vulkan renderer library ported to Yamagi Quake II.
 ## Compilation
 
 You'll need:
-* clang or gcc
-* GNU Make
-* SDL2 with `sdl2-config`.
-* vulkan-headers.
+* clang or gcc,
+* GNU Make,
+* SDL2 with `sdl2-config`,
+* vulkan-headers,
+* vulkan-validationlayers if you like to debug issues.
 
 Type `make` to compile the library. If the compilation is successfull,
 the library can be found under *release/ref_vk.dll* (Windows) or

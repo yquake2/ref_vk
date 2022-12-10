@@ -46,6 +46,11 @@ static inline uint32_t count_bits_set(uint32_t v)
 #endif
 }
 
+/*
+ * Check:
+ *   https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceMemoryProperties.html
+ * for more information.
+ */
 static uint32_t
 get_memory_type(uint32_t mem_req_type_bits,
 								  VkMemoryPropertyFlags mem_prop,
@@ -53,7 +58,7 @@ get_memory_type(uint32_t mem_req_type_bits,
 								  VkMemoryPropertyFlags mem_skip)
 {
 	uint32_t mem_type_index = VK_MAX_MEMORY_TYPES;
-	int max_cost = 0;
+	int max_cost = -1;
 
 	// update prefered with required
 	mem_pref |= mem_prop;
@@ -65,18 +70,23 @@ get_memory_type(uint32_t mem_req_type_bits,
 
 	for(uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
 		if(mem_req_type_bits & (1 << i)) {
+			VkMemoryPropertyFlags propertyFlags;
+
+			// cache flags
+			propertyFlags = vk_device.mem_properties.memoryTypes[i].propertyFlags;
 			// This memory type contains mem_prop and no mem_skip
 			if(
-				(vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_prop) == mem_prop &&
-				!(vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_skip)
+				(propertyFlags & mem_prop) == mem_prop &&
+				!(propertyFlags & mem_skip)
 			)
 			{
-				// Calculate cost as number of bits from preferredFlags present in this memory type.
-				int curr_cost = count_bits_set(
-					vk_device.mem_properties.memoryTypes[i].propertyFlags & mem_pref);
+				int curr_cost;
 
-				// Remember memory type with lowest cost.
-				if(curr_cost >= max_cost)
+				// Calculate cost as number of bits from preferredFlags
+				// not present in this memory type.
+				curr_cost = count_bits_set(propertyFlags & mem_pref);
+				// Remember memory type with upper cost as has more prefered bits.
+				if(curr_cost > max_cost)
 				{
 					mem_type_index = i;
 					max_cost = curr_cost;
@@ -122,6 +132,12 @@ vulkan_memory_init(void)
 static void
 memory_type_print(VkMemoryPropertyFlags mem_prop)
 {
+	if (!mem_prop)
+	{
+		R_Printf(PRINT_ALL, " VK_MEMORY_PROPERTY_NONE");
+		return;
+	}
+
 #define MPSTR(r, prop) \
 	if((prop & VK_MEMORY_PROPERTY_ ##r) != 0) \
 		{ R_Printf(PRINT_ALL, " %s", "VK_MEMORY_PROPERTY_"#r); }; \
@@ -391,7 +407,7 @@ memory_create(VkDeviceSize size,
 	{
 		// check size of block,
 		// new block should be at least same size as current
-		// and beger than double minimal offset
+		// and bigger than double minimal offset
 		// and marked as not for mmap
 		if (used_memory[pos].size > (size * 2) &&
 			(used_memory[pos].size > (used_memory[pos].alignment * 2)) &&
@@ -448,8 +464,19 @@ memory_create_by_property(VkMemoryRequirements* mem_reqs,
 		VkDeviceMemory *memory,
 		VkDeviceSize *offset)
 {
-	uint32_t memory_index;
 	VkMemoryPropertyFlags host_visible;
+	uint32_t memory_index;
+
+	if (r_validation->value)
+	{
+		R_Printf(PRINT_ALL, "Asked about memory properties with:\n");
+		memory_type_print(mem_properties);
+		R_Printf(PRINT_ALL, "\nAsked about memory preferences with:\n");
+		memory_type_print(mem_preferences);
+		R_Printf(PRINT_ALL, "\nAsked about memory skip with:\n");
+		memory_type_print(mem_skip);
+		R_Printf(PRINT_ALL, "\n");
+	}
 
 	memory_index = get_memory_type(mem_reqs->memoryTypeBits,
 		mem_properties, mem_preferences, mem_skip);
@@ -460,6 +487,18 @@ memory_create_by_property(VkMemoryRequirements* mem_reqs,
 			__func__, __LINE__);
 		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 	}
+	else if (r_validation->value)
+	{
+		R_Printf(PRINT_ALL, "%s:%d: Selected %d memory properties with:\n",
+			__func__, __LINE__, memory_index);
+		memory_type_print(
+			vk_device.mem_properties.memoryTypes[memory_index].propertyFlags);
+		R_Printf(PRINT_ALL, "\n");
+	}
+
+	/* get selected memory properties */
+	mem_properties = vk_device.mem_properties.memoryTypes[memory_index].propertyFlags &
+		(mem_properties | mem_preferences);
 
 	host_visible = mem_properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
@@ -499,11 +538,6 @@ buffer_create(BufferResource_t *buf,
 	if(result != VK_SUCCESS) {
 		R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
 			__func__, __LINE__, QVk_GetError(result));
-		R_Printf(PRINT_ALL, "Memory properties with:\n");
-		memory_type_print(mem_properties);
-		R_Printf(PRINT_ALL, "Memory preferences with:\n");
-		memory_type_print(mem_preferences);
-		R_Printf(PRINT_ALL, "\n");
 		goto fail_mem_alloc;
 	}
 
@@ -556,11 +590,6 @@ image_create(ImageResource_t *img,
 	if(result != VK_SUCCESS) {
 		R_Printf(PRINT_ALL, "%s:%d: VkResult verification: %s\n",
 			__func__, __LINE__, QVk_GetError(result));
-		R_Printf(PRINT_ALL, "Memory properties with:\n");
-		memory_type_print(mem_properties);
-		R_Printf(PRINT_ALL, "Memory preferences with:\n");
-		memory_type_print(mem_preferences);
-		R_Printf(PRINT_ALL, "\n");
 		goto fail_mem_alloc;
 	}
 
