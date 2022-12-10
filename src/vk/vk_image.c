@@ -693,9 +693,9 @@ void Vk_TextureMode( char *string )
 		if (unfiltered2D && image->type == it_pic)
 		{
 			// exception to that exception: stuff on the r_lerp_list
-			nolerp = (lerplist== NULL) || (strstr(lerplist, image->name) == NULL);
+			nolerp = (lerplist == NULL) || File_Filtered(image->name, lerplist);
 		}
-		else if (nolerplist != NULL && strstr(nolerplist, image->name) != NULL)
+		else if (nolerplist != NULL && File_Filtered(image->name, nolerplist))
 		{
 			nolerp = true;
 		}
@@ -1098,18 +1098,19 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	image_t		*image;
 	byte		*texBuffer = NULL;
 	int		upload_width, upload_height;
-
+	const char* nolerplist = r_nolerp_list->string;
+	const char* lerplist = r_lerp_list->string;
 	qboolean nolerp = false;
 
 	if (r_2D_unfiltered->value && type == it_pic)
 	{
 		// if r_2D_unfiltered is true(ish), nolerp should usually be true,
 		// *unless* the texture is on the r_lerp_list
-		nolerp = (r_lerp_list->string == NULL) || (strstr(r_lerp_list->string, name) == NULL);
+		nolerp = (lerplist == NULL) || File_Filtered(name, lerplist);
 	}
-	else if (r_nolerp_list != NULL && r_nolerp_list->string != NULL)
+	else if (nolerplist != NULL)
 	{
-		nolerp = strstr(r_nolerp_list->string, name) != NULL;
+		nolerp = File_Filtered(name, nolerplist);
 	}
 
 	{

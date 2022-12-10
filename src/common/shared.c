@@ -1421,3 +1421,121 @@ Info_SetValueForKey(char *s, char *key, char *value)
 
 	*s = 0;
 }
+
+/*
+ * TODO: Sync with yquake
+ */
+
+/*
+ * name: file name
+ * filter:  file name line rule with '*'
+ * return false for empty filter
+ */
+static qboolean
+File_Filtered_Line(const char *name, const char *filter)
+{
+	const char *current_filter = filter;
+
+	// skip empty filter
+	if (!*current_filter)
+	{
+		return false;
+	}
+
+	while (*current_filter)
+	{
+		char part_filter[MAX_QPATH];
+		const char *name_part;
+		const char *str_end;
+
+		str_end = index(current_filter, '*');
+		if (!str_end)
+		{
+			if (!strstr(name, current_filter))
+			{
+				// no such part in string
+				return false;
+			}
+			// have such part
+			break;
+		}
+		// copy filter line
+		if ((str_end - current_filter) >= MAX_QPATH)
+		{
+			return false;
+		}
+		memcpy(part_filter, current_filter, str_end - current_filter);
+		part_filter[str_end - current_filter] = 0;
+		// place part in name
+		name_part = strstr(name, part_filter);
+		if (!name_part)
+		{
+			// no such part in string
+			return false;
+		}
+		// have such part
+		name = name_part + strlen(part_filter);
+		// move to next filter
+		current_filter = str_end + 1;
+	}
+
+	return true;
+}
+
+/*
+ * name: file name
+ * filter: file names separated by space, and '!' for skip file
+ */
+qboolean
+File_Filtered(const char *name, const char *filter)
+{
+	const char *current_filter = filter;
+
+	while (*current_filter)
+	{
+		char line_filter[MAX_QPATH];
+		const char *str_end;
+
+		str_end = index(current_filter, ' ');
+		// its end of filter
+		if (!str_end)
+		{
+			// check rules inside line
+			if (File_Filtered_Line(name, current_filter))
+			{
+				return true;
+			}
+			return false;
+		}
+		// copy filter line
+		if ((str_end - current_filter) >= MAX_QPATH)
+		{
+			return false;
+		}
+		memcpy(line_filter, current_filter, str_end - current_filter);
+		line_filter[str_end - current_filter] = 0;
+		// check rules inside line
+		if (*line_filter == '!')
+		{
+			// has invert rule
+			if (File_Filtered_Line(name, line_filter + 1))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if (File_Filtered_Line(name, line_filter))
+			{
+				return true;
+			}
+		}
+		// move to next filter
+		current_filter = str_end + 1;
+	}
+	return false;
+}
+
+/*
+ * End of unsynced code
+ */

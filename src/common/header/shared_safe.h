@@ -39,4 +39,9 @@ int LongNoSwap(int l);
 float FloatSwap(float f);
 float FloatNoSwap(float f);
 
+/*
+ * TODO: Sync with yquake
+ */
+qboolean File_Filtered(const char *name, const char *filter);
+
 #endif // COMMON_SHARED_SAFE_H
