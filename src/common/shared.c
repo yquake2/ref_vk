@@ -1448,7 +1448,7 @@ File_Filtered_Line(const char *name, const char *filter)
 		const char *name_part;
 		const char *str_end;
 
-		str_end = index(current_filter, '*');
+		str_end = strchr(current_filter, '*');
 		if (!str_end)
 		{
 			if (!strstr(name, current_filter))
@@ -1496,7 +1496,7 @@ File_Filtered(const char *name, const char *filter)
 		char line_filter[MAX_QPATH];
 		const char *str_end;
 
-		str_end = index(current_filter, ' ');
+		str_end = strchr(current_filter, ' ');
 		// its end of filter
 		if (!str_end)
 		{
