@@ -1253,7 +1253,7 @@ static image_t *Vk_LoadWal (char *name, imagetype_t type)
 }
 
 static image_t *
-Vk_LoadM8(char *origname, imagetype_t type)
+Vk_LoadM8(const char *origname, imagetype_t type)
 {
 	m8tex_t *mt;
 	int width, height, ofs, size;
@@ -1261,13 +1261,7 @@ Vk_LoadM8(char *origname, imagetype_t type)
 	char name[256];
 	unsigned char *image_buffer = NULL;
 
-	Q_strlcpy(name, origname, sizeof(name));
-
-	/* Add the extension */
-	if (strcmp(COM_FileExtension(name), "m8"))
-	{
-		Q_strlcat(name, ".m8", sizeof(name));
-	}
+	FixFileExt(origname, "m8", name, sizeof(name));
 
 	size = ri.FS_LoadFile(name, (void **)&mt);
 
