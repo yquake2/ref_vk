@@ -1219,59 +1219,6 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 }
 
 static image_t*
-Vk_LoadHiColorImage(char *name, const char* namewe, const char *ext, imagetype_t type)
-{
-	image_t	*image = NULL;
-	byte *pic = NULL;
-	int realwidth = 0, realheight = 0;
-	int width = 0, height = 0;
-
-	if (strcmp(ext, "pcx") == 0)
-	{
-		/* Get size of the original texture */
-		GetPCXInfo(name, &realwidth, &realheight);
-	}
-	else if (strcmp(ext, "wal") == 0)
-	{
-		/* Get size of the original texture */
-		GetWalInfo(name, &realwidth, &realheight);
-	}
-	else if (strcmp(ext, "m8") == 0)
-	{
-		/* Get size of the original texture */
-		GetM8Info(name, &realwidth, &realheight);
-	}
-
-	/* try to load a tga, png or jpg (in that order/priority) */
-	if (  LoadSTB(namewe, "tga", &pic, &width, &height)
-	   || LoadSTB(namewe, "png", &pic, &width, &height)
-	   || LoadSTB(namewe, "jpg", &pic, &width, &height) )
-	{
-		if (width >= realwidth && height >= realheight)
-		{
-			if (realheight == 0 || realwidth == 0)
-			{
-				realheight = height;
-				realwidth = width;
-			}
-
-			image = Vk_LoadPic(name, pic,
-				width, realwidth,
-				height, realheight,
-				width * height,
-				type, 32);
-		}
-	}
-
-	if (pic)
-	{
-		free(pic);
-	}
-
-	return image;
-}
-
-static image_t*
 Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 {
 	image_t	*image = NULL;
@@ -1279,7 +1226,8 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 	// with retexturing
 	if (r_retexturing->value)
 	{
-		image = Vk_LoadHiColorImage(name, namewe, ext, type);
+		image = (image_t *)LoadHiColorImage(name, namewe, ext, type,
+			(loadimage_t)Vk_LoadPic);
 	}
 
 	if (!image)
@@ -1315,6 +1263,10 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 		else if (!strcmp(ext, "m8"))
 		{
 			image = (image_t *)LoadM8(namewe, type, (loadimage_t)Vk_LoadPic);
+		}
+		else if (!strcmp(ext, "m32"))
+		{
+			image = (image_t *)LoadM32(namewe, type, (loadimage_t)Vk_LoadPic);
 		}
 		else if (!strcmp(ext, "tga"))
 		{
