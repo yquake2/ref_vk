@@ -1218,40 +1218,6 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	return image;
 }
 
-
-/*
-================
-Vk_LoadWal
-================
-*/
-static image_t *Vk_LoadWal (char *name, imagetype_t type)
-{
-	miptex_t	*mt;
-	int			width, height, ofs;
-	image_t		*image;
-
-	ri.FS_LoadFile (name, (void **)&mt);
-	if (!mt)
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s\n", __func__, name);
-		return r_notexture;
-	}
-
-	width = LittleLong (mt->width);
-	height = LittleLong (mt->height);
-	ofs = LittleLong (mt->offsets[0]);
-
-	image = Vk_LoadPic(name, (byte *)mt + ofs,
-			   width, width,
-			   height, height,
-			   height * width,
-			   type, 8);
-
-	ri.FS_FreeFile ((void *)mt);
-
-	return image;
-}
-
 static image_t *
 Vk_LoadM8(const char *origname, imagetype_t type)
 {
@@ -1411,7 +1377,7 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 		}
 		else if (!strcmp(ext, "wal"))
 		{
-			image = Vk_LoadWal (name, type);
+			image = (image_t *)LoadWal(namewe, type, (load_image_t)Vk_LoadPic);
 		}
 		else if (!strcmp(ext, "m8"))
 		{
