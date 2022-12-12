@@ -1256,10 +1256,10 @@ Vk_LoadHiColorImage(char *name, const char* namewe, const char *ext, imagetype_t
 			}
 
 			image = Vk_LoadPic(name, pic,
-					   width, realwidth,
-					   height, realheight,
-					   width * height,
-					   type, 32);
+				width, realwidth,
+				height, realheight,
+				width * height,
+				type, 32);
 		}
 	}
 
