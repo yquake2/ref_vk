@@ -1218,76 +1218,6 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	return image;
 }
 
-static image_t*
-Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
-{
-	image_t	*image = NULL;
-
-	// with retexturing
-	if (r_retexturing->value)
-	{
-		image = (image_t *)LoadHiColorImage(name, namewe, ext, type,
-			(loadimage_t)Vk_LoadPic);
-	}
-
-	if (!image)
-	{
-		byte	*pic;
-		int	width, height;
-
-		//
-		// load the pic from disk
-		//
-		pic = NULL;
-		if (!strcmp(ext, "pcx"))
-		{
-			byte	*palette;
-			palette = NULL;
-
-			LoadPCX (name, &pic, &palette, &width, &height);
-			if (!pic)
-				return NULL;
-			image = Vk_LoadPic(name, pic,
-					   width, width,
-					   height, height,
-					   width * height,
-					   type, 8);
-
-			if (palette)
-				free(palette);
-		}
-		else if (!strcmp(ext, "wal"))
-		{
-			image = (image_t *)LoadWal(namewe, type, (loadimage_t)Vk_LoadPic);
-		}
-		else if (!strcmp(ext, "m8"))
-		{
-			image = (image_t *)LoadM8(namewe, type, (loadimage_t)Vk_LoadPic);
-		}
-		else if (!strcmp(ext, "m32"))
-		{
-			image = (image_t *)LoadM32(namewe, type, (loadimage_t)Vk_LoadPic);
-		}
-		else if (!strcmp(ext, "tga"))
-		{
-			if (!LoadSTB (namewe, "tga", &pic, &width, &height))
-				return NULL;
-			if (!pic)
-				return NULL;
-			image = Vk_LoadPic(name, pic,
-					   width, width,
-					   height, height,
-					   width * height,
-					   type, 32);
-		}
-
-		if (pic)
-			free(pic);
-	}
-
-	return image;
-}
-
 /*
 ===============
 Vk_FindImage
@@ -1344,7 +1274,8 @@ image_t	*Vk_FindImage (char *name, imagetype_t type)
 	//
 	// load the pic from disk
 	//
-	image = Vk_LoadImage(name, namewe, ext, type);
+	image = (image_t *)LoadImage(name, namewe, ext, type,
+		r_retexturing->value, (loadimage_t)Vk_LoadPic);
 
 	if (!image && r_validation->value > 0)
 	{
