@@ -1218,73 +1218,6 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	return image;
 }
 
-static image_t *
-Vk_LoadM8(const char *origname, imagetype_t type)
-{
-	m8tex_t *mt;
-	int width, height, ofs, size;
-	image_t *image;
-	char name[256];
-	unsigned char *image_buffer = NULL;
-
-	FixFileExt(origname, "m8", name, sizeof(name));
-
-	size = ri.FS_LoadFile(name, (void **)&mt);
-
-	if (!mt)
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s\n", __func__, name);
-		return r_notexture;
-	}
-
-	if (size < sizeof(m8tex_t))
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s, small header\n", __func__, name);
-		ri.FS_FreeFile((void *)mt);
-		return r_notexture;
-	}
-
-	if (LittleLong (mt->version) != M8_VERSION)
-	{
-		R_Printf(PRINT_ALL, "LoadWal: can't load %s, wrong magic value.\n", name);
-		ri.FS_FreeFile ((void *)mt);
-		return r_notexture;
-	}
-
-	width = LittleLong(mt->width[0]);
-	height = LittleLong(mt->height[0]);
-	ofs = LittleLong(mt->offsets[0]);
-
-	if ((ofs <= 0) || (width <= 0) || (height <= 0) ||
-	    (((size - ofs) / height) < width))
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s, small body\n", __func__, name);
-		ri.FS_FreeFile((void *)mt);
-		return r_notexture;
-	}
-
-	image_buffer = malloc (width * height * 4);
-	for(int i=0; i<width * height; i++)
-	{
-		unsigned char value = *((byte *)mt + ofs + i);
-		image_buffer[i * 4 + 0] = mt->palette[value].r;
-		image_buffer[i * 4 + 1] = mt->palette[value].g;
-		image_buffer[i * 4 + 2] = mt->palette[value].b;
-		image_buffer[i * 4 + 3] = value == 255 ? 0 : 255;
-	}
-
-	image = Vk_LoadPic(name, image_buffer,
-		width, width,
-		height, height,
-		width * height,
-		type, 32);
-	free(image_buffer);
-
-	ri.FS_FreeFile((void *)mt);
-
-	return image;
-}
-
 static image_t*
 Vk_LoadHiColorImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 {
@@ -1377,11 +1310,11 @@ Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
 		}
 		else if (!strcmp(ext, "wal"))
 		{
-			image = (image_t *)LoadWal(namewe, type, (load_image_t)Vk_LoadPic);
+			image = (image_t *)LoadWal(namewe, type, (loadimage_t)Vk_LoadPic);
 		}
 		else if (!strcmp(ext, "m8"))
 		{
-			image = Vk_LoadM8 (name, type);
+			image = (image_t *)LoadM8(namewe, type, (loadimage_t)Vk_LoadPic);
 		}
 		else if (!strcmp(ext, "tga"))
 		{
