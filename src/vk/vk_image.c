@@ -1220,13 +1220,13 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 
 /*
 ===============
-Vk_FindImageUnsafe
+Vk_FindImage
 
 Finds or loads the given image or NULL
 ===============
 */
 image_t	*
-Vk_FindImageUnsafe (const char *name, imagetype_t type)
+Vk_FindImage (const char *name, imagetype_t type)
 {
 	image_t	*image;
 	int	i, len;
@@ -1277,23 +1277,6 @@ Vk_FindImageUnsafe (const char *name, imagetype_t type)
 	//
 	image = (image_t *)LoadImage(name, namewe, ext, type,
 		r_retexturing->value, (loadimage_t)Vk_LoadPic);
-
-	return image;
-}
-
-/*
-===============
-Vk_FindImage
-
-Finds or loads the given image or no texture.
-===============
-*/
-image_t	*
-Vk_FindImage (const char *name, imagetype_t type)
-{
-	image_t	*image;
-
-	image = Vk_FindImageUnsafe (name, type);
 
 	if (!image && r_validation->value > 0)
 	{

@@ -703,7 +703,7 @@ void RE_SetSky_s (const char *name, float rotate, const vec3_t axis)
 		image_t	*image;
 
 		image = (image_t *)GetSkyImage(skyname, suf[i],
-			r_palettedtexture->value, (findimage_t)Vk_FindImageUnsafe);
+			r_palettedtexture->value, (findimage_t)Vk_FindImage);
 
 		if (!image)
 		{
