@@ -95,5 +95,7 @@ extern void *Mod_LoadSP2 (const char *mod_name, const void *buffer, int modfilel
 	struct image_s **skins, findimage_t find_image, modtype_t *type);
 extern int Mod_ReLoadSkins(struct image_s **skins, findimage_t find_image,
 	void *extradata, modtype_t type);
+extern struct image_s *GetSkyImage(const char *skyname, const char* surfname,
+	qboolean palettedtexture, findimage_t find_image);
 
 #endif /* SRC_CLIENT_REFRESH_REF_SHARED_H_ */

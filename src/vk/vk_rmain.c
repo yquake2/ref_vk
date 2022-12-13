@@ -94,7 +94,7 @@ cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 cvar_t	*vk_overbrightbits;
 cvar_t	*r_validation;
 cvar_t	*vk_picmip;
-cvar_t	*vk_skymip;
+cvar_t	*r_palettedtexture;
 cvar_t	*vk_flashblend;
 cvar_t	*vk_finish;
 #if defined(__APPLE__)
@@ -1176,7 +1176,7 @@ R_Register( void )
 	vk_overbrightbits = ri.Cvar_Get("vk_overbrightbits", "1.0", CVAR_ARCHIVE);
 	r_validation = ri.Cvar_Get("r_validation", "0", CVAR_ARCHIVE);
 	vk_picmip = ri.Cvar_Get("vk_picmip", "0", 0);
-	vk_skymip = ri.Cvar_Get("vk_skymip", "0", 0);
+	r_palettedtexture = ri.Cvar_Get("r_palettedtexture", "0", 0);
 	vk_flashblend = ri.Cvar_Get("vk_flashblend", "0", 0);
 	vk_finish = ri.Cvar_Get("vk_finish", "0", CVAR_ARCHIVE);
 	r_clear = ri.Cvar_Get("r_clear", "0", CVAR_ARCHIVE);
