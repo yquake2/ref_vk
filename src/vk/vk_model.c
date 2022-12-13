@@ -415,7 +415,8 @@ Mod_LoadTexinfo (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 		image = GetTexImage(in->texture, (findimage_t)Vk_FindImageUnsafe);
 		if (!image)
 		{
-			R_Printf(PRINT_ALL, "Couldn't load %s\n", in->texture);
+			R_Printf(PRINT_ALL, "%s: Couldn't load %s\n",
+				__func__, in->texture);
 			image = r_notexture;
 		}
 
@@ -1100,7 +1101,7 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 		{
 			mod->extradata = Mod_LoadMD2(mod->name, buf, modfilelen,
 				mod->mins, mod->maxs,
-				(struct image_s **)mod->skins, (findimage_t)Vk_FindImage,
+				(struct image_s **)mod->skins, (findimage_t)Vk_FindImageUnsafe,
 				&(mod->type));
 			if (!mod->extradata)
 			{
@@ -1113,7 +1114,7 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 	case IDSPRITEHEADER:
 		{
 			mod->extradata = Mod_LoadSP2(mod->name, buf, modfilelen,
-				(struct image_s **)mod->skins, (findimage_t)Vk_FindImage,
+				(struct image_s **)mod->skins, (findimage_t)Vk_FindImageUnsafe,
 				&(mod->type));
 			if (!mod->extradata)
 			{
