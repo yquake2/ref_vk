@@ -31,7 +31,7 @@ Draw_InitLocal
 */
 void Draw_InitLocal (void)
 {
-	draw_chars = Vk_FindImage("pics/conchars.pcx", it_pic);
+	draw_chars = FindPic ("conchars", (findimage_t)Vk_FindImageUnsafe);
 	if (!draw_chars)
 	{
 		ri.Sys_Error(ERR_FATAL, "%s: Couldn't load pics/conchars.pcx", __func__);
@@ -85,19 +85,7 @@ RE_Draw_FindPic
 */
 image_t	*RE_Draw_FindPic (char *name)
 {
-	image_t *vk;
-
-	if (name[0] != '/' && name[0] != '\\')
-	{
-		char	fullname[MAX_QPATH];
-
-		Com_sprintf(fullname, sizeof(fullname), "pics/%s.pcx", name);
-		vk = Vk_FindImage(fullname, it_pic);
-	}
-	else
-		vk = Vk_FindImage(name + 1, it_pic);
-
-	return vk;
+	return FindPic(name, (findimage_t)Vk_FindImageUnsafe);
 }
 
 /*
@@ -107,17 +95,17 @@ RE_Draw_GetPicSize
 */
 void RE_Draw_GetPicSize (int *w, int *h, char *name)
 {
-	image_t *vk;
+	image_t *image;
 
-	vk = RE_Draw_FindPic(name);
-	if (!vk)
+	image = FindPic(name, (findimage_t)Vk_FindImageUnsafe);
+	if (!image)
 	{
 		*w = *h = -1;
 		return;
 	}
 
-	*w = vk->width;
-	*h = vk->height;
+	*w = image->width;
+	*h = image->height;
 }
 
 /*
@@ -132,7 +120,7 @@ void RE_Draw_StretchPic (int x, int y, int w, int h, char *name)
 	if (!vk_frameStarted)
 		return;
 
-	vk = RE_Draw_FindPic(name);
+	vk = FindPic(name, (findimage_t)Vk_FindImageUnsafe);
 	if (!vk)
 	{
 		R_Printf(PRINT_ALL, "%s(): Can't find pic: %s\n", __func__, name);
@@ -155,7 +143,7 @@ void RE_Draw_PicScaled (int x, int y, char *name, float scale)
 {
 	image_t *vk;
 
-	vk = RE_Draw_FindPic(name);
+	vk = FindPic(name, (findimage_t)Vk_FindImageUnsafe);
 	if (!vk)
 	{
 		R_Printf(PRINT_ALL, "%s(): Can't find pic: %s\n", __func__, name);
@@ -180,7 +168,7 @@ void RE_Draw_TileClear (int x, int y, int w, int h, char *name)
 	if (!vk_frameStarted)
 		return;
 
-	image = RE_Draw_FindPic(name);
+	image = FindPic(name, (findimage_t)Vk_FindImageUnsafe);
 	if (!image)
 	{
 		R_Printf(PRINT_ALL, "%s(): Can't find pic: %s\n", __func__, name);
