@@ -467,7 +467,7 @@ memory_create_by_property(VkMemoryRequirements* mem_reqs,
 	VkMemoryPropertyFlags host_visible;
 	uint32_t memory_index;
 
-	if (r_validation->value)
+	if (r_validation->value > 0)
 	{
 		R_Printf(PRINT_ALL, "Asked about memory properties with:\n");
 		memory_type_print(mem_properties);
@@ -487,7 +487,7 @@ memory_create_by_property(VkMemoryRequirements* mem_reqs,
 			__func__, __LINE__);
 		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 	}
-	else if (r_validation->value)
+	else if (r_validation->value > 0)
 	{
 		R_Printf(PRINT_ALL, "%s:%d: Selected %d memory properties with:\n",
 			__func__, __LINE__, memory_index);

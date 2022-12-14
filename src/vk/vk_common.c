@@ -1749,7 +1749,7 @@ qboolean QVk_Init(void)
 	}
 
 	// add space for validation layer
-	if (r_validation->value)
+	if (r_validation->value > 0)
 		extCount++;
 
 #if defined(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) && defined(__APPLE__)
@@ -1766,7 +1766,7 @@ qboolean QVk_Init(void)
 	}
 
 	// restore extensions count
-	if (r_validation->value)
+	if (r_validation->value > 0)
 	{
 		extCount++;
 		wantedExtensions[extCount - 1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
@@ -1855,7 +1855,7 @@ qboolean QVk_Init(void)
 	const char *validationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
 #endif
 
-	if (r_validation->value)
+	if (r_validation->value > 0)
 	{
 		createInfo.enabledLayerCount = sizeof(validationLayers) / sizeof(validationLayers[0]);
 		createInfo.ppEnabledLayerNames = validationLayers;
@@ -1867,7 +1867,7 @@ qboolean QVk_Init(void)
 
 	VkResult res = vkCreateInstance(&createInfo, NULL, &vk_instance);
 
-	if (res == VK_ERROR_LAYER_NOT_PRESENT && r_validation->value) {
+	if (res == VK_ERROR_LAYER_NOT_PRESENT && r_validation->value > 0) {
 		// we give a "last try" if the validation layer fails
 		// before falling back to a GL renderer
 		createInfo.enabledLayerCount = 0;
@@ -1889,7 +1889,7 @@ qboolean QVk_Init(void)
 
 	volkLoadInstance(vk_instance);
 	R_Printf(PRINT_ALL, "...created Vulkan instance\n");
-	if (r_validation->value)
+	if (r_validation->value > 0)
 	{
 		// initialize function pointers
 		qvkCreateDebugUtilsMessengerEXT  = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vk_instance, "vkCreateDebugUtilsMessengerEXT");
@@ -1911,7 +1911,7 @@ qboolean QVk_Init(void)
 		qvkInsertDebugUtilsLabelEXT = NULL;
 	}
 
-	if (r_validation->value)
+	if (r_validation->value > 0)
 		QVk_CreateValidationLayers();
 
 	if (!Vkimp_CreateSurface(vk_window))
@@ -1927,7 +1927,7 @@ qboolean QVk_Init(void)
 	}
 	QVk_DebugSetObjectName((uintptr_t)vk_device.physical, VK_OBJECT_TYPE_PHYSICAL_DEVICE, va("Physical Device: %s", vk_config.vendor_name));
 
-	if (r_validation->value)
+	if (r_validation->value > 0)
 		vulkan_memory_types_show();
 
 	// setup swapchain
