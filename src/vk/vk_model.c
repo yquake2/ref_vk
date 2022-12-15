@@ -380,7 +380,6 @@ Mod_LoadTexinfo (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 	texinfo_t *in;
 	mtexinfo_t *out, *step;
 	int 	i, j, count;
-	char	name[MAX_QPATH];
 
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -397,6 +396,7 @@ Mod_LoadTexinfo (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 
 	for ( i=0 ; i<count ; i++, in++, out++)
 	{
+		image_t	*image;
 		int	next;
 
 		for (j=0 ; j<4 ; j++)
@@ -410,21 +410,17 @@ Mod_LoadTexinfo (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 		if (next > 0)
 			out->next = loadmodel->texinfo + next;
 		else
-		    out->next = NULL;
-		Com_sprintf (name, sizeof(name), "textures/%s.wal", in->texture);
+			out->next = NULL;
 
-		out->image = Vk_FindImage (name, it_wall);
-		if (!out->image || out->image == r_notexture)
+		image = GetTexImage(in->texture, (findimage_t)Vk_FindImage);
+		if (!image)
 		{
-			Com_sprintf (name, sizeof(name), "textures/%s.m8", in->texture);
-			out->image = Vk_FindImage (name, it_wall);
+			R_Printf(PRINT_ALL, "%s: Couldn't load %s\n",
+				__func__, in->texture);
+			image = r_notexture;
 		}
 
-		if (!out->image)
-		{
-			R_Printf(PRINT_ALL, "Couldn't load %s\n", name);
-			out->image = r_notexture;
-		}
+		out->image = image;
 	}
 
 	// count animation frames

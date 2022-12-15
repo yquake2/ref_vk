@@ -1218,231 +1218,6 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	return image;
 }
 
-
-/*
-================
-Vk_LoadWal
-================
-*/
-static image_t *Vk_LoadWal (char *name, imagetype_t type)
-{
-	miptex_t	*mt;
-	int			width, height, ofs;
-	image_t		*image;
-
-	ri.FS_LoadFile (name, (void **)&mt);
-	if (!mt)
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s\n", __func__, name);
-		return r_notexture;
-	}
-
-	width = LittleLong (mt->width);
-	height = LittleLong (mt->height);
-	ofs = LittleLong (mt->offsets[0]);
-
-	image = Vk_LoadPic(name, (byte *)mt + ofs,
-			   width, width,
-			   height, height,
-			   height * width,
-			   type, 8);
-
-	ri.FS_FreeFile ((void *)mt);
-
-	return image;
-}
-
-static image_t *
-Vk_LoadM8(char *origname, imagetype_t type)
-{
-	m8tex_t *mt;
-	int width, height, ofs, size;
-	image_t *image;
-	char name[256];
-	unsigned char *image_buffer = NULL;
-
-	Q_strlcpy(name, origname, sizeof(name));
-
-	/* Add the extension */
-	if (strcmp(COM_FileExtension(name), "m8"))
-	{
-		Q_strlcat(name, ".m8", sizeof(name));
-	}
-
-	size = ri.FS_LoadFile(name, (void **)&mt);
-
-	if (!mt)
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s\n", __func__, name);
-		return r_notexture;
-	}
-
-	if (size < sizeof(m8tex_t))
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s, small header\n", __func__, name);
-		ri.FS_FreeFile((void *)mt);
-		return r_notexture;
-	}
-
-	if (LittleLong (mt->version) != M8_VERSION)
-	{
-		R_Printf(PRINT_ALL, "LoadWal: can't load %s, wrong magic value.\n", name);
-		ri.FS_FreeFile ((void *)mt);
-		return r_notexture;
-	}
-
-	width = LittleLong(mt->width[0]);
-	height = LittleLong(mt->height[0]);
-	ofs = LittleLong(mt->offsets[0]);
-
-	if ((ofs <= 0) || (width <= 0) || (height <= 0) ||
-	    (((size - ofs) / height) < width))
-	{
-		R_Printf(PRINT_ALL, "%s: can't load %s, small body\n", __func__, name);
-		ri.FS_FreeFile((void *)mt);
-		return r_notexture;
-	}
-
-	image_buffer = malloc (width * height * 4);
-	for(int i=0; i<width * height; i++)
-	{
-		unsigned char value = *((byte *)mt + ofs + i);
-		image_buffer[i * 4 + 0] = mt->palette[value].r;
-		image_buffer[i * 4 + 1] = mt->palette[value].g;
-		image_buffer[i * 4 + 2] = mt->palette[value].b;
-		image_buffer[i * 4 + 3] = value == 255 ? 0 : 255;
-	}
-
-	image = Vk_LoadPic(name, image_buffer,
-		width, width,
-		height, height,
-		width * height,
-		type, 32);
-	free(image_buffer);
-
-	ri.FS_FreeFile((void *)mt);
-
-	return image;
-}
-
-static image_t*
-Vk_LoadHiColorImage(char *name, const char* namewe, const char *ext, imagetype_t type)
-{
-	image_t	*image = NULL;
-	byte *pic = NULL;
-	int realwidth = 0, realheight = 0;
-	int width = 0, height = 0;
-
-	if (strcmp(ext, "pcx") == 0)
-	{
-		/* Get size of the original texture */
-		GetPCXInfo(name, &realwidth, &realheight);
-	}
-	else if (strcmp(ext, "wal") == 0)
-	{
-		/* Get size of the original texture */
-		GetWalInfo(name, &realwidth, &realheight);
-	}
-	else if (strcmp(ext, "m8") == 0)
-	{
-		/* Get size of the original texture */
-		GetM8Info(name, &realwidth, &realheight);
-	}
-
-	/* try to load a tga, png or jpg (in that order/priority) */
-	if (  LoadSTB(namewe, "tga", &pic, &width, &height)
-	   || LoadSTB(namewe, "png", &pic, &width, &height)
-	   || LoadSTB(namewe, "jpg", &pic, &width, &height) )
-	{
-		if (width >= realwidth && height >= realheight)
-		{
-			if (realheight == 0 || realwidth == 0)
-			{
-				realheight = height;
-				realwidth = width;
-			}
-
-			image = Vk_LoadPic(name, pic,
-					   width, realwidth,
-					   height, realheight,
-					   width * height,
-					   type, 32);
-		}
-	}
-
-	if (pic)
-	{
-		free(pic);
-	}
-
-	return image;
-}
-
-static image_t*
-Vk_LoadImage(char *name, const char* namewe, const char *ext, imagetype_t type)
-{
-	image_t	*image = NULL;
-
-	// with retexturing
-	if (r_retexturing->value)
-	{
-		image = Vk_LoadHiColorImage(name, namewe, ext, type);
-	}
-
-	if (!image)
-	{
-		byte	*pic;
-		int	width, height;
-
-		//
-		// load the pic from disk
-		//
-		pic = NULL;
-		if (!strcmp(ext, "pcx"))
-		{
-			byte	*palette;
-			palette = NULL;
-
-			LoadPCX (name, &pic, &palette, &width, &height);
-			if (!pic)
-				return NULL;
-			image = Vk_LoadPic(name, pic,
-					   width, width,
-					   height, height,
-					   width * height,
-					   type, 8);
-
-			if (palette)
-				free(palette);
-		}
-		else if (!strcmp(ext, "wal"))
-		{
-			image = Vk_LoadWal (name, type);
-		}
-		else if (!strcmp(ext, "m8"))
-		{
-			image = Vk_LoadM8 (name, type);
-		}
-		else if (!strcmp(ext, "tga"))
-		{
-			if (!LoadSTB (namewe, "tga", &pic, &width, &height))
-				return NULL;
-			if (!pic)
-				return NULL;
-			image = Vk_LoadPic(name, pic,
-					   width, width,
-					   height, height,
-					   width * height,
-					   type, 32);
-		}
-
-		if (pic)
-			free(pic);
-	}
-
-	return image;
-}
-
 /*
 ===============
 Vk_FindImage
@@ -1450,7 +1225,8 @@ Vk_FindImage
 Finds or loads the given image or NULL
 ===============
 */
-image_t	*Vk_FindImage (char *name, imagetype_t type)
+image_t	*
+Vk_FindImage (const char *name, imagetype_t type)
 {
 	image_t	*image;
 	int	i, len;
@@ -1499,7 +1275,8 @@ image_t	*Vk_FindImage (char *name, imagetype_t type)
 	//
 	// load the pic from disk
 	//
-	image = Vk_LoadImage(name, namewe, ext, type);
+	image = (image_t *)R_LoadImage(name, namewe, ext, type,
+		r_retexturing->value, (loadimage_t)Vk_LoadPic);
 
 	if (!image && r_validation->value > 0)
 	{
@@ -1598,46 +1375,6 @@ void Vk_FreeUnusedImages (void)
 	vulkan_memory_free_unused();
 }
 
-
-/*
-===============
-Draw_GetPalette
-===============
-*/
-static int Draw_GetPalette (void)
-{
-	int		i;
-	byte	*pic, *pal;
-	int		width, height;
-
-	// get the palette
-
-	LoadPCX ("pics/colormap.pcx", &pic, &pal, &width, &height);
-	if (!pal)
-		ri.Sys_Error (ERR_FATAL, "Couldn't load pics/colormap.pcx");
-
-	for (i=0 ; i<256 ; i++)
-	{
-		unsigned	v;
-		int	r, g, b;
-
-		r = pal[i*3+0];
-		g = pal[i*3+1];
-		b = pal[i*3+2];
-
-		v = (255u<<24) + (r<<0) + (g<<8) + (b<<16);
-		d_8to24table[i] = LittleLong(v);
-	}
-
-	d_8to24table[255] &= LittleLong(0xffffff);	// 255 is transparent
-
-	free (pic);
-	free (pal);
-
-	return 0;
-}
-
-
 /*
 ===============
 Vk_InitImages
@@ -1647,6 +1384,7 @@ void	Vk_InitImages (void)
 {
 	int	i;
 	float	overbright;
+	byte	*colormap;
 
 	numvktextures = 0;
 	img_loaded = 0;
@@ -1671,7 +1409,8 @@ void	Vk_InitImages (void)
 		intensitytable[i] = j;
 	}
 
-	Draw_GetPalette();
+	GetPCXPalette (&colormap, d_8to24table);
+	free(colormap);
 
 	overbright = vk_overbrightbits->value;
 

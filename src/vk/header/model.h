@@ -41,10 +41,6 @@ BRUSH MODELS
 //
 // in memory representation
 //
-typedef struct
-{
-	vec3_t		position;
-} mvertex_t;
 
 
 #define	SIDE_FRONT	0
@@ -57,21 +53,6 @@ typedef struct
 #define	SURF_DRAWTURB		0x10
 #define	SURF_DRAWBACKGROUND	0x40
 #define	SURF_UNDERWATER		0x80
-
-typedef struct
-{
-	unsigned short	v[2];
-	unsigned int	cachededgeoffset;
-} medge_t;
-
-typedef struct mtexinfo_s
-{
-	float		vecs[2][4];
-	int			flags;
-	int			numframes;
-	struct mtexinfo_s	*next;		// animation chain
-	image_t		*image;
-} mtexinfo_t;
 
 #define	VERTEXSIZE	7
 

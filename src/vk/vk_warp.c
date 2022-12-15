@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // vk_warp.c -- sky and water polygons
 #include "header/local.h"
 
-static char	skyname[MAX_QPATH];
 static float	skyrotate;
 static vec3_t	skyaxis;
 static image_t	*sky_images[6];
@@ -683,7 +682,6 @@ void R_DrawSkyBox (void)
 	}
 }
 
-
 /*
 ============
 RE_SetSky_s
@@ -693,8 +691,8 @@ RE_SetSky_s
 static char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 void RE_SetSky_s (const char *name, float rotate, const vec3_t axis)
 {
+	char	skyname[MAX_QPATH];
 	int		i;
-	char	pathname[MAX_QPATH];
 
 	strncpy(skyname, name, sizeof(skyname) - 1);
 	skyrotate = rotate;
@@ -702,31 +700,21 @@ void RE_SetSky_s (const char *name, float rotate, const vec3_t axis)
 
 	for (i = 0; i<6; i++)
 	{
-		// chop down rotating skies for less memory
-		if (vk_skymip->value || skyrotate)
-			vk_picmip->value++;
+		image_t	*image;
 
-		Com_sprintf(pathname, sizeof(pathname), "env/%s%s.tga", skyname, suf[i]);
+		image = (image_t *)GetSkyImage(skyname, suf[i],
+			r_palettedtexture->value, (findimage_t)Vk_FindImage);
 
-		sky_images[i] = Vk_FindImage(pathname, it_sky);
-		if (!sky_images[i]) {
-			Com_sprintf(pathname, sizeof(pathname), "pics/Skies/%s%s.m8", skyname, suf[i]);
-			sky_images[i] = Vk_FindImage(pathname, it_sky);
-		}
-
-		if (!sky_images[i])
-			sky_images[i] = r_notexture;
-
-		if (vk_skymip->value || skyrotate)
-		{	// take less memory
-			vk_picmip->value--;
-			sky_min = 1.0 / 256;
-			sky_max = 255.0 / 256;
-		}
-		else
+		if (!image)
 		{
-			sky_min = 1.0 / 512;
-			sky_max = 511.0 / 512;
+			R_Printf(PRINT_ALL, "%s: can't load %s:%s sky\n",
+				__func__, skyname, suf[i]);
+			image = r_notexture;
 		}
+
+		sky_images[i] = image;
 	}
+
+	sky_min = 1.0 / 512;
+	sky_max = 511.0 / 512;
 }
