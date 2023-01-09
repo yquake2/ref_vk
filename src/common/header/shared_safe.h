@@ -42,6 +42,6 @@ float FloatNoSwap(float f);
 /*
  * TODO: Sync with yquake
  */
-qboolean File_Filtered(const char *name, const char *filter);
+qboolean File_Filtered(const char *name, const char *filter, char sepator);
 
 #endif // COMMON_SHARED_SAFE_H

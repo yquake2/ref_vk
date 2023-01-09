@@ -1484,10 +1484,10 @@ File_Filtered_Line(const char *name, const char *filter)
 
 /*
  * name: file name
- * filter: file names separated by space, and '!' for skip file
+ * filter: file names separated by sepator, and '!' for skip file
  */
 qboolean
-File_Filtered(const char *name, const char *filter)
+File_Filtered(const char *name, const char *filter, char sepator)
 {
 	const char *current_filter = filter;
 
@@ -1496,7 +1496,7 @@ File_Filtered(const char *name, const char *filter)
 		char line_filter[MAX_QPATH];
 		const char *str_end;
 
-		str_end = strchr(current_filter, ' ');
+		str_end = strchr(current_filter, sepator);
 		// its end of filter
 		if (!str_end)
 		{
