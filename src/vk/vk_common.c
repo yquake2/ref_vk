@@ -165,6 +165,8 @@ PFN_vkSetDebugUtilsObjectTagEXT qvkSetDebugUtilsObjectTagEXT;
 PFN_vkCmdBeginDebugUtilsLabelEXT qvkCmdBeginDebugUtilsLabelEXT;
 PFN_vkCmdEndDebugUtilsLabelEXT qvkCmdEndDebugUtilsLabelEXT;
 PFN_vkCmdInsertDebugUtilsLabelEXT qvkInsertDebugUtilsLabelEXT;
+PFN_vkCreateDebugReportCallbackEXT qvkCreateDebugReportCallbackEXT;
+PFN_vkDestroyDebugReportCallbackEXT qvkDestroyDebugReportCallbackEXT;
 
 #define VK_INPUTBIND_DESC(s) { \
 	.binding = 0, \
@@ -1899,6 +1901,8 @@ qboolean QVk_Init(void)
 		qvkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(vk_instance, "vkCmdBeginDebugUtilsLabelEXT");
 		qvkCmdEndDebugUtilsLabelEXT   = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vk_instance, "vkCmdEndDebugUtilsLabelEXT");
 		qvkInsertDebugUtilsLabelEXT   = (PFN_vkCmdInsertDebugUtilsLabelEXT)vkGetInstanceProcAddr(vk_instance, "vkCmdInsertDebugUtilsLabelEXT");
+		qvkCreateDebugReportCallbackEXT  = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(vk_instance, "vkCreateDebugReportCallbackEXT");
+		qvkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(vk_instance, "vkDestroyDebugReportCallbackEXT");
 	}
 	else
 	{
@@ -1909,6 +1913,8 @@ qboolean QVk_Init(void)
 		qvkCmdBeginDebugUtilsLabelEXT = NULL;
 		qvkCmdEndDebugUtilsLabelEXT = NULL;
 		qvkInsertDebugUtilsLabelEXT = NULL;
+		qvkCreateDebugReportCallbackEXT = NULL;
+		qvkDestroyDebugReportCallbackEXT = NULL;
 	}
 
 	if (r_validation->value > 0)

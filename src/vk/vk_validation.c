@@ -61,6 +61,36 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(VkDebugUtilsMessageSeve
 	return VK_FALSE;
 }
 
+static VkDebugReportCallbackEXT validationLayerCallback = VK_NULL_HANDLE;
+
+// validation layer callback function (VK_EXT_debug_report)
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackReport(VkDebugReportFlagsEXT flags,
+                                                          VkDebugReportObjectTypeEXT objType,
+                                                          uint64_t obj, size_t location, int32_t code,
+                                                          const char *layerPrefix, const char *msg,
+                                                          void* userData)
+{
+    switch (flags)
+    {
+	case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
+		R_Printf(PRINT_ALL, "VK_INFO: %s %s\n", layerPrefix, msg);
+        break;
+	case VK_DEBUG_REPORT_DEBUG_BIT_EXT:
+		R_Printf(PRINT_ALL, "VK_DEBUG: %s %s\n", layerPrefix, msg);
+        break;
+	case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
+		R_Printf(PRINT_ALL, "VK_PERFORMANCE: %s %s\n", layerPrefix, msg);
+        break;
+	case VK_DEBUG_REPORT_WARNING_BIT_EXT:
+		R_Printf(PRINT_ALL, "VK_WARNING: %s %s\n", layerPrefix, msg);
+        break;
+        default:
+		R_Printf(PRINT_ALL, "VK_ERROR: %s %s\n", layerPrefix, msg);
+        break;
+    }
+    return VK_FALSE;
+}
+
 void QVk_CreateValidationLayers()
 {
 	VkDebugUtilsMessengerCreateInfoEXT callbackInfo = {
@@ -76,6 +106,16 @@ void QVk_CreateValidationLayers()
 		.pUserData = NULL
 	};
 
+	VkDebugReportCallbackCreateInfoEXT callbackReport = {
+		.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
+		.pNext = NULL,
+		.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
+			VK_DEBUG_REPORT_DEBUG_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT |
+			VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
+		.pfnCallback = debugCallbackReport,
+		.pUserData = NULL
+	};
+
 	if (r_validation->value > 1)
 	{
 		callbackInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
@@ -85,6 +125,11 @@ void QVk_CreateValidationLayers()
 	if (qvkCreateDebugUtilsMessengerEXT)
 	{
 		VK_VERIFY(qvkCreateDebugUtilsMessengerEXT(vk_instance, &callbackInfo, NULL, &validationMessenger));
+	}
+
+	if (qvkCreateDebugReportCallbackEXT)
+	{
+		VK_VERIFY(qvkCreateDebugReportCallbackEXT(vk_instance, &callbackReport, NULL, &validationLayerCallback));
 		R_Printf(PRINT_ALL, "...Vulkan validation layers enabled\n");
 	}
 }
@@ -95,5 +140,11 @@ void QVk_DestroyValidationLayers()
 	{
 		qvkDestroyDebugUtilsMessengerEXT( vk_instance, validationMessenger, NULL );
 		validationMessenger = VK_NULL_HANDLE;
+	}
+
+	if ( validationLayerCallback != VK_NULL_HANDLE && qvkDestroyDebugReportCallbackEXT)
+	{
+		qvkDestroyDebugReportCallbackEXT( vk_instance, validationLayerCallback, NULL );
+		validationLayerCallback = VK_NULL_HANDLE;
 	}
 }
