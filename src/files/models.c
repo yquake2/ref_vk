@@ -292,6 +292,144 @@ Mod_ReLoadSkins(struct image_s **skins, findimage_t find_image, void *extradata,
 			skins[i] = find_image ((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME, it_skin);
 		return  pheader->num_frames;
 	}
-	// Unknow format, no images associated with it
+	/* Unknow format, no images associated with it */
 	return 0;
+}
+
+/*
+=================
+Mod_SetParent
+=================
+*/
+static void
+Mod_SetParent(mnode_t *node, mnode_t *parent)
+{
+	node->parent = parent;
+	if (node->contents != CONTENTS_NODE)
+	{
+		return;
+	}
+
+	Mod_SetParent (node->children[0], node);
+	Mod_SetParent (node->children[1], node);
+}
+
+/*
+=================
+Mod_NumberLeafs
+=================
+*/
+static void
+Mod_NumberLeafs(mleaf_t *leafs, mnode_t *node, int *r_leaftovis, int *r_vistoleaf,
+	int *numvisleafs)
+{
+	if (node->contents != CONTENTS_NODE)
+	{
+		mleaf_t *leaf;
+		int leafnum;
+
+		leaf = (mleaf_t *)node;
+		leafnum = leaf - leafs;
+		if (leaf->contents & CONTENTS_SOLID)
+		{
+			return;
+		}
+
+		r_leaftovis[leafnum] = *numvisleafs;
+		r_vistoleaf[*numvisleafs] = leafnum;
+		(*numvisleafs) ++;
+		return;
+	}
+
+	Mod_NumberLeafs(leafs, node->children[0], r_leaftovis, r_vistoleaf,
+		numvisleafs);
+	Mod_NumberLeafs(leafs, node->children[1], r_leaftovis, r_vistoleaf,
+		numvisleafs);
+}
+
+/*
+=================
+Mod_LoadNodes
+=================
+*/
+void
+Mod_LoadNodes(const char *name, cplane_t *planes, int numplanes, mleaf_t *leafs,
+	int numleafs, mnode_t **nodes, int *numnodes, const byte *mod_base,
+	const lump_t *l)
+{
+	int	r_leaftovis[MAX_MAP_LEAFS], r_vistoleaf[MAX_MAP_LEAFS];
+	int	i, count, numvisleafs;
+	dnode_t	*in;
+	mnode_t	*out;
+
+	in = (void *)(mod_base + l->fileofs);
+
+	if (l->filelen % sizeof(*in))
+	{
+		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
+				__func__, name);
+	}
+
+	count = l->filelen / sizeof(*in);
+	out = Hunk_Alloc(count * sizeof(*out));
+
+	*nodes = out;
+	*numnodes = count;
+
+	for (i = 0; i < count; i++, in++, out++)
+	{
+		int j, planenum;
+
+		for (j = 0; j < 3; j++)
+		{
+			out->minmaxs[j] = LittleShort(in->mins[j]);
+			out->minmaxs[3 + j] = LittleShort(in->maxs[j]);
+		}
+
+		planenum = LittleLong(in->planenum);
+		if (planenum  < 0 || planenum >= numplanes)
+		{
+			ri.Sys_Error(ERR_DROP, "%s: Incorrect %d < %d planenum.",
+					__func__, planenum, numplanes);
+		}
+		out->plane = planes + planenum;
+
+		out->firstsurface = LittleShort(in->firstface);
+		out->numsurfaces = LittleShort(in->numfaces);
+		out->contents = CONTENTS_NODE; /* differentiate from leafs */
+
+		for (j = 0; j < 2; j++)
+		{
+			int leafnum;
+
+			leafnum = LittleLong(in->children[j]);
+
+			if (leafnum >= 0)
+			{
+				if (leafnum  < 0 || leafnum >= *numnodes)
+				{
+					ri.Sys_Error(ERR_DROP, "%s: Incorrect %d nodenum as leaf.",
+							__func__, leafnum);
+				}
+
+				out->children[j] = *nodes + leafnum;
+			}
+			else
+			{
+				leafnum = -1 - leafnum;
+				if (leafnum  < 0 || leafnum >= numleafs)
+				{
+					ri.Sys_Error(ERR_DROP, "%s: Incorrect %d leafnum.",
+							__func__, leafnum);
+				}
+
+				out->children[j] = (mnode_t *)(leafs + leafnum);
+			}
+		}
+	}
+
+	Mod_SetParent(*nodes, NULL); /* sets nodes and leafs */
+
+	numvisleafs = 0;
+	Mod_NumberLeafs (leafs, *nodes, r_leaftovis, r_vistoleaf, &numvisleafs);
 }

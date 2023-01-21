@@ -692,8 +692,7 @@ static void R_DrawInlineBModel (entity_t *currententity, model_t *currentmodel, 
 		lt = r_newrefdef.dlights;
 		for (k = 0; k<r_newrefdef.num_dlights; k++, lt++)
 		{
-			R_MarkLights(lt, 1 << k,
-				currentmodel->nodes + currentmodel->firstnode);
+			R_MarkLights(lt, 1 << k, currentmodel->nodes + currentmodel->firstnode);
 		}
 	}
 
@@ -829,7 +828,7 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 		return;
 
 	// if a leaf node, draw stuff
-	if (node->contents != -1)
+	if (node->contents != CONTENTS_NODE)
 	{
 		msurface_t	**mark;
 

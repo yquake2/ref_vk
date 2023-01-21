@@ -42,18 +42,6 @@ BRUSH MODELS
 // in memory representation
 //
 
-
-#define	SIDE_FRONT	0
-#define	SIDE_BACK	1
-#define	SIDE_ON		2
-
-
-#define	SURF_PLANEBACK		2
-#define	SURF_DRAWSKY		4
-#define	SURF_DRAWTURB		0x10
-#define	SURF_DRAWBACKGROUND	0x40
-#define	SURF_UNDERWATER		0x80
-
 #define	VERTEXSIZE	7
 
 typedef struct vkpoly_s
@@ -96,45 +84,6 @@ typedef struct msurface_s
 	float		cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
 	byte		*samples;		// [numstyles*surfsize]
 } msurface_t;
-
-typedef struct mnode_s
-{
-// common with leaf
-	int			contents;		// -1, to differentiate from leafs
-	int			visframe;		// node needs to be traversed if current
-
-	float		minmaxs[6];		// for bounding box culling
-
-	struct mnode_s	*parent;
-
-// node specific
-	cplane_t	*plane;
-	struct mnode_s	*children[2];
-
-	unsigned short		firstsurface;
-	unsigned short		numsurfaces;
-} mnode_t;
-
-
-
-typedef struct mleaf_s
-{
-// common with node
-	int			contents;		// wil be a negative contents number
-	int			visframe;		// node needs to be traversed if current
-
-	float		minmaxs[6];		// for bounding box culling
-
-	struct mnode_s	*parent;
-
-// leaf specific
-	int			cluster;
-	int			area;
-
-	msurface_t	**firstmarksurface;
-	int			nummarksurfaces;
-} mleaf_t;
-
 
 //===================================================================
 

@@ -29,6 +29,23 @@
 
 #include "ref_api.h"
 
+#ifdef _MSC_VER
+
+  #include <malloc.h>
+
+  #define YQ2_VLA(TYPE, VARNAME, NUMELEMS) \
+	TYPE * VARNAME = (TYPE *) _malloca(sizeof(TYPE) * NUMELEMS)
+  #define YQ2_VLAFREE(VARNAME) \
+	_freea(VARNAME); VARNAME=NULL;
+
+#else // other compilers hopefully support C99 VLAs (gcc/mingw and clang do)
+
+  #define YQ2_VLA(TYPE, VARNAME, NUMELEMS) \
+	TYPE VARNAME[NUMELEMS]
+  #define YQ2_VLAFREE(VARNAME)
+
+#endif
+
 /*
  * skins will be outline flood filled and mip mapped
  * pics and sprites with alpha will be outline flood filled
@@ -120,6 +137,44 @@ typedef struct mtexinfo_s
 	struct image_s	*image;
 } mtexinfo_t;
 
+#define	CONTENTS_NODE	-1
+typedef struct mnode_s
+{
+	/* common with leaf */
+	int		contents;	/* CONTENTS_NODE, to differentiate from leafs */
+	int		visframe;	/* node needs to be traversed if current */
+
+	float		minmaxs[6];	/* for bounding box culling */
+
+	struct mnode_s	*parent;
+
+	/* node specific */
+	cplane_t	*plane;
+	struct mnode_s	*children[2];
+
+	unsigned short	firstsurface;
+	unsigned short	numsurfaces;
+} mnode_t;
+
+typedef struct mleaf_s
+{
+	/* common with leaf */
+	int		contents;	/* CONTENTS_NODE, to differentiate from leafs */
+	int		visframe;	/* node needs to be traversed if current */
+
+	float		minmaxs[6];	/* for bounding box culling */
+
+	struct mnode_s	*parent;
+
+	/* leaf specific */
+	int		cluster;
+	int		area;
+
+	struct msurface_s	**firstmarksurface;
+	int		nummarksurfaces;
+	int		key;	/* BSP sequence number for leaf's contents */
+} mleaf_t;
+
 /* Shared models func */
 typedef struct image_s* (*findimage_t)(const char *name, imagetype_t type);
 extern void *Mod_LoadMD2 (const char *mod_name, const void *buffer, int modfilelen,
@@ -133,7 +188,10 @@ extern struct image_s *GetSkyImage(const char *skyname, const char* surfname,
 	qboolean palettedtexture, findimage_t find_image);
 extern struct image_s *GetTexImage(const char *name, findimage_t find_image);
 extern struct image_s *R_FindPic(const char *name, findimage_t find_image);
-extern struct image_s* R_LoadImage(const char *name, const char* namewe, const char *ext, imagetype_t type,
-	qboolean r_retexturing, loadimage_t load_image);
+extern struct image_s* R_LoadImage(const char *name, const char* namewe, const char *ext,
+	imagetype_t type, qboolean r_retexturing, loadimage_t load_image);
+extern void Mod_LoadNodes(const char *name, cplane_t *planes, int numplanes,
+	mleaf_t *leafs, int numleafs, mnode_t **nodes, int *numnodes,
+	const byte *mod_base, const lump_t *l);
 
 #endif /* SRC_CLIENT_REFRESH_REF_SHARED_H_ */
