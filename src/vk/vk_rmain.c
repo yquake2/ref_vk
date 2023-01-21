@@ -698,9 +698,15 @@ R_SetupFrame (void)
 	// current viewcluster
 	if (!(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
 	{
+		if (!r_worldmodel)
+		{
+			ri.Sys_Error(ERR_DROP, "%s: bad world model", __func__);
+			return;
+		}
+
 		r_oldviewcluster = r_viewcluster;
 		r_oldviewcluster2 = r_viewcluster2;
-		leaf = Mod_PointInLeaf(r_origin, r_worldmodel);
+		leaf = Mod_PointInLeaf(r_origin, r_worldmodel->nodes);
 		r_viewcluster = r_viewcluster2 = leaf->cluster;
 
 		// check above and below so crossing solid water doesn't draw wrong
@@ -710,7 +716,7 @@ R_SetupFrame (void)
 
 			VectorCopy(r_origin, temp);
 			temp[2] -= 16;
-			leaf = Mod_PointInLeaf(temp, r_worldmodel);
+			leaf = Mod_PointInLeaf(temp, r_worldmodel->nodes);
 			if (!(leaf->contents & CONTENTS_SOLID) &&
 				(leaf->cluster != r_viewcluster2))
 				r_viewcluster2 = leaf->cluster;
@@ -721,7 +727,7 @@ R_SetupFrame (void)
 
 			VectorCopy(r_origin, temp);
 			temp[2] += 16;
-			leaf = Mod_PointInLeaf(temp, r_worldmodel);
+			leaf = Mod_PointInLeaf(temp, r_worldmodel->nodes);
 			if (!(leaf->contents & CONTENTS_SOLID) &&
 				(leaf->cluster != r_viewcluster2))
 				r_viewcluster2 = leaf->cluster;

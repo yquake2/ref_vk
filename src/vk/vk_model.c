@@ -33,37 +33,6 @@ static int 	models_known_max = 0;
 
 int		registration_sequence;
 
-/*
-===============
-Mod_PointInLeaf
-===============
-*/
-mleaf_t *Mod_PointInLeaf (const vec3_t p, model_t *model)
-{
-	mnode_t		*node;
-
-	if (!model || !model->nodes)
-		ri.Sys_Error (ERR_DROP, "%s: bad model", __func__);
-
-	node = model->nodes;
-	while (1)
-	{
-		cplane_t	*plane;
-		float	d;
-
-		if (node->contents != CONTENTS_NODE)
-			return (mleaf_t *)node;
-		plane = node->plane;
-		d = DotProduct (p,plane->normal) - plane->dist;
-		if (d > 0)
-			node = node->children[0];
-		else
-			node = node->children[1];
-	}
-
-	return NULL;	// never reached
-}
-
 
 /*
 ==============
