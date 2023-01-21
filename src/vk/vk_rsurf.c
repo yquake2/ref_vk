@@ -811,11 +811,8 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 		pleaf = (mleaf_t *)node;
 
 		// check for door connected areas
-		if (r_newrefdef.areabits)
-		{
-			if (! (r_newrefdef.areabits[pleaf->area>>3] & (1<<(pleaf->area&7)) ) )
-				return;		// not visible
-		}
+		if (!R_AreaVisible(r_newrefdef.areabits, pleaf))
+			return;	// not visible
 
 		mark = pleaf->firstmarksurface;
 		c = pleaf->nummarksurfaces;
