@@ -67,30 +67,6 @@ static qboolean	LM_AllocBlock (int w, int h, int *x, int *y);
 */
 
 /*
-===============
-R_TextureAnimation
-
-Returns the proper texture for a given time and base texture
-===============
-*/
-static image_t *R_TextureAnimation (mtexinfo_t *tex, entity_t *currententity)
-{
-	int		c;
-
-	if (!tex->next)
-		return tex->image;
-
-	c = currententity->frame % tex->numframes;
-	while (c)
-	{
-		tex = tex->next;
-		c--;
-	}
-
-	return tex->image;
-}
-
-/*
 ================
 DrawVkPoly
 ================
@@ -281,7 +257,7 @@ static void R_RenderBrushPoly (msurface_t *fa, float *modelMatrix, float alpha, 
 	float		color[4] = { 1.f, 1.f, 1.f, alpha };
 	c_brush_polys++;
 
-	image = R_TextureAnimation(fa->texinfo, currententity);
+	image = R_TextureAnimation(currententity, fa->texinfo);
 
 	if (fa->flags & SURF_DRAWTURB)
 	{
@@ -447,7 +423,7 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 	int		i, nv = surf->polys->numverts;
 	int		map;
 	float	*v;
-	image_t *image = R_TextureAnimation(surf->texinfo, currententity);
+	image_t *image = R_TextureAnimation(currententity, surf->texinfo);
 	qboolean is_dynamic = false;
 	unsigned lmtex = surf->lightmaptexturenum;
 	vkpoly_t *p;
@@ -919,7 +895,7 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 				// the polygon is visible, so add it to the texture
 				// sorted chain
 				// FIXME: this is a hack for animation
-				image = R_TextureAnimation(surf->texinfo, currententity);
+				image = R_TextureAnimation(currententity, surf->texinfo);
 				surf->texturechain = image->texturechain;
 				image->texturechain = surf;
 			}
