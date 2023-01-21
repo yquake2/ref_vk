@@ -199,84 +199,6 @@ void Mod_FreeModelsKnown (void)
 
 /*
 =================
-Mod_LoadLighting
-=================
-*/
-static void
-Mod_LoadLighting (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	if (!l->filelen)
-	{
-		loadmodel->lightdata = NULL;
-		return;
-	}
-	loadmodel->lightdata = Hunk_Alloc ( l->filelen);
-	memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
-}
-
-
-/*
-=================
-Mod_LoadVisibility
-=================
-*/
-static void
-Mod_LoadVisibility (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	int		i;
-
-	if (!l->filelen)
-	{
-		loadmodel->vis = NULL;
-		return;
-	}
-	loadmodel->vis = Hunk_Alloc ( l->filelen);
-	memcpy (loadmodel->vis, mod_base + l->fileofs, l->filelen);
-
-	loadmodel->vis->numclusters = LittleLong (loadmodel->vis->numclusters);
-	for (i=0 ; i<loadmodel->vis->numclusters ; i++)
-	{
-		loadmodel->vis->bitofs[i][0] = LittleLong (loadmodel->vis->bitofs[i][0]);
-		loadmodel->vis->bitofs[i][1] = LittleLong (loadmodel->vis->bitofs[i][1]);
-	}
-}
-
-
-/*
-=================
-Mod_LoadVertexes
-=================
-*/
-static void
-Mod_LoadVertexes (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	dvertex_t	*in;
-	mvertex_t	*out;
-	int			i, count;
-
-	in = (void *)(mod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
-	{
-		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
-				__func__, loadmodel->name);
-	}
-
-	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*sizeof(*out));
-
-	loadmodel->vertexes = out;
-	loadmodel->numvertexes = count;
-
-	for ( i=0 ; i<count ; i++, in++, out++)
-	{
-		out->position[0] = LittleFloat (in->point[0]);
-		out->position[1] = LittleFloat (in->point[1]);
-		out->position[2] = LittleFloat (in->point[2]);
-	}
-}
-
-/*
-=================
 Mod_LoadSubmodels
 =================
 */
@@ -334,102 +256,6 @@ Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 			ri.Sys_Error(ERR_DROP, "%s: Inline model %i has bad firstnode",
 					__func__, i);
 		}
-	}
-}
-
-/*
-=================
-Mod_LoadEdges
-=================
-*/
-static void
-Mod_LoadEdges (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	dedge_t *in;
-	medge_t *out;
-	int 	i, count;
-
-	in = (void *)(mod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
-	{
-		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
-				__func__, loadmodel->name);
-	}
-
-	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( (count + 1) * sizeof(*out));
-
-	loadmodel->edges = out;
-	loadmodel->numedges = count;
-
-	for ( i=0 ; i<count ; i++, in++, out++)
-	{
-		out->v[0] = (unsigned short)LittleShort(in->v[0]);
-		out->v[1] = (unsigned short)LittleShort(in->v[1]);
-	}
-}
-
-/*
-=================
-Mod_LoadTexinfo
-=================
-*/
-static void
-Mod_LoadTexinfo (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	texinfo_t *in;
-	mtexinfo_t *out, *step;
-	int 	i, j, count;
-
-	in = (void *)(mod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
-	{
-		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
-				__func__, loadmodel->name);
-	}
-
-	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*sizeof(*out));
-
-	loadmodel->texinfo = out;
-	loadmodel->numtexinfo = count;
-
-	for ( i=0 ; i<count ; i++, in++, out++)
-	{
-		image_t	*image;
-		int	next;
-
-		for (j=0 ; j<4 ; j++)
-		{
-			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
-			out->vecs[1][j] = LittleFloat (in->vecs[1][j]);
-		}
-
-		out->flags = LittleLong (in->flags);
-		next = LittleLong (in->nexttexinfo);
-		if (next > 0)
-			out->next = loadmodel->texinfo + next;
-		else
-			out->next = NULL;
-
-		image = GetTexImage(in->texture, (findimage_t)Vk_FindImage);
-		if (!image)
-		{
-			R_Printf(PRINT_ALL, "%s: Couldn't load %s\n",
-				__func__, in->texture);
-			image = r_notexture;
-		}
-
-		out->image = image;
-	}
-
-	// count animation frames
-	for (i=0 ; i<count ; i++)
-	{
-		out = &loadmodel->texinfo[i];
-		out->numframes = 1;
-		for (step = out->next ; step && step != out ; step=step->next)
-			out->numframes++;
 	}
 }
 
@@ -768,85 +594,6 @@ Mod_LoadMarksurfaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 	}
 }
 
-/*
-=================
-Mod_LoadSurfedges
-=================
-*/
-static void
-Mod_LoadSurfedges (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	int		i, count;
-	int		*in, *out;
-
-	in = (void *)(mod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
-	{
-		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
-				__func__, loadmodel->name);
-	}
-
-	count = l->filelen / sizeof(*in);
-	if (count < 1 || count >= MAX_MAP_SURFEDGES)
-		ri.Sys_Error (ERR_DROP, "%s: bad surfedges count in %s: %i",
-		__func__, loadmodel->name, count);
-
-	out = Hunk_Alloc ( count*sizeof(*out));
-
-	loadmodel->surfedges = out;
-	loadmodel->numsurfedges = count;
-
-	for ( i=0 ; i<count ; i++)
-		out[i] = LittleLong (in[i]);
-}
-
-
-/*
-=================
-Mod_LoadPlanes
-=================
-*/
-static void
-Mod_LoadPlanes (model_t *loadmodel, const byte *mod_base, const lump_t *l)
-{
-	int			i;
-	cplane_t	*out;
-	dplane_t 	*in;
-	int			count;
-
-	in = (void *)(mod_base + l->fileofs);
-
-	if (l->filelen % sizeof(*in))
-	{
-		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
-				__func__, loadmodel->name);
-	}
-
-	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*2*sizeof(*out));
-
-	loadmodel->planes = out;
-	loadmodel->numplanes = count;
-
-	for ( i=0 ; i<count ; i++, in++, out++)
-	{
-		int bits, j;
-
-		bits = 0;
-		for (j=0 ; j<3 ; j++)
-		{
-			out->normal[j] = LittleFloat (in->normal[j]);
-			if (out->normal[j] < 0)
-				bits |= 1<<j;
-		}
-
-		out->dist = LittleFloat (in->dist);
-		out->type = LittleLong (in->type);
-		out->signbits = bits;
-	}
-}
-
-
 // calculate the size that Hunk_Alloc(), called by Mod_Load*() from Mod_LoadBrushModel(),
 // will use (=> includes its padding), so we'll know how big the hunk needs to be
 static int calcLumpHunkSize(const lump_t *l, int inSize, int outSize)
@@ -919,15 +666,21 @@ Mod_LoadBrushModel (model_t *mod, const void *buffer, int modfilelen)
 	mod->numframes = 2;		// regular and alternate animation
 
 	// load into heap
-	Mod_LoadVertexes (mod, mod_base, &header->lumps[LUMP_VERTEXES]);
-	Mod_LoadEdges (mod, mod_base, &header->lumps[LUMP_EDGES]);
-	Mod_LoadSurfedges (mod, mod_base, &header->lumps[LUMP_SURFEDGES]);
-	Mod_LoadLighting (mod, mod_base, &header->lumps[LUMP_LIGHTING]);
-	Mod_LoadPlanes (mod, mod_base, &header->lumps[LUMP_PLANES]);
-	Mod_LoadTexinfo (mod, mod_base, &header->lumps[LUMP_TEXINFO]);
+	Mod_LoadVertexes (mod->name, &mod->vertexes, &mod->numvertexes, mod_base,
+		&header->lumps[LUMP_VERTEXES], 0);
+	Mod_LoadEdges (mod->name, &mod->edges, &mod->numedges,
+		mod_base, &header->lumps[LUMP_EDGES], 1);
+	Mod_LoadSurfedges(mod->name, &mod->surfedges, &mod->numsurfedges,
+		mod_base, &header->lumps[LUMP_SURFEDGES], 0);
+	Mod_LoadLighting (&mod->lightdata, mod_base, &header->lumps[LUMP_LIGHTING]);
+	Mod_LoadPlanes (mod->name, &mod->planes, &mod->numplanes,
+		mod_base, &header->lumps[LUMP_PLANES], 0);
+	Mod_LoadTexinfo (mod->name, &mod->texinfo, &mod->numtexinfo,
+		mod_base, &header->lumps[LUMP_TEXINFO], (findimage_t)Vk_FindImage,
+		r_notexture, 0);
 	Mod_LoadFaces (mod, mod_base, &header->lumps[LUMP_FACES]);
 	Mod_LoadMarksurfaces (mod, mod_base, &header->lumps[LUMP_LEAFFACES]);
-	Mod_LoadVisibility (mod, mod_base, &header->lumps[LUMP_VISIBILITY]);
+	Mod_LoadVisibility (&mod->vis, mod_base, &header->lumps[LUMP_VISIBILITY]);
 	Mod_LoadLeafs (mod, mod_base, &header->lumps[LUMP_LEAFS]);
 	Mod_LoadNodes (mod->name, mod->planes, mod->numplanes,
 		mod->leafs, mod->numleafs, &mod->nodes,
