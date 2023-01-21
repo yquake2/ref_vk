@@ -746,8 +746,10 @@ void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel)
 		VectorAdd(currententity->origin, currentmodel->maxs, maxs);
 	}
 
-	if (R_CullBox(mins, maxs))
+	if (r_cull->value && R_CullBox(mins, maxs, frustum))
+	{
 		return;
+	}
 
 	memset(vk_lms.lightmap_surfaces, 0, sizeof(vk_lms.lightmap_surfaces));
 
@@ -802,7 +804,8 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 
 	if (node->visframe != r_visframecount)
 		return;
-	if (R_CullBox (node->minmaxs, node->minmaxs+3))
+
+	if (r_cull->value && R_CullBox (node->minmaxs, node->minmaxs+3, frustum))
 		return;
 
 	// if a leaf node, draw stuff

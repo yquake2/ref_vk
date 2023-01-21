@@ -135,6 +135,7 @@ extern	cvar_t	*r_farsee;
 
 extern	cvar_t	*vk_overbrightbits;
 extern	cvar_t	*r_validation;
+extern	cvar_t	*r_cull;
 extern	cvar_t	*vk_picmip;
 extern	cvar_t	*r_palettedtexture;
 extern	cvar_t	*vk_flashblend;
@@ -211,7 +212,6 @@ void R_DrawAlphaSurfaces (void);
 void RE_InitParticleTexture (void);
 void Draw_InitLocal (void);
 void Vk_SubdivideSurface (msurface_t *fa, model_t *loadmodel);
-qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 void R_RotateForEntity (entity_t *e, float *mvMatrix);
 void R_MarkLeaves (void);
 

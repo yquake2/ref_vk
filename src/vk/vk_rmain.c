@@ -79,7 +79,7 @@ cvar_t	*r_drawworld;
 static cvar_t	*r_speeds;
 static cvar_t	*r_fullbright;
 cvar_t	*r_novis;
-static cvar_t	*r_nocull;
+cvar_t	*r_cull;
 cvar_t	*r_lerpmodels;
 cvar_t	*r_lefthand;
 cvar_t	*r_vsync;
@@ -143,27 +143,6 @@ PFN_vkGetPhysicalDeviceMetalFeaturesMVK qvkGetPhysicalDeviceMetalFeaturesMVK;
 PFN_vkGetMoltenVKConfigurationMVK qvkGetMoltenVKConfigurationMVK;
 PFN_vkSetMoltenVKConfigurationMVK qvkSetMoltenVKConfigurationMVK;
 #endif
-
-/*
-=================
-R_CullBox
-
-Returns true if the box is completely outside the frustom
-=================
-*/
-qboolean R_CullBox (vec3_t mins, vec3_t maxs)
-{
-	int		i;
-
-	if (r_nocull->value)
-		return false;
-
-	for (i=0 ; i<4 ; i++)
-		if ( BOX_ON_PLANE_SIDE(mins, maxs, &frustum[i]) == 2)
-			return true;
-	return false;
-}
-
 
 void R_RotateForEntity (entity_t *e, float *mvMatrix)
 {
@@ -638,45 +617,6 @@ R_PolyBlend (void)
 
 //=======================================================================
 
-static int
-SignbitsForPlane (cplane_t *out)
-{
-	int	bits, j;
-
-	// for fast box on planeside test
-
-	bits = 0;
-	for (j = 0; j<3; j++)
-	{
-		if (out->normal[j] < 0)
-			bits |= 1 << j;
-	}
-	return bits;
-}
-
-
-static void
-R_SetFrustum (float fovx, float fovy)
-{
-	// rotate VPN right by FOV_X/2 degrees
-	RotatePointAroundVector(frustum[0].normal, vup, vpn, -(90 - fovx / 2));
-	// rotate VPN left by FOV_X/2 degrees
-	RotatePointAroundVector(frustum[1].normal, vup, vpn, 90 - fovx / 2);
-	// rotate VPN up by FOV_X/2 degrees
-	RotatePointAroundVector(frustum[2].normal, vright, vpn, 90 - fovy / 2);
-	// rotate VPN down by FOV_X/2 degrees
-	RotatePointAroundVector(frustum[3].normal, vright, vpn, -(90 - fovy / 2));
-
-	for (int i = 0; i < 4; i++)
-	{
-		frustum[i].type = PLANE_ANYZ;
-		frustum[i].dist = DotProduct(r_origin, frustum[i].normal);
-		frustum[i].signbits = SignbitsForPlane(&frustum[i]);
-	}
-}
-
-//=======================================================================
-
 /*
 ===============
 R_SetupFrame
@@ -929,7 +869,8 @@ R_SetupVulkan (void)
 	r_proj_aspect = (float)r_newrefdef.width / r_newrefdef.height;
 	Mat_Perspective(r_projection_matrix, r_vulkan_correction, r_proj_fovy, r_proj_aspect, 4, dist);
 
-	R_SetFrustum(r_proj_fovx, r_proj_fovy);
+	R_SetFrustum(vup, vpn, vright, r_origin, r_proj_fovx, r_proj_fovy,
+		frustum);
 
 	// set up view matrix
 	Mat_Identity(r_view_matrix);
@@ -1177,7 +1118,7 @@ R_Register( void )
 	r_drawentities = ri.Cvar_Get("r_drawentities", "1", 0);
 	r_drawworld = ri.Cvar_Get("r_drawworld", "1", 0);
 	r_novis = ri.Cvar_Get("r_novis", "0", 0);
-	r_nocull = ri.Cvar_Get("r_nocull", "0", 0);
+	r_cull = ri.Cvar_Get("r_cull", "1", 0);
 	r_lerpmodels = ri.Cvar_Get("r_lerpmodels", "1", 0);
 	r_speeds = ri.Cvar_Get("r_speeds", "0", 0);
 	r_lightlevel = ri.Cvar_Get("r_lightlevel", "0", 0);
