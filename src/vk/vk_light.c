@@ -22,9 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "header/local.h"
 
-static int	r_dlightframecount;
-
-#define	DLIGHT_CUTOFF	64
+int	r_dlightframecount;
 
 /*
 =============================================================================
@@ -115,32 +113,14 @@ DYNAMIC LIGHTS
 
 /*
 =============
-R_MarkLights
+R_MarkSurfaceLights
 =============
 */
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
+void
+R_MarkSurfaceLights(dlight_t *light, int bit, mnode_t *node, int r_dlightframecount)
 {
-	cplane_t	*splitplane;
-	float		dist;
 	msurface_t	*surf;
 	int			i;
-
-	if (node->contents != CONTENTS_NODE)
-		return;
-
-	splitplane = node->plane;
-	dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist;
-
-	if (dist > light->intensity-DLIGHT_CUTOFF)
-	{
-		R_MarkLights (light, bit, node->children[0]);
-		return;
-	}
-	if (dist < -light->intensity+DLIGHT_CUTOFF)
-	{
-		R_MarkLights (light, bit, node->children[1]);
-		return;
-	}
 
 	// mark the polygons
 	surf = r_worldmodel->surfaces + node->firstsurface;
@@ -153,11 +133,7 @@ void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 		}
 		surf->dlightbits |= bit;
 	}
-
-	R_MarkLights (light, bit, node->children[0]);
-	R_MarkLights (light, bit, node->children[1]);
 }
-
 
 /*
 =============
@@ -176,7 +152,8 @@ void R_PushDlights (void)
 											//  advanced yet for this frame
 	l = r_newrefdef.dlights;
 	for (i=0 ; i<r_newrefdef.num_dlights ; i++, l++)
-		R_MarkLights ( l, 1<<i, r_worldmodel->nodes );
+		R_MarkLights (l, 1<<i, r_worldmodel->nodes, r_dlightframecount,
+			R_MarkSurfaceLights);
 }
 
 

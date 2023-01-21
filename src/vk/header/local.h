@@ -189,6 +189,7 @@ extern	float	r_viewproj_matrix[16];
 extern	vec3_t	lightspot;
 
 extern	int		registration_sequence;
+extern	int		r_dlightframecount;
 extern	qvksampler_t vk_current_sampler;
 extern	qvksampler_t vk_current_lmap_sampler;
 
@@ -220,7 +221,8 @@ void EmitWaterPolys (msurface_t *fa, image_t *texture,
 void R_AddSkySurface (msurface_t *fa);
 void R_ClearSkyBox (void);
 void R_DrawSkyBox (void);
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
+void R_MarkSurfaceLights(dlight_t *light, int bit, mnode_t *node,
+	int r_dlightframecount);
 
 struct image_s	*RE_Draw_FindPic (char *name);
 
