@@ -751,6 +751,8 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 
 	switch (LittleLong(*(unsigned *)buf))
 	{
+	case RAVENFMHEADER:
+		/* fall through */
 	case IDALIASHEADER:
 		/* fall through */
 	case IDMDLHEADER:

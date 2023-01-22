@@ -268,73 +268,11 @@ static void Vk_LerpVerts( int nverts, dtrivertx_t *v, dtrivertx_t *ov, dtrivertx
 
 }
 
-/*
-=============
-Vk_DrawAliasFrameLerp
-
-interpolates between two frames and origins
-FIXME: batch lerp all vertexes
-=============
-*/
-static void Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin, float *modelMatrix, int leftHandOffset, int translucentIdx, entity_t *currententity)
+static void
+Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_end,
+	float alpha, image_t *skin, float *modelMatrix, int leftHandOffset, int translucentIdx,
+	dtrivertx_t *verts)
 {
-	daliasframe_t	*frame, *oldframe;
-	dtrivertx_t	*v, *ov, *verts;
-	int		*order;
-	float	frontlerp;
-	float	alpha;
-	vec3_t	move, delta, vectors[3];
-	vec3_t	frontv, backv;
-	int		i;
-	float	*lerp;
-
-	frame = (daliasframe_t *)((byte *)paliashdr + paliashdr->ofs_frames
-		+ currententity->frame * paliashdr->framesize);
-	verts = v = frame->verts;
-
-	oldframe = (daliasframe_t *)((byte *)paliashdr + paliashdr->ofs_frames
-		+ currententity->oldframe * paliashdr->framesize);
-	ov = oldframe->verts;
-
-	order = (int *)((byte *)paliashdr + paliashdr->ofs_glcmds);
-
-	if (currententity->flags & RF_TRANSLUCENT)
-		alpha = currententity->alpha;
-	else
-		alpha = 1.0;
-
-	frontlerp = 1.0 - backlerp;
-
-	// move should be the delta back to the previous frame * backlerp
-	VectorSubtract (currententity->oldorigin, currententity->origin, delta);
-	AngleVectors (currententity->angles, vectors[0], vectors[1], vectors[2]);
-
-	move[0] = DotProduct (delta, vectors[0]);	// forward
-	move[1] = -DotProduct (delta, vectors[1]);	// left
-	move[2] = DotProduct (delta, vectors[2]);	// up
-
-	VectorAdd (move, oldframe->translate, move);
-
-	for (i=0 ; i<3 ; i++)
-	{
-		move[i] = backlerp*move[i] + frontlerp*frame->translate[i];
-	}
-
-	for (i=0 ; i<3 ; i++)
-	{
-		frontv[i] = frontlerp*frame->scale[i];
-		backv[i] = backlerp*oldframe->scale[i];
-	}
-
-	if (Mesh_VertsRealloc(paliashdr->num_xyz))
-	{
-		ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
-	}
-
-	lerp = s_lerped[0];
-
-	Vk_LerpVerts( paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv, currententity );
-
 	int vertCounts[2] = { 0, 0 };
 	int pipeCounters[2] = { 0, 0 };
 	VkDeviceSize maxTriangleFanIdxCnt = 0;
@@ -358,8 +296,11 @@ static void Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *s
 
 		// get the vertex count and primitive type
 		count = *order++;
-		if (!count)
-			break;		// done
+		if (!count || order >= order_end)
+		{
+			break; /* done */
+		}
+
 		if (count < 0)
 		{
 			count = -count;
@@ -489,6 +430,8 @@ static void Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *s
 
 		if (p == TRIANGLE_STRIP)
 		{
+			int i;
+
 			vkCmdBindIndexBuffer(vk_activeCmdbuffer, QVk_GetTriangleStripIbo(maxTriangleFanIdxCnt), 0, VK_INDEX_TYPE_UINT16);
 
 			for (i = 0; i < pipeCounters[p]; i++)
@@ -498,6 +441,8 @@ static void Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *s
 		}
 		else
 		{
+			int i;
+
 			vkCmdBindIndexBuffer(vk_activeCmdbuffer, QVk_GetTriangleFanIbo(maxTriangleFanIdxCnt), 0, VK_INDEX_TYPE_UINT16);
 
 			for (i = 0; i < pipeCounters[p]; i++)
@@ -508,23 +453,115 @@ static void Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *s
 	}
 }
 
+/*
+=============
+Vk_DrawAliasFrameLerp
+
+interpolates between two frames and origins
+FIXME: batch lerp all vertexes
+=============
+*/
+static void
+Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin,
+	float *modelMatrix, int leftHandOffset, int translucentIdx, entity_t *currententity)
+{
+	daliasframe_t	*frame, *oldframe;
+	dtrivertx_t	*v, *ov, *verts;
+	int		*order;
+	float	frontlerp;
+	float	alpha;
+	vec3_t	move, delta, vectors[3];
+	vec3_t	frontv, backv;
+	int		i;
+	float	*lerp;
+	int num_mesh_nodes;
+	short *mesh_nodes;
+
+	frame = (daliasframe_t *)((byte *)paliashdr + paliashdr->ofs_frames
+		+ currententity->frame * paliashdr->framesize);
+	verts = v = frame->verts;
+
+	oldframe = (daliasframe_t *)((byte *)paliashdr + paliashdr->ofs_frames
+		+ currententity->oldframe * paliashdr->framesize);
+	ov = oldframe->verts;
+
+	order = (int *)((byte *)paliashdr + paliashdr->ofs_glcmds);
+
+	if (currententity->flags & RF_TRANSLUCENT)
+		alpha = currententity->alpha;
+	else
+		alpha = 1.0;
+
+	frontlerp = 1.0 - backlerp;
+
+	// move should be the delta back to the previous frame * backlerp
+	VectorSubtract (currententity->oldorigin, currententity->origin, delta);
+	AngleVectors (currententity->angles, vectors[0], vectors[1], vectors[2]);
+
+	move[0] = DotProduct (delta, vectors[0]);	// forward
+	move[1] = -DotProduct (delta, vectors[1]);	// left
+	move[2] = DotProduct (delta, vectors[2]);	// up
+
+	VectorAdd (move, oldframe->translate, move);
+
+	for (i=0 ; i<3 ; i++)
+	{
+		move[i] = backlerp*move[i] + frontlerp*frame->translate[i];
+	}
+
+	for (i=0 ; i<3 ; i++)
+	{
+		frontv[i] = frontlerp*frame->scale[i];
+		backv[i] = backlerp*oldframe->scale[i];
+	}
+
+	if (Mesh_VertsRealloc(paliashdr->num_xyz))
+	{
+		ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+	}
+
+	lerp = s_lerped[0];
+
+	Vk_LerpVerts( paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv, currententity );
+
+	num_mesh_nodes = (paliashdr->ofs_skins - sizeof(dmdl_t)) / sizeof(short) / 2;
+	mesh_nodes = (short *)((char*)paliashdr + sizeof(dmdl_t));
+
+	if (num_mesh_nodes > 0)
+	{
+		int i;
+		for (i = 0; i < num_mesh_nodes; i++)
+		{
+			Vk_DrawAliasFrameLerpCommands(currententity,
+				order + mesh_nodes[i * 2],
+				order + min(paliashdr->num_glcmds, mesh_nodes[i * 2] + mesh_nodes[i * 2 + 1]),
+				alpha, skin,
+				modelMatrix, leftHandOffset, translucentIdx, verts);
+		}
+	}
+	else
+	{
+		Vk_DrawAliasFrameLerpCommands(currententity,
+			order, order + paliashdr->num_glcmds, alpha, skin,
+			modelMatrix, leftHandOffset, translucentIdx, verts);
+	}
+}
+
 
 /*
 =============
 Vk_DrawAliasShadow
 =============
 */
-static void Vk_DrawAliasShadow (dmdl_t *paliashdr, int posenum, float *modelMatrix, entity_t *currententity)
+static void Vk_DrawAliasShadow (int *order, int *order_end, int posenum,
+	float *modelMatrix, entity_t *currententity)
 {
-	int		*order;
 	vec3_t	point;
 	float	height, lheight;
 
 	lheight = currententity->origin[2] - lightspot[2];
 
 	height = 0;
-
-	order = (int *)((byte *)paliashdr + paliashdr->ofs_glcmds);
 
 	height = -lheight + 1.0;
 
@@ -541,8 +578,11 @@ static void Vk_DrawAliasShadow (dmdl_t *paliashdr, int posenum, float *modelMatr
 		i = 0;
 		// get the vertex count and primitive type
 		count = *order++;
-		if (!count)
-			break;		// done
+		if (!count || order >= order_end)
+		{
+			break; /* done */
+		}
+
 		if (count < 0)
 		{
 			count = -count;
@@ -988,9 +1028,34 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 
 	if (vk_shadows->value && !(currententity->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL)))
 	{
+		int num_mesh_nodes;
+		short *mesh_nodes;
 		float model[16];
+		int *order;
+
 		Mat_Identity(model);
 		R_RotateForEntity(currententity, model);
-		Vk_DrawAliasShadow (paliashdr, currententity->frame, model, currententity);
+
+		order = (int *)((byte *)paliashdr + paliashdr->ofs_glcmds);
+
+		num_mesh_nodes = (paliashdr->ofs_skins - sizeof(dmdl_t)) / sizeof(short) / 2;
+		mesh_nodes = (short *)((char*)paliashdr + sizeof(dmdl_t));
+
+		if (num_mesh_nodes > 0)
+		{
+			int i;
+			for (i = 0; i < num_mesh_nodes; i++)
+			{
+				Vk_DrawAliasShadow (
+					order + mesh_nodes[i * 2],
+					order + min(paliashdr->num_glcmds, mesh_nodes[i * 2] + mesh_nodes[i * 2 + 1]),
+					currententity->frame, model, currententity);
+			}
+		}
+		else
+		{
+			Vk_DrawAliasShadow (order, order + paliashdr->num_glcmds,
+				currententity->frame, model, currententity);
+		}
 	}
 }
