@@ -103,7 +103,7 @@ cvar_t  *vk_molten_metalbuffers;
 #endif
 cvar_t	*r_clear;
 cvar_t	*r_lockpvs;
-static cvar_t	*vk_polyblend;
+static cvar_t	*r_polyblend;
 cvar_t	*r_modulate;
 cvar_t	*vk_shadows;
 cvar_t	*vk_pixel_size;
@@ -606,7 +606,7 @@ R_PolyBlend
 static void
 R_PolyBlend (void)
 {
-	if (!vk_polyblend->value)
+	if (!r_polyblend->value)
 		return;
 	if (!v_blend[3])
 		return;
@@ -1137,7 +1137,7 @@ R_Register( void )
 	vk_finish = ri.Cvar_Get("vk_finish", "0", CVAR_ARCHIVE);
 	r_clear = ri.Cvar_Get("r_clear", "0", CVAR_ARCHIVE);
 	r_lockpvs = ri.Cvar_Get("r_lockpvs", "0", 0);
-	vk_polyblend = ri.Cvar_Get("vk_polyblend", "1", 0);
+	r_polyblend = ri.Cvar_Get("r_polyblend", "1", 0);
 	r_modulate = ri.Cvar_Get("r_modulate", "1", CVAR_ARCHIVE);
 	vk_shadows = ri.Cvar_Get("r_shadows", "0", CVAR_ARCHIVE);
 	vk_pixel_size = ri.Cvar_Get("vk_pixel_size", "1", CVAR_ARCHIVE);

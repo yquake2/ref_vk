@@ -54,7 +54,7 @@ windows.
 * **vk_flashblend**: Toggle the blending of lights onto the environment.
   (default: `0`)
 
-* **vk_polyblend**: Blend fullscreen effects: blood, powerups etc.
+* **r_polyblend**: Blend fullscreen effects: blood, powerups etc.
   (default: `1`)
 
 * **vk_skymip**: Toggle the usage of mipmap information for the sky
