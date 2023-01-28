@@ -125,3 +125,11 @@ windows.
 
 * **vk_molten_fastmath**: enable/disable float point op optimisations.
   (default: `0`)
+
+### Custom model format support
+
+Render unofficially supports  mdl/Quake 1 and fm/Heretic2, are provided
+without any warranty of support. The simplest way to check is renaming the
+mdl/fm format file to md2 and place instead the original md2 file. FM is
+rendered with all meshes without support of filtering/selecting the exact
+part of the model.
