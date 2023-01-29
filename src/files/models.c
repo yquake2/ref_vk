@@ -983,11 +983,13 @@ Mod_LoadFile(char *name, void **buffer)
 		}
 
 		/* Remove the extension */
+		size_t tlen = len - (strlen(ext) + 1);
 		memset(namewe, 0, 256);
-		memcpy(namewe, name, len - (strlen(ext) + 1));
+		memcpy(namewe, name, tlen);
 
 		/* Check Heretic2 model */
-		snprintf(newname, sizeof(newname), "%s.fm", namewe);
+		Q_strlcpy(newname, namewe, sizeof(newname));
+		Q_strlcat(newname, ".fm", sizeof(newname));
 		filesize = ri.FS_LoadFile (newname, buffer);
 		if (filesize > 0)
 		{
@@ -995,7 +997,7 @@ Mod_LoadFile(char *name, void **buffer)
 		}
 
 		/* Check Quake 2 model */
-		snprintf(newname, sizeof(newname), "%s.md2", namewe);
+		Q_strlcpy(newname + tlen, ".md2", sizeof(newname));
 		filesize = ri.FS_LoadFile (newname, buffer);
 		if (filesize > 0)
 		{
@@ -1003,7 +1005,7 @@ Mod_LoadFile(char *name, void **buffer)
 		}
 
 		/* Check Quake model */
-		snprintf(newname, sizeof(newname), "%s.mdl", namewe);
+		Q_strlcpy(newname + tlen, ".mdl", sizeof(newname));
 		filesize = ri.FS_LoadFile (newname, buffer);
 		if (filesize > 0)
 		{
