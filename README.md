@@ -128,8 +128,8 @@ windows.
 
 ### Custom model format support
 
-Render unofficially supports  mdl/Quake 1 and fm/Heretic2, are provided
-without any warranty of support. The simplest way to check is renaming the
-mdl/fm format file to md2 and place instead the original md2 file. FM is
-rendered with all meshes without support of filtering/selecting the exact
-part of the model.
+Render unofficially supports  mdl/Quake 1, dkm/Daikatana and fm/Heretic2,
+are provided without any warranty of support. The simplest way to check
+is renaming the mdl/dkm/fm format file to md2 and place instead the original
+tris.md2 file. FM is rendered with all meshes without support of
+filtering/selecting the exact part of the model.
