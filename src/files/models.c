@@ -716,7 +716,7 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 {
 	char *src = (char *)buffer;
 	int version, size, i;
-	void *extradata;
+	void *extradata = NULL;
 	dmdl_t *pheader = NULL;
 
 	while (modfilelen > 0)
