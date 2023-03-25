@@ -352,7 +352,7 @@ calcTexinfoAndFacesSize(const lump_t *fl, const byte *mod_base, const lump_t *tl
 	// 256-55000 bytes are allocated (usually on the lower end),
 	// so just assume 48k per face to be safe
 	ret += numWarpFaces * 49152;
-	ret += 1000000; // and 1MB extra just in case
+	ret += 5000000; // and 5MB extra just in case
 
 	return ret;
 }
@@ -624,7 +624,7 @@ Mod_LoadBrushModel (model_t *mod, const void *buffer, int modfilelen)
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_LIGHTING], 1, 1);
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_PLANES], sizeof(dplane_t), sizeof(cplane_t)*2);
 	hunkSize += calcTexinfoAndFacesSize(&header->lumps[LUMP_FACES], mod_base, &header->lumps[LUMP_TEXINFO]);
-	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_LEAFFACES], sizeof(short), sizeof(msurface_t *)); // yes, out is indeeed a pointer!
+	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_LEAFFACES], sizeof(short), sizeof(msurface_t *)); // yes, out is indeed a pointer!
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_VISIBILITY], 1, 1);
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_LEAFS], sizeof(dleaf_t), sizeof(mleaf_t));
 	hunkSize += calcLumpHunkSize(&header->lumps[LUMP_NODES], sizeof(dnode_t), sizeof(mnode_t));
