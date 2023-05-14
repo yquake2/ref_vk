@@ -1658,6 +1658,14 @@ void QVk_SetWindow(SDL_Window *window)
 	vk_window = window;
 }
 
+/*
+ * Fills the actual size of the drawable into width and height.
+ */
+void QVk_GetDrawableSize(int *width, int *height)
+{
+	SDL_GL_GetDrawableSize(vk_window, width, height);
+}
+
 void QVk_WaitAndShutdownAll (void)
 {
 	if (!vk_initialized)

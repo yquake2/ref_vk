@@ -25,7 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	REF_VERSION	"Yamagi Quake II Vulkan Refresher " VKVERSION " (based on vkQuake2 v1.4.3)"
 
 // world rendered and ready to render 2d elements
-static qboolean	world_rendered;
+static qboolean world_rendered;
+static qboolean RE_IsHighDPIaware = false;
 
 viddef_t	vid;
 
@@ -144,8 +145,6 @@ PFN_vkGetMoltenVKConfigurationMVK qvkGetMoltenVKConfigurationMVK;
 PFN_vkSetMoltenVKConfigurationMVK qvkSetMoltenVKConfigurationMVK;
 #endif
 
-qboolean RE_IsHighDPIaware = false;
-SDL_Window *window;
 
 void R_RotateForEntity (entity_t *e, float *mvMatrix)
 {
@@ -1194,13 +1193,6 @@ R_Register( void )
 	ri.Cmd_AddCommand("modellist", Mod_Modellist_f);
 }
 
-/*
- * Fills the actual size of the drawable into width and height.
- */
-void RE_GetDrawableSize(int* width, int* height)
-{
-	SDL_Vulkan_GetDrawableSize(window, width, height);
-}
 
 static int
 Vkimp_SetMode(int *pwidth, int *pheight, int mode, int fullscreen)
@@ -1572,7 +1564,7 @@ RE_InitContext(void *win)
 {
 	char title[40] = {0};
 
-	window = (SDL_Window *)win;
+	SDL_Window *window = (SDL_Window *)win;
 
 	if(window == NULL)
 	{
@@ -1583,15 +1575,19 @@ RE_InitContext(void *win)
 	/* Window title - set here so we can display renderer name in it */
 	snprintf(title, sizeof(title), "Yamagi Quake II - Vulkan Render");
 	SDL_SetWindowTitle(window, title);
+	// window is ready, initialize Vulkan now
+	QVk_SetWindow(window);
 
 #if SDL_VERSION_ATLEAST(2, 26, 0)
 	// Figure out if we are high dpi aware.
-	int flags = SDL_GetWindowFlags(win);
+	int flags = SDL_GetWindowFlags(window);
 	RE_IsHighDPIaware = (flags & SDL_WINDOW_ALLOW_HIGHDPI) ? true : false;
+	if (RE_IsHighDPIaware)
+	{
+		R_Printf(PRINT_ALL, "%s() - HighDPI is enabled\n", __func__);
+	}
 #endif
 
-	// window is ready, initialize Vulkan now
-	QVk_SetWindow(window);
 	if (!QVk_Init())
 	{
 		R_Printf(PRINT_ALL, "%s() - could not initialize Vulkan!\n", __func__);
@@ -1642,14 +1638,14 @@ qboolean Vkimp_CreateSurface(SDL_Window *window)
 	{
 		if (vid_fullscreen->value != 2)
 		{
-			RE_GetDrawableSize(&vid.width, &vid.height);
+			QVk_GetDrawableSize(&vid.width, &vid.height);
 		}
 		else
 		{
 			if (r_mode->value == -2)
 			{
 				/* User requested native resolution. */
-				RE_GetDrawableSize(&vid.width, &vid.height);
+				QVk_GetDrawableSize(&vid.width, &vid.height);
 			}
 		}
 	}
@@ -1739,7 +1735,7 @@ GetRefAPI(refimport_t imp)
 	refexport.IsVSyncActive = RE_IsVsyncActive;
 	refexport.Shutdown = RE_Shutdown;
 	refexport.InitContext = RE_InitContext;
-	refexport.GetDrawableSize = RE_GetDrawableSize;
+	refexport.GetDrawableSize = QVk_GetDrawableSize;
 	refexport.ShutdownContext = RE_ShutdownContext;
 	refexport.PrepareForWindow = RE_PrepareForWindow;
 

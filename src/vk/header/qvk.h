@@ -287,6 +287,7 @@ extern PFN_vkSetMoltenVKConfigurationMVK qvkSetMoltenVKConfigurationMVK;
 void		QVk_SetWindow(SDL_Window*);
 qboolean	QVk_Init(void);
 void		QVk_PostInit(void);
+void		QVk_GetDrawableSize(int *width, int *height);
 void		QVk_WaitAndShutdownAll(void);
 void		QVk_Shutdown(void);
 void		QVk_Restart(void);
