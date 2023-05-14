@@ -144,6 +144,9 @@ PFN_vkGetMoltenVKConfigurationMVK qvkGetMoltenVKConfigurationMVK;
 PFN_vkSetMoltenVKConfigurationMVK qvkSetMoltenVKConfigurationMVK;
 #endif
 
+qboolean RE_IsHighDPIaware = false;
+SDL_Window *window;
+
 void R_RotateForEntity (entity_t *e, float *mvMatrix)
 {
 	Mat_Rotate(mvMatrix, -e->angles[2], 1.f, 0.f, 0.f);
@@ -1191,6 +1194,14 @@ R_Register( void )
 	ri.Cmd_AddCommand("modellist", Mod_Modellist_f);
 }
 
+/*
+ * Fills the actual size of the drawable into width and height.
+ */
+void RE_GetDrawableSize(int* width, int* height)
+{
+	SDL_Vulkan_GetDrawableSize(window, width, height);
+}
+
 static int
 Vkimp_SetMode(int *pwidth, int *pheight, int mode, int fullscreen)
 {
@@ -1561,7 +1572,7 @@ RE_InitContext(void *win)
 {
 	char title[40] = {0};
 
-	SDL_Window *window = (SDL_Window *)win;
+	window = (SDL_Window *)win;
 
 	if(window == NULL)
 	{
@@ -1572,6 +1583,12 @@ RE_InitContext(void *win)
 	/* Window title - set here so we can display renderer name in it */
 	snprintf(title, sizeof(title), "Yamagi Quake II - Vulkan Render");
 	SDL_SetWindowTitle(window, title);
+
+#if SDL_VERSION_ATLEAST(2, 26, 0)
+	// Figure out if we are high dpi aware.
+	int flags = SDL_GetWindowFlags(win);
+	RE_IsHighDPIaware = (flags & SDL_WINDOW_ALLOW_HIGHDPI) ? true : false;
+#endif
 
 	// window is ready, initialize Vulkan now
 	QVk_SetWindow(window);
@@ -1594,6 +1611,49 @@ qboolean Vkimp_CreateSurface(SDL_Window *window)
 				__func__, SDL_GetError());
 		return false;
 	}
+
+	/* This is totaly obscure: For some strange reasons the renderer
+	   maintains two(!) repesentations of the resolution. One comes
+	   from the client and is saved in r_newrefdef. The other one
+	   is determined here and saved in vid. Several calculations take
+	   both representations into account.
+
+	   The values will always be the same. The GLimp_InitGraphics()
+	   call above communicates the requested resolution to the client
+	   where it ends up in the vid subsystem and the vid system writes
+	   it into r_newrefdef.
+
+	   We can't avoid the client roundtrip, because we can get the
+	   real size of the drawable (which can differ from the resolution
+	   due to high dpi awareness) only after the render context was
+	   created by GLimp_InitGraphics() and need to communicate it
+	   somehow to the client. So we just overwrite the values saved
+	   in vid with a call to RI_GetDrawableSize(), just like the
+	   client does. This makes sure that both values are the same
+	   and everything is okay.
+
+	   We also need to take the special case fullscreen window into
+	   account. With the fullscreen windows we cannot use the
+	   drawable size, it would scale all cases to the size of the
+	   window. Instead use the drawable size when the user wants
+	   native resolution (the fullscreen window fills the screen)
+	   and use the requested resolution in all other cases. */
+	if (RE_IsHighDPIaware)
+	{
+		if (vid_fullscreen->value != 2)
+		{
+			RE_GetDrawableSize(&vid.width, &vid.height);
+		}
+		else
+		{
+			if (r_mode->value == -2)
+			{
+				/* User requested native resolution. */
+				RE_GetDrawableSize(&vid.width, &vid.height);
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -1679,6 +1739,7 @@ GetRefAPI(refimport_t imp)
 	refexport.IsVSyncActive = RE_IsVsyncActive;
 	refexport.Shutdown = RE_Shutdown;
 	refexport.InitContext = RE_InitContext;
+	refexport.GetDrawableSize = RE_GetDrawableSize;
 	refexport.ShutdownContext = RE_ShutdownContext;
 	refexport.PrepareForWindow = RE_PrepareForWindow;
 
