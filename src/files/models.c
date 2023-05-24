@@ -685,8 +685,23 @@ Mod_LoadMD2 (const char *mod_name, const void *buffer, int modfilelen,
 	// register all skins
 	memcpy ((char *)pheader + pheader->ofs_skins, (char *)pinmodel + pheader->ofs_skins,
 		pheader->num_skins*MAX_SKINNAME);
-	for (i=0 ; i<pheader->num_skins ; i++)
+
+	if (pheader->num_skins > MAX_MD2SKINS)
 	{
+		R_Printf(PRINT_ALL, "%s has too many skins (%i > %i), "
+				"extra skins will be ignored\n",
+				mod_name, pheader->num_skins, MAX_MD2SKINS);
+	}
+
+	// Load in our skins.
+	for (i=0; i < pheader->num_skins; i++)
+	{
+		if (i >= MAX_MD2SKINS)
+		{
+			/* extra skins are ignored */
+			continue;
+		}
+
 		skins[i] = find_image((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME,
 			it_skin);
 	}
@@ -972,9 +987,22 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 		src += size;
 	}
 
-	// Load in our skins.
-	for (i=0 ; i<pheader->num_skins ; i++)
+	if (pheader->num_skins > MAX_MD2SKINS)
 	{
+		R_Printf(PRINT_ALL, "%s has too many skins (%i > %i), "
+				"extra skins will be ignored\n",
+				mod_name, pheader->num_skins, MAX_MD2SKINS);
+	}
+
+	// Load in our skins.
+	for (i=0; i < pheader->num_skins; i++)
+	{
+		if (i >= MAX_MD2SKINS)
+		{
+			/* extra skins are ignored */
+			continue;
+		}
+
 		skins[i] = find_image((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME,
 			it_skin);
 	}
@@ -996,9 +1024,9 @@ Mod_LoadDKMModel(const char *mod_name, const void *buffer, int modfilelen,
 	vec3_t mins, vec3_t maxs, struct image_s **skins, findimage_t find_image,
 	modtype_t *type)
 {
-	dmdl_t dmdlheader, *pheader;
+	dmdl_t dmdlheader, *pheader = NULL;
 	dkm_header_t header;
-	void *extradata;
+	void *extradata = NULL;
 	int i;
 
 	if (sizeof(dkm_header_t) > modfilelen)
@@ -1087,9 +1115,22 @@ Mod_LoadDKMModel(const char *mod_name, const void *buffer, int modfilelen,
 	Mod_LoadDkmTriangleList (pheader,
 		(dkmtriangle_t *)((byte *)buffer + header.ofs_tris));
 
-	// Load in our skins.
-	for (i=0 ; i<pheader->num_skins ; i++)
+	if (pheader->num_skins > MAX_MD2SKINS)
 	{
+		R_Printf(PRINT_ALL, "%s has too many skins (%i > %i), "
+				"extra skins will be ignored\n",
+				mod_name, pheader->num_skins, MAX_MD2SKINS);
+	}
+
+	// Load in our skins.
+	for (i=0; i < pheader->num_skins; i++)
+	{
+		if (i >= MAX_MD2SKINS)
+		{
+			/* extra skins are ignored */
+			continue;
+		}
+
 		skins[i] = find_image((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME,
 			it_skin);
 	}
@@ -1179,9 +1220,9 @@ Mod_LoadSP2 (const char *mod_name, const void *buffer, int modfilelen,
 
 	if (sprout->numframes > MAX_MD2SKINS)
 	{
-		R_Printf(PRINT_ALL, "%s has too many frames (%i > %i)",
+		R_Printf(PRINT_ALL, "%s has too many sprites (%i > %i), "
+				"extra sprites will be ignored\n",
 				mod_name, sprout->numframes, MAX_MD2SKINS);
-		return NULL;
 	}
 
 	/* byte swap everything */
@@ -1192,6 +1233,12 @@ Mod_LoadSP2 (const char *mod_name, const void *buffer, int modfilelen,
 		sprout->frames[i].origin_x = LittleLong(sprin->frames[i].origin_x);
 		sprout->frames[i].origin_y = LittleLong(sprin->frames[i].origin_y);
 		memcpy(sprout->frames[i].name, sprin->frames[i].name, MAX_SKINNAME);
+
+		if (i >= MAX_MD2SKINS)
+		{
+			/* extra sprites are ignored */
+			continue;
+		}
 
 		skins[i] = find_image((char *)sprout->frames[i].name, it_sprite);
 		if (!skins[i])
@@ -1301,10 +1348,17 @@ Mod_ReLoadSkins(struct image_s **skins, findimage_t find_image, void *extradata,
 	if (type == mod_sprite)
 	{
 		dsprite_t	*sprout;
-		int	i;
+		int	i, numframes;
 
 		sprout = (dsprite_t *)extradata;
-		for (i=0 ; i<sprout->numframes ; i++)
+		numframes = sprout->numframes;
+		if (numframes > MAX_MD2SKINS)
+		{
+			/* extra skins are ignored */
+			numframes = MAX_MD2SKINS;
+		}
+
+		for (i=0; i < numframes; i++)
 		{
 			skins[i] = find_image(sprout->frames[i].name, it_sprite);
 		}
@@ -1313,11 +1367,20 @@ Mod_ReLoadSkins(struct image_s **skins, findimage_t find_image, void *extradata,
 	else if (type == mod_alias)
 	{
 		dmdl_t *pheader;
-		int	i;
+		int	i, num_skins;
 
 		pheader = (dmdl_t *)extradata;
-		for (i=0 ; i<pheader->num_skins ; i++)
+		num_skins = pheader->num_skins;
+		if (num_skins > MAX_MD2SKINS)
+		{
+			/* extra skins are ignored */
+			num_skins = MAX_MD2SKINS;
+		}
+
+		for (i=0; i < num_skins; i++)
+		{
 			skins[i] = find_image ((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME, it_skin);
+		}
 		return  pheader->num_frames;
 	}
 	/* Unknow format, no images associated with it */
