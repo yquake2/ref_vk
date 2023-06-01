@@ -1025,7 +1025,7 @@ Mod_LoadDKMModel(const char *mod_name, const void *buffer, int modfilelen,
 	modtype_t *type)
 {
 	dmdl_t dmdlheader, *pheader = NULL;
-	dkm_header_t header;
+	dkm_header_t header = {0};
 	void *extradata = NULL;
 	int i;
 
