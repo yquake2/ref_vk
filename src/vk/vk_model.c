@@ -85,8 +85,7 @@ Mod_Reallocate (void)
 
 	R_Printf(PRINT_ALL, "Reallocate space for %d models.\n", models_known_max);
 
-	models_known = malloc(models_known_max * sizeof(model_t));
-	memset(models_known, 0, models_known_max * sizeof(model_t));
+	models_known = calloc(models_known_max, sizeof(model_t));
 }
 
 /*
