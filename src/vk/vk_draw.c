@@ -266,7 +266,7 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const b
 	int	i, j;
 	unsigned *dest;
 	byte *source;
-	byte *image_scaled;
+	byte *image_scaled = NULL;
 	unsigned *raw_image32;
 
 	if (!vk_frameStarted)
@@ -325,14 +325,14 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const b
 				dest[rowOffset + j] = r_rawpalette[palIdx];
 			}
 		}
-	}
 
-	if (r_retexturing->value)
-	{
-		int scaled_size = cols * rows;
+		if (r_retexturing->value)
+		{
+			int scaled_size = cols * rows;
 
-		free(image_scaled);
-		SmoothColorImage(raw_image32, scaled_size, (scaled_size) >> 7);
+			free(image_scaled);
+			SmoothColorImage(raw_image32, scaled_size, (scaled_size) >> 7);
+		}
 	}
 
 	if (vk_rawTexture.resource.image != VK_NULL_HANDLE &&
