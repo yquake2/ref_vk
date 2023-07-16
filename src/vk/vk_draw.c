@@ -260,7 +260,7 @@ RE_Draw_StretchRaw
 static int vk_rawTexture_height;
 static int vk_rawTexture_width;
 
-void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data)
+void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int bits)
 {
 
 	int	i, j;
@@ -272,53 +272,66 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 	if (!vk_frameStarted)
 		return;
 
-	if (r_retexturing->value)
+	if (bits == 32)
 	{
-		// triple scaling
-		if (cols < (vid.width / 3) || rows < (vid.height / 3))
+		raw_image32 = malloc(cols * rows * sizeof(unsigned));
+		if (!raw_image32)
 		{
-			image_scaled = malloc(cols * rows * 9);
-
-			scale3x(data, image_scaled, cols, rows);
-
-			cols = cols * 3;
-			rows = rows * 3;
+			return;
 		}
-		else
-		// double scaling
-		{
-			image_scaled = malloc(cols * rows * 4);
 
-			scale2x(data, image_scaled, cols, rows);
-
-			cols = cols * 2;
-			rows = rows * 2;
-		}
+		memcpy(raw_image32, data, cols * rows * sizeof(unsigned));
 	}
 	else
 	{
-		image_scaled = data;
-	}
-
-	raw_image32 = malloc(cols * rows * sizeof(unsigned));
-
-	source = image_scaled;
-	dest = raw_image32;
-	for (i = 0; i < rows; ++i)
-	{
-		int rowOffset = i * cols;
-		for (j = 0; j < cols; ++j)
+		if (r_retexturing->value)
 		{
-			byte palIdx = source[rowOffset + j];
-			dest[rowOffset + j] = r_rawpalette[palIdx];
+			// triple scaling
+			if (cols < (vid.width / 3) || rows < (vid.height / 3))
+			{
+				image_scaled = malloc(cols * rows * 9);
+
+				scale3x(data, image_scaled, cols, rows);
+
+				cols = cols * 3;
+				rows = rows * 3;
+			}
+			else
+			// double scaling
+			{
+				image_scaled = malloc(cols * rows * 4);
+
+				scale2x(data, image_scaled, cols, rows);
+
+				cols = cols * 2;
+				rows = rows * 2;
+			}
+		}
+		else
+		{
+			image_scaled = (byte *)data;
+		}
+
+		raw_image32 = malloc(cols * rows * sizeof(unsigned));
+
+		source = image_scaled;
+		dest = raw_image32;
+		for (i = 0; i < rows; ++i)
+		{
+			int rowOffset = i * cols;
+			for (j = 0; j < cols; ++j)
+			{
+				byte palIdx = source[rowOffset + j];
+				dest[rowOffset + j] = r_rawpalette[palIdx];
+			}
 		}
 	}
 
 	if (r_retexturing->value)
 	{
-		free(image_scaled);
-
 		int scaled_size = cols * rows;
+
+		free(image_scaled);
 		SmoothColorImage(raw_image32, scaled_size, (scaled_size) >> 7);
 	}
 
@@ -351,6 +364,7 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *d
 		QVk_DebugSetObjectName((uint64_t)vk_rawTexture.resource.memory,
 			VK_OBJECT_TYPE_DEVICE_MEMORY, "Memory: raw texture");
 	}
+
 	free(raw_image32);
 
 	float imgTransform[] = { (float)x / vid.width, (float)y / vid.height,

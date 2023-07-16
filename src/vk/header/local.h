@@ -231,7 +231,7 @@ void	RE_Draw_CharScaled (int x, int y, int num, float scale);
 void	RE_Draw_TileClear (int x, int y, int w, int h, char *name);
 void	RE_Draw_Fill (int x, int y, int w, int h, int c);
 void	RE_Draw_FadeScreen (void);
-void	RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
+void	RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int bits);
 
 qboolean	RE_EndWorldRenderpass( void );
 
