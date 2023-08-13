@@ -38,13 +38,49 @@
 #error YQ2OSTYPE should be defined by the build system
 #endif
 
-#ifndef YQ2ARCH
-#error YQ2ARCH should be defined by the build system
-#endif
-
 #ifndef BUILD_DATE
 #define BUILD_DATE __DATE__
 #endif
+
+#ifdef _WIN32
+ #define CFGDIR "YamagiQ2"
+#else
+ #ifndef __HAIKU__
+   #define CFGDIR ".yq2"
+ #else
+   #define CFGDIR "yq2"
+ #endif
+#endif
+
+#ifndef YQ2ARCH
+  #ifdef _MSC_VER
+    // Setting YQ2ARCH for VisualC++ from CMake doesn't work when using VS integrated CMake
+    // so set it in code instead
+    #ifdef YQ2ARCH
+      #undef YQ2ARCH
+    #endif
+    #ifdef _M_X64
+      // this matches AMD64 and ARM64EC (but not regular ARM64), but they're supposed to be binary-compatible somehow, so whatever
+      #define YQ2ARCH "x86_64"
+    #elif defined(_M_ARM64)
+      #define YQ2ARCH "arm64"
+    #elif defined(_M_ARM)
+      #define YQ2ARCH "arm"
+    #elif defined(_M_IX86)
+      #define YQ2ARCH "x86"
+    #else
+      // if you're not targeting one of the aforementioned architectures,
+      // check https://learn.microsoft.com/en-us/cpp/preprocessor/predefined-macros
+      // to find out how to detect yours and add it here - and please send a patch :)
+      #error "Unknown CPU architecture!"
+      // (for a quick and dirty solution, comment out the previous line, but keep in mind
+      //  that savegames may not be compatible with other builds of Yamagi Quake II)
+      #define YQ2ARCH "UNKNOWN"
+    #endif // _M_X64 etc
+  #else // other compilers than MSVC
+    #error YQ2ARCH should be defined by the build system
+  #endif // _MSC_VER
+#endif // YQ2ARCH
 
 /* ================================================================== */
 
@@ -708,17 +744,18 @@ void Com_Printf(char *fmt, ...) PRINTF_ATTR(1, 2);
 void Com_DPrintf(char *fmt, ...) PRINTF_ATTR(1, 2);
 void Com_VPrintf(int print_level, const char *fmt, va_list argptr); /* print_level is PRINT_ALL or PRINT_DEVELOPER */
 void Com_MDPrintf(char *fmt, ...) PRINTF_ATTR(1, 2);
-YQ2_ATTR_NORETURN void Com_Error(int code, char *fmt, ...) PRINTF_ATTR(2, 3);
+YQ2_ATTR_NORETURN_FUNCPTR void Com_Error(int code, char *fmt, ...) PRINTF_ATTR(2, 3);
 YQ2_ATTR_NORETURN void Com_Quit(void);
 
 /* Ugly work around for unsupported
  * format specifiers unter mingw. */
-#define YQ2_COM_PRId64 PRId64
 #define YQ2_COM_PRIu64 PRIu64
 
 #ifdef WIN32
+#define YQ2_COM_PRId64 "%I64d"
 #define YQ2_COM_PRIdS "%Id"
 #else
+#define YQ2_COM_PRId64 "%ld"
 #define YQ2_COM_PRIdS "%zd"
 #endif
 
