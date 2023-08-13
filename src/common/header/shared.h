@@ -61,16 +61,17 @@ typedef unsigned char byte;
 	// must be used as prefix (YQ2_ATTR_NORETURN void bla();)!
 	#define YQ2_ATTR_NORETURN       _Noreturn
 	#define YQ2_STATIC_ASSERT(C, M) _Static_assert((C), M)
-#  if defined(__GNUC__)
+  #if defined(__GNUC__)
 	#define YQ2_ATTR_MALLOC         __attribute__ ((__malloc__))
 	#define YQ2_ATTR_INLINE         __attribute__((always_inline)) inline
-#  elif defined(_MSC_VER)
-   	#define YQ2_ATTR_MALLOC         __declspec(restrict)
-#  else
+  #elif defined(_MSC_VER)
+	#define YQ2_ATTR_MALLOC         __declspec(restrict)
+	#define YQ2_ATTR_INLINE         __forceinline
+  #else
 	// no equivalent per see
 	#define YQ2_ATTR_MALLOC
 	#define YQ2_ATTR_INLINE         inline
-#  endif
+  #endif
 #elif defined(__GNUC__) // GCC and clang should support this attribute
 	#define YQ2_ALIGNAS_SIZE(SIZE)  __attribute__(( __aligned__(SIZE) ))
 	#define YQ2_ALIGNAS_TYPE(TYPE)  __attribute__(( __aligned__(__alignof__(TYPE)) ))
@@ -96,7 +97,7 @@ typedef unsigned char byte;
 
 	// must be used as prefix (YQ2_ATTR_NORETURN void bla();)!
 	#define YQ2_ATTR_NORETURN       __declspec(noreturn)
-   	#define YQ2_ATTR_MALLOC         __declspec(restrict)
+	#define YQ2_ATTR_MALLOC         __declspec(restrict)
 	#define YQ2_ATTR_INLINE         __forceinline
 	#define YQ2_STATIC_ASSERT(C, M) assert((C) && M)
 #else
@@ -104,7 +105,7 @@ typedef unsigned char byte;
 	#define YQ2_ALIGNAS_SIZE(SIZE)
 	#define YQ2_ALIGNAS_TYPE(TYPE)
 	#define YQ2_ATTR_NORETURN
-   	#define YQ2_ATTR_MALLOC
+	#define YQ2_ATTR_MALLOC
 	#define YQ2_ATTR_INLINE         inline
 	#define YQ2_STATIC_ASSERT(C, M) assert((C) && M)
 #endif
@@ -371,6 +372,9 @@ int randk(void);
 float frandk(void);
 float crandk(void);
 void randk_seed(void);
+
+/* Addition code utilities */
+qboolean Utils_FilenameFiltered(const char *name, const char *filter, char sepator);
 
 /*
  * ==============================================================

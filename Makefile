@@ -357,6 +357,7 @@ REFVK_OBJS_ := \
 	src/files/wal.o \
 	src/files/pvs.o \
 	src/common/shared.o \
+	src/common/utils.o \
 	src/common/md4.o
 
 ifeq ($(YQ2_OSTYPE), Windows)
