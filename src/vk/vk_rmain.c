@@ -119,7 +119,7 @@ cvar_t	*vk_postprocess;
 cvar_t	*vk_dynamic;
 cvar_t	*vk_msaa;
 cvar_t	*vk_showtris;
-cvar_t	*vk_lightmap;
+cvar_t	*r_lightmap;
 cvar_t	*vk_texturemode;
 cvar_t	*vk_lmaptexturemode;
 cvar_t	*vk_aniso;
@@ -1114,6 +1114,10 @@ RE_RenderFrame (refdef_t *fd)
 static void
 R_Register( void )
 {
+	/* Init default value */
+	s_blocklights = NULL;
+	s_blocklights_max = NULL;
+
 	r_lefthand = ri.Cvar_Get("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	r_norefresh = ri.Cvar_Get("r_norefresh", "0", 0);
 	r_fullbright = ri.Cvar_Get("r_fullbright", "0", 0);
@@ -1154,7 +1158,7 @@ R_Register( void )
 	vk_dynamic = ri.Cvar_Get("vk_dynamic", "1", 0);
 	vk_msaa = ri.Cvar_Get("r_msaa_samples", "0", CVAR_ARCHIVE);
 	vk_showtris = ri.Cvar_Get("vk_showtris", "0", 0);
-	vk_lightmap = ri.Cvar_Get("vk_lightmap", "0", 0);
+	r_lightmap = ri.Cvar_Get("r_lightmap", "0", 0);
 	vk_texturemode = ri.Cvar_Get("vk_texturemode", "VK_MIPMAP_LINEAR", CVAR_ARCHIVE);
 	vk_lmaptexturemode = ri.Cvar_Get("vk_lmaptexturemode", "VK_MIPMAP_LINEAR", CVAR_ARCHIVE);
 	vk_aniso = ri.Cvar_Get("r_anisotropic", "0", CVAR_ARCHIVE);
@@ -1180,7 +1184,9 @@ R_Register( void )
 
 	// clamp vk_msaa to accepted range so that video menu doesn't crash on us
 	if (vk_msaa->value < 0)
+	{
 		ri.Cvar_Set("r_msaa_samples", "0");
+	}
 
 	vid_fullscreen = ri.Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_gamma = ri.Cvar_Get("vid_gamma", "1.0", CVAR_ARCHIVE);
@@ -1298,7 +1304,6 @@ RE_Init
 */
 static qboolean RE_Init( void )
 {
-
 	R_Printf(PRINT_ALL, "Refresh: " REF_VERSION "\n");
 	R_Printf(PRINT_ALL, "Platform: " YQ2OSTYPE "\n");
 	R_Printf(PRINT_ALL, "Architecture: " YQ2ARCH "\n");
@@ -1348,9 +1353,18 @@ void RE_Shutdown (void)
 	ri.Cmd_RemoveCommand("vk_mem");
 	ri.Cmd_RemoveCommand("imagelist");
 	ri.Cmd_RemoveCommand("screenshot");
-	ri.Cmd_RemoveCommand( "modellist" );
+	ri.Cmd_RemoveCommand("modellist");
 
 	QVk_WaitAndShutdownAll();
+
+	/* Cleanup buffers */
+	if (s_blocklights)
+	{
+		free(s_blocklights);
+	}
+
+	s_blocklights = NULL;
+	s_blocklights_max = NULL;
 }
 
 /*

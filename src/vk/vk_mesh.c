@@ -495,12 +495,12 @@ Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin,
 	frontlerp = 1.0 - backlerp;
 
 	// move should be the delta back to the previous frame * backlerp
-	VectorSubtract (currententity->oldorigin, currententity->origin, delta);
+	VectorSubtract(currententity->oldorigin, currententity->origin, delta);
 	AngleVectors (currententity->angles, vectors[0], vectors[1], vectors[2]);
 
-	move[0] = DotProduct (delta, vectors[0]);	// forward
-	move[1] = -DotProduct (delta, vectors[1]);	// left
-	move[2] = DotProduct (delta, vectors[2]);	// up
+	move[0] = DotProduct(delta, vectors[0]);	// forward
+	move[1] = -DotProduct(delta, vectors[1]);	// left
+	move[2] = DotProduct(delta, vectors[2]);	// up
 
 	VectorAdd (move, oldframe->translate, move);
 
@@ -854,7 +854,7 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 	}
 	else
 	{
-		R_LightPoint (currententity->origin, shadelight, currententity);
+		R_LightPoint(currententity->origin, shadelight, currententity);
 
 		// player lighting hack for communication back to server
 		// big hack!

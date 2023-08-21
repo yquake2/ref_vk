@@ -98,7 +98,7 @@ windows.
 
 * **vk_showtris**: Display mesh triangles. (default: `0`)
 
-* **vk_lightmap**: Display lightmaps. (default: `0`)
+* **r_lightmap**: Display lightmaps. (default: `0`)
 
 * **vk_postprocess**: Toggle additional color/gamma correction.
   (default: `1`)

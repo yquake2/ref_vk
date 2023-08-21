@@ -27,9 +27,6 @@ static vec3_t	modelorg;		// relative to viewpoint
 
 msurface_t	*r_alpha_surfaces;
 
-#define DYNAMIC_LIGHT_WIDTH  128
-#define DYNAMIC_LIGHT_HEIGHT 128
-
 #define LIGHTMAP_BYTES 4
 
 #define	BLOCK_WIDTH		128
@@ -433,7 +430,7 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 		float viewLightmaps;
 	} lmapPolyUbo;
 
-	lmapPolyUbo.viewLightmaps = vk_lightmap->value ? 1.f : 0.f;
+	lmapPolyUbo.viewLightmaps = r_lightmap->value ? 1.f : 0.f;
 
 	if (modelMatrix)
 	{
@@ -480,12 +477,13 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 		unsigned	temp[128 * 128];
 		int			smax, tmax;
 
+		smax = (surf->extents[0] >> 4) + 1;
+		tmax = (surf->extents[1] >> 4) + 1;
+
+		R_BuildLightMap(surf, (void *)temp, smax * 4);
+
 		if ((surf->styles[map] >= 32 || surf->styles[map] == 0) && (surf->dlightframe != r_framecount))
 		{
-			smax = (surf->extents[0] >> 4) + 1;
-			tmax = (surf->extents[1] >> 4) + 1;
-
-			R_BuildLightMap(surf, (void *)temp, smax * 4);
 			R_SetCacheState(surf);
 
 			lmtex = surf->lightmaptexturenum;
@@ -493,11 +491,6 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 		}
 		else
 		{
-			smax = (surf->extents[0] >> 4) + 1;
-			tmax = (surf->extents[1] >> 4) + 1;
-
-			R_BuildLightMap(surf, (void *)temp, smax * 4);
-
 			lmtex = surf->lightmaptexturenum + DYNLIGHTMAP_OFFSET;
 			QVk_UpdateTextureData(&vk_state.lightmap_textures[lmtex], (unsigned char *)temp, surf->light_s, surf->light_t, smax, tmax);
 		}
@@ -724,6 +717,7 @@ void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel)
 {
 	vec3_t		mins, maxs;
 	qboolean	rotated;
+	float model[16];
 
 	if (currentmodel->nummodelsurfaces == 0)
 		return;
@@ -768,7 +762,7 @@ void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel)
 
 	currententity->angles[0] = -currententity->angles[0];	// stupid quake bug
 	currententity->angles[2] = -currententity->angles[2];	// stupid quake bug
-	float model[16];
+
 	Mat_Identity(model);
 	R_RotateForEntity(currententity, model);
 	currententity->angles[0] = -currententity->angles[0];	// stupid quake bug
@@ -850,7 +844,7 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 		dot = modelorg[2] - plane->dist;
 		break;
 	default:
-		dot = DotProduct (modelorg, plane->normal) - plane->dist;
+		dot = DotProduct(modelorg, plane->normal) - plane->dist;
 		break;
 	}
 
@@ -924,7 +918,7 @@ void R_DrawWorld (void)
 	if ( r_newrefdef.rdflags & RDF_NOWORLDMODEL )
 		return;
 
-	VectorCopy (r_newrefdef.vieworg, modelorg);
+	VectorCopy(r_newrefdef.vieworg, modelorg);
 
 	// auto cycle the world frame for texture animation
 	memset (&ent, 0, sizeof(ent));
@@ -1163,27 +1157,28 @@ void Vk_BuildPolygonFromSurface(msurface_t *fa, model_t *currentmodel)
 			r_pedge = &pedges[-lindex];
 			vec = currentmodel->vertexes[r_pedge->v[1]].position;
 		}
-		s = DotProduct (vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+
+		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
 		s /= fa->texinfo->image->width;
 
-		t = DotProduct (vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
 		t /= fa->texinfo->image->height;
 
 		VectorAdd (total, vec, total);
-		VectorCopy (vec, poly->verts[i]);
+		VectorCopy(vec, poly->verts[i]);
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
 
 		//
 		// lightmap texture coordinates
 		//
-		s = DotProduct (vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
 		s -= fa->texturemins[0];
 		s += fa->light_s*16;
 		s += 8;
 		s /= BLOCK_WIDTH*16; //fa->texinfo->texture->width;
 
-		t = DotProduct (vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
 		t -= fa->texturemins[1];
 		t += fa->light_t*16;
 		t += 8;
@@ -1210,8 +1205,8 @@ void Vk_CreateSurfaceLightmap (msurface_t *surf)
 	if (surf->flags & (SURF_DRAWSKY|SURF_DRAWTURB))
 		return;
 
-	smax = (surf->extents[0]>>4)+1;
-	tmax = (surf->extents[1]>>4)+1;
+	smax = (surf->extents[0] >> 4) + 1;
+	tmax = (surf->extents[1] >> 4) + 1;
 
 	if ( !LM_AllocBlock( smax, tmax, &surf->light_s, &surf->light_t ) )
 	{

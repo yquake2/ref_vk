@@ -142,7 +142,7 @@ extern	cvar_t	*vk_shadows;
 extern	cvar_t	*vk_dynamic;
 extern	cvar_t	*vk_msaa;
 extern	cvar_t	*vk_showtris;
-extern	cvar_t	*vk_lightmap;
+extern	cvar_t	*r_lightmap;
 extern	cvar_t	*vk_texturemode;
 extern	cvar_t	*vk_lmaptexturemode;
 extern	cvar_t	*vk_aniso;
@@ -169,6 +169,8 @@ extern	int		c_visible_lightmaps;
 extern	int		c_visible_textures;
 
 extern	float	r_viewproj_matrix[16];
+
+extern	float *s_blocklights, *s_blocklights_max;
 
 void R_LightPoint (vec3_t p, vec3_t color, entity_t *currententity);
 void R_PushDlights (void);
