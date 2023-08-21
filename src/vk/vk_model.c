@@ -443,6 +443,7 @@ Mod_LoadFaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 		}
 
 		out->texinfo = loadmodel->texinfo + ti;
+		out->lmshift = DEFAULT_LMSHIFT;
 
 		CalcSurfaceExtents(loadmodel, out);
 

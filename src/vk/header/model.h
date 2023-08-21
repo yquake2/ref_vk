@@ -43,6 +43,7 @@ BRUSH MODELS
 //
 
 #define	VERTEXSIZE	7
+#define	DEFAULT_LMSHIFT		4
 
 typedef struct vkpoly_s
 {
@@ -66,6 +67,8 @@ typedef struct msurface_s
 	short		texturemins[2];
 	short		extents[2];
 
+	short		lmshift;
+
 	int			light_s, light_t;	// gl lightmap coordinates
 	int			dlight_s, dlight_t; // gl lightmap coordinates for dynamic lightmaps
 
@@ -75,7 +78,7 @@ typedef struct msurface_s
 
 	mtexinfo_t	*texinfo;
 
-// lighting info
+	/* lighting info */
 	int			dlightframe;
 	int			dlightbits;
 
