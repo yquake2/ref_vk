@@ -1131,10 +1131,11 @@ void Vk_BuildPolygonFromSurface(msurface_t *fa, model_t *currentmodel)
 	lnumverts = fa->numedges;
 
 	VectorClear (total);
+
 	//
 	// draw texture
 	//
-	poly = Hunk_Alloc (sizeof(vkpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float));
+	poly = Hunk_Alloc (sizeof(vkpoly_t) + (lnumverts-4) * VERTEXSIZE * sizeof(float));
 	poly->next = fa->polys;
 	poly->flags = fa->flags;
 	fa->polys = poly;

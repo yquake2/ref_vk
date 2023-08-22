@@ -356,7 +356,8 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 		}
 		else
 		{
-			meshUbo.textured = 1;
+			/* Do not apply texture for lighmap debug case */
+			meshUbo.textured = r_lightmap->value ? 0 : 1;
 			do
 			{
 				int vertIdx = vertCounts[pipelineIdx];
