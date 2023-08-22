@@ -367,14 +367,12 @@ R_AddDynamicLights(msurface_t *surf)
 	int			s, t;
 	int			i;
 	int			smax, tmax;
-	mtexinfo_t	*tex;
 	dlight_t	*dl;
 	float		*plightdest;
 	float		fsacc, ftacc;
 
 	smax = (surf->extents[0] >> surf->lmshift) + 1;
 	tmax = (surf->extents[1] >> surf->lmshift) + 1;
-	tex = surf->texinfo;
 
 	for (lnum=0 ; lnum<r_newrefdef.num_dlights ; lnum++)
 	{
@@ -404,15 +402,17 @@ R_AddDynamicLights(msurface_t *surf)
 					surf->plane->normal[i]*fdist;
 		}
 
-		local[0] = DotProduct(impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
-		local[1] = DotProduct(impact, tex->vecs[1]) + tex->vecs[1][3] - surf->texturemins[1];
+		local[0] = DotProduct (impact, surf->lmvecs[0]) + surf->lmvecs[0][3] - surf->texturemins[0];
+		local[1] = DotProduct (impact, surf->lmvecs[1]) + surf->lmvecs[1][3] - surf->texturemins[1];
 
 		plightdest = s_blocklights;
 		for (t = 0, ftacc = 0; t < tmax; t++, ftacc += (1 << surf->lmshift))
 		{
 			td = local[1] - ftacc;
-			if ( td < 0 )
+			if (td < 0)
 				td = -td;
+
+			td *= surf->lmvlen[1];
 
 			for ( s=0, fsacc = 0 ; s<smax ; s++, fsacc += (1 << surf->lmshift), plightdest += 3)
 			{
@@ -420,6 +420,8 @@ R_AddDynamicLights(msurface_t *surf)
 
 				if ( sd < 0 )
 					sd = -sd;
+
+				sd *= surf->lmvlen[0];
 
 				if (sd > td)
 					fdist = sd + (td>>1);
