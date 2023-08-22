@@ -375,17 +375,154 @@ calcTexinfoAndFacesSize(const lump_t *fl, const byte *mod_base, const lump_t *tl
 	return ret;
 }
 
+// Extension to support lightmaps that aren't tied to texture scale.
+static int
+Mod_LoadDecoupledLM(const dlminfo_t* lminfos, int surfnum, msurface_t *out)
+{
+	const dlminfo_t *lminfo;
+	unsigned short lmwidth, lmheight;
+
+	if (lminfos == NULL) {
+		return -1;
+	}
+
+	lminfo = lminfos + surfnum;
+
+	lmwidth = LittleShort(lminfo->lmwidth);
+	lmheight = LittleShort(lminfo->lmheight);
+
+	if (lmwidth <= 0 || lmheight <= 0) {
+		return -1;
+	}
+
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 4; j++) {
+			out->lmvecs[i][j] = LittleFloat(lminfo->vecs[i][j]);
+		}
+	}
+
+	out->extents[0] = (short)(lmwidth - 1);
+	out->extents[1] = (short)(lmheight - 1);
+	out->lmshift = 0;
+	out->texturemins[0] = 0;
+	out->texturemins[1] = 0;
+
+	float v0 = VectorLength(out->lmvecs[0]);
+	out->lmvlen[0] = v0 > 0.0f ? 1.0f / v0 : 0.0f;
+
+	float v1 = VectorLength(out->lmvecs[1]);
+	out->lmvlen[1] = v1 > 0.0f ? 1.0f / v1 : 0.0f;
+
+	return LittleLong(lminfo->lightofs);
+}
+
+const void *
+Mod_BSPX_FindLump(bspx_header_t* bspx_header, char* lumpname, int* plumpsize, const byte* mod_base)
+{
+	int i;
+	bspx_lump_t* lump;
+
+	if (!bspx_header) {
+		return NULL;
+	}
+
+	lump = (bspx_lump_t*)(bspx_header + 1);
+	for (i = 0; i < bspx_header->numlumps; i++, lump++) {
+		if (!strcmp(lump->lumpname, lumpname)) {
+			if (plumpsize) {
+				*plumpsize = lump->filelen;
+			}
+			return mod_base + lump->fileofs;
+		}
+	}
+
+	return NULL;
+}
+
+bspx_header_t *
+Mod_LoadBSPX(int filesize, byte* mod_base)
+{
+	dheader_t* header;
+	bspx_header_t* xheader;
+	bspx_lump_t* lump;
+	int i;
+	int xofs;
+
+	// find end of last lump
+	header = (dheader_t*)mod_base;
+	xofs = 0;
+	for (i = 0; i < HEADER_LUMPS; i++) {
+		xofs = max(xofs,
+			ROUNDUP(header->lumps[i].fileofs + header->lumps[i].filelen, sizeof(int)));
+	}
+
+	if (xofs + sizeof(bspx_header_t) > filesize) {
+		return NULL;
+	}
+
+	xheader = (bspx_header_t*)(mod_base + xofs);
+	if (LittleLong(xheader->ident) != BSPXHEADER)
+	{
+		R_Printf(PRINT_ALL, "%s: Incorrect header ident.\n",
+			__func__, xheader->ident, BSPXHEADER);
+		return NULL;
+	}
+
+	xheader->numlumps = LittleLong(xheader->numlumps);
+
+	if (xheader->numlumps < 0 || xofs + sizeof(bspx_header_t) + xheader->numlumps * sizeof(bspx_lump_t) > filesize) {
+		return NULL;
+	}
+
+	// byte-swap and check sanity
+	lump = (bspx_lump_t*)(xheader + 1); // lumps immediately follow the header
+	for (i = 0; i < xheader->numlumps; i++, lump++) {
+		lump->lumpname[sizeof(lump->lumpname) - 1] = '\0'; // make sure it ends with zero
+		lump->fileofs = LittleLong(lump->fileofs);
+		lump->filelen = LittleLong(lump->filelen);
+		if (lump->fileofs < 0 || lump->filelen < 0 || (unsigned)(lump->fileofs + lump->filelen) >(unsigned)filesize) {
+			return NULL;
+		}
+	}
+
+	// success
+	return xheader;
+}
+
+static void
+SetSurfaceLighting(model_t* loadmodel, msurface_t* out, byte* styles, int lightofs)
+{
+	int i;
+
+	/* lighting info */
+	for (i = 0; i < MAXLIGHTMAPS; i++)
+	{
+		out->styles[i] = styles[i];
+	}
+
+	i = LittleLong(lightofs);
+	if (i == -1 || loadmodel->lightdata == NULL)
+	{
+		out->samples = NULL;
+	}
+	else
+	{
+		out->samples = loadmodel->lightdata + i;
+	}
+}
+
 /*
 =================
 Mod_LoadFaces
 =================
 */
 static void
-Mod_LoadFaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
+Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, bspx_header_t *bspx_header)
 {
-	dface_t *in;
+	int i, count, surfnum, lminfosize, lightofs;
+	const dlminfo_t *lminfos;
 	msurface_t *out;
-	int i, count, surfnum;
+	dface_t *in;
 
 	in = (void *)(mod_base + l->fileofs);
 
@@ -400,6 +537,13 @@ Mod_LoadFaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 
 	loadmodel->surfaces = out;
 	loadmodel->numsurfaces = count;
+
+	lminfos = Mod_BSPX_FindLump(bspx_header, "DECOUPLED_LM", &lminfosize, mod_base);
+	if (lminfos != NULL && lminfosize / sizeof(dlminfo_t) != loadmodel->numsurfaces) {
+		R_Printf(PRINT_ALL, "%s: [%s] decoupled_lm size %ld does not match surface count %d\n",
+			__func__, loadmodel->name, lminfosize / sizeof(dlminfo_t), loadmodel->numsurfaces);
+		lminfos = NULL;
+	}
 
 	Vk_BeginBuildingLightmaps(loadmodel);
 
@@ -444,24 +588,19 @@ Mod_LoadFaces (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 
 		out->texinfo = loadmodel->texinfo + ti;
 
-		CalcSurfaceExtents(loadmodel, out);
+		lightofs = Mod_LoadDecoupledLM(lminfos, surfnum, out);
+		if (lightofs < 0) {
+			memcpy(out->lmvecs, out->texinfo->vecs, sizeof(out->lmvecs));
+			out->lmshift = DEFAULT_LMSHIFT;
+			out->lmvlen[0] = 1.0f;
+			out->lmvlen[1] = 1.0f;
 
-		/* lighting info */
-		for (i = 0; i < MAXLIGHTMAPS; i++)
-		{
-			out->styles[i] = in->styles[i];
+			CalcSurfaceExtents(loadmodel, out);
+
+			lightofs = in->lightofs;
 		}
 
-		i = LittleLong(in->lightofs);
-
-		if (i == -1)
-		{
-			out->samples = NULL;
-		}
-		else
-		{
-			out->samples = loadmodel->lightdata + i;
-		}
+		SetSurfaceLighting(loadmodel, out, in->styles, lightofs);
 
 		/* set the drawing flags */
 		if (out->texinfo->flags & SURF_WARP)
@@ -635,9 +774,10 @@ Mod_LoadBrushModel
 static void
 Mod_LoadBrushModel (model_t *mod, const void *buffer, int modfilelen)
 {
-	int			i;
-	dheader_t	*header;
+	bspx_header_t*	bspx_header;
 	byte		*mod_base;
+	dheader_t	*header;
+	int			i;
 
 	header = (dheader_t *)buffer;
 
@@ -677,6 +817,10 @@ Mod_LoadBrushModel (model_t *mod, const void *buffer, int modfilelen)
 	mod->extradata = Hunk_Begin(hunkSize);
 	mod->type = mod_brush;
 
+
+	/* check for BSPX extensions */
+	bspx_header = Mod_LoadBSPX(modfilelen, (byte*)header);
+
 	/* load into heap */
 	Mod_LoadVertexes(mod->name, &mod->vertexes, &mod->numvertexes, mod_base,
 		&header->lumps[LUMP_VERTEXES], 0);
@@ -685,14 +829,14 @@ Mod_LoadBrushModel (model_t *mod, const void *buffer, int modfilelen)
 	Mod_LoadSurfedges(mod->name, &mod->surfedges, &mod->numsurfedges,
 		mod_base, &header->lumps[LUMP_SURFEDGES], 0);
 	Mod_LoadLighting(&mod->lightdata, mod_base, &header->lumps[LUMP_LIGHTING]);
-	Mod_LoadPlanes (mod->name, &mod->planes, &mod->numplanes,
+	Mod_LoadPlanes(mod->name, &mod->planes, &mod->numplanes,
 		mod_base, &header->lumps[LUMP_PLANES], 0);
 	Mod_LoadTexinfo(mod->name, &mod->texinfo, &mod->numtexinfo,
 		mod_base, &header->lumps[LUMP_TEXINFO], (findimage_t)Vk_FindImage,
 		r_notexture, 0);
-	Mod_LoadFaces(mod, mod_base, &header->lumps[LUMP_FACES]);
+	Mod_LoadFaces(mod, mod_base, &header->lumps[LUMP_FACES], bspx_header);
 	Mod_LoadMarksurfaces(mod, mod_base, &header->lumps[LUMP_LEAFFACES]);
-	Mod_LoadVisibility (&mod->vis, mod_base, &header->lumps[LUMP_VISIBILITY]);
+	Mod_LoadVisibility(&mod->vis, mod_base, &header->lumps[LUMP_VISIBILITY]);
 	Mod_LoadLeafs(mod, mod_base, &header->lumps[LUMP_LEAFS]);
 	Mod_LoadNodes(mod->name, mod->planes, mod->numplanes, mod->leafs,
 		mod->numleafs, &mod->nodes, &mod->numnodes, mod_base,
