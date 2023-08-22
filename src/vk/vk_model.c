@@ -452,7 +452,8 @@ Mod_LoadBSPX(int filesize, byte* mod_base)
 	header = (dheader_t*)mod_base;
 	xofs = 0;
 	for (i = 0; i < HEADER_LUMPS; i++) {
-		xofs = max(xofs, header->lumps[i].fileofs + header->lumps[i].filelen);
+		xofs = max(xofs,
+			ROUNDUP(header->lumps[i].fileofs + header->lumps[i].filelen, sizeof(int)));
 	}
 
 	if (xofs + sizeof(bspx_header_t) > filesize) {
@@ -462,6 +463,8 @@ Mod_LoadBSPX(int filesize, byte* mod_base)
 	xheader = (bspx_header_t*)(mod_base + xofs);
 	if (LittleLong(xheader->ident) != BSPXHEADER)
 	{
+		R_Printf(PRINT_ALL, "%s: Incorrect header ident.\n",
+			__func__, xheader->ident, BSPXHEADER);
 		return NULL;
 	}
 
