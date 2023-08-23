@@ -463,8 +463,7 @@ Mod_LoadBSPX(int filesize, byte* mod_base)
 	xheader = (bspx_header_t*)(mod_base + xofs);
 	if (LittleLong(xheader->ident) != BSPXHEADER)
 	{
-		R_Printf(PRINT_ALL, "%s: Incorrect header ident.\n",
-			__func__, xheader->ident, BSPXHEADER);
+		R_Printf(PRINT_ALL, "%s: Incorrect header ident.\n", __func__);
 		return NULL;
 	}
 
