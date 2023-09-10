@@ -1273,14 +1273,7 @@ R_SetMode (void)
 	}
 	else
 	{
-		if (err == rserr_invalid_fullscreen)
-		{
-			ri.Cvar_SetValue("vid_fullscreen", 0);
-			R_Printf(PRINT_ALL, "%s() - fullscreen unavailable in this mode\n", __func__);
-			if (Vkimp_SetMode((int*)&vid.width, (int*)&vid.height, r_mode->value, false) == rserr_ok)
-				return true;
-		}
-		else if (err == rserr_invalid_mode)
+		if (err == rserr_invalid_mode)
 		{
 			ri.Cvar_SetValue("r_mode", vk_state.prev_mode);
 			r_mode->modified = false;
