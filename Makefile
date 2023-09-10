@@ -341,9 +341,9 @@ REFVK_OBJS_ := \
 	src/vk/vk_mesh.o \
 	src/vk/vk_model.o \
 	src/vk/vk_pipeline.o \
-	src/vk/vk_rmain.o \
-	src/vk/vk_rmisc.o \
-	src/vk/vk_rsurf.o \
+	src/vk/vk_main.o \
+	src/vk/vk_misc.o \
+	src/vk/vk_surf.o \
 	src/vk/vk_shaders.o \
 	src/vk/vk_swapchain.o \
 	src/vk/vk_validation.o \

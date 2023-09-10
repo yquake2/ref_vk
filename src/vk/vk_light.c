@@ -1,36 +1,33 @@
 /*
-Copyright (C) 1997-2001 Id Software, Inc.
-Copyright (C) 2018-2019 Krzysztof Kondrak
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-// vk_light.c
+ * Copyright (C) 1997-2001 Id Software, Inc.
+ * Copyright (C) 2018-2019 Krzysztof Kondrak
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ *
+ * =======================================================================
+ *
+ * Lightmaps and dynamic lighting
+ *
+ * =======================================================================
+ */
 
 #include "header/local.h"
 
 int	r_dlightframecount;
-
-/*
-=============================================================================
-
-DYNAMIC LIGHTS BLEND RENDERING
-
-=============================================================================
-*/
 
 static void
 R_RenderDlight(dlight_t *light)
@@ -119,19 +116,15 @@ DYNAMIC LIGHTS
 =============================================================================
 */
 
-/*
-=============
-R_MarkSurfaceLights
-=============
-*/
 void
 R_MarkSurfaceLights(dlight_t *light, int bit, mnode_t *node, int r_dlightframecount)
 {
 	msurface_t	*surf;
 	int			i;
 
-	// mark the polygons
+	/* mark the polygons */
 	surf = r_worldmodel->surfaces + node->firstsurface;
+
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
 		if (surf->dlightframe != r_dlightframecount)
@@ -293,11 +286,6 @@ RecursiveLightPoint(mnode_t *node, vec3_t start, vec3_t end, vec3_t pointcolor)
 	return RecursiveLightPoint(node->children[!side], mid, end, pointcolor);
 }
 
-/*
-===============
-R_LightPoint
-===============
-*/
 void
 R_LightPoint(vec3_t p, vec3_t color, entity_t *currententity)
 {
@@ -327,22 +315,21 @@ R_LightPoint(vec3_t p, vec3_t color, entity_t *currententity)
 		VectorCopy(pointcolor, color);
 	}
 
-	//
-	// add dynamic lights
-	//
+	/* add dynamic lights */
 	dl = r_newrefdef.dlights;
+
 	for (lnum = 0; lnum < r_newrefdef.num_dlights; lnum++, dl++)
 	{
 		float	add;
 
 		VectorSubtract(currententity->origin,
-						dl->origin,
-						dist);
+				dl->origin, dist);
 		add = dl->intensity - VectorLength(dist);
-		add *= (1.0/256);
+		add *= (1.0 / 256);
+
 		if (add > 0)
 		{
-			VectorMA (color, add, dl->color, color);
+			VectorMA(color, add, dl->color, color);
 		}
 	}
 
@@ -620,12 +607,11 @@ store:
 	{
 		for (j = 0; j < smax; j++)
 		{
-
 			r = Q_ftol(bl[0]);
 			g = Q_ftol(bl[1]);
 			b = Q_ftol(bl[2]);
 
-			// catch negative lights
+			/* catch negative lights */
 			if (r < 0)
 			{
 				r = 0;
@@ -641,9 +627,7 @@ store:
 				b = 0;
 			}
 
-			/*
-			** determine the brightest of the three color components
-			*/
+			/* determine the brightest of the three color components */
 			if (r > g)
 			{
 				max = r;
@@ -658,17 +642,14 @@ store:
 				max = b;
 			}
 
-			/*
-			** alpha is ONLY used for the mono lightmap case.  For this reason
-			** we set it to the brightest of the color components so that
-			** things don't get too dim.
-			*/
+			/* alpha is ONLY used for the mono lightmap case. For this
+			   reason we set it to the brightest of the color components
+			   so that things don't get too dim. */
 			a = max;
 
-			/*
-			** rescale all the color components if the intensity of the greatest
-			** channel exceeds 1.0
-			*/
+			/* rescale all the color components if the
+			   intensity of the greatest channel exceeds
+			   1.0 */
 			if (max > 255)
 			{
 				float t = 255.0F / max;

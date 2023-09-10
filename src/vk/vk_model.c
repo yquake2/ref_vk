@@ -1,24 +1,29 @@
 /*
-Copyright (C) 1997-2001 Id Software, Inc.
-Copyright (C) 2018-2019 Krzysztof Kondrak
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-// vk_model.c -- model loading and caching
+ * Copyright (C) 1997-2001 Id Software, Inc.
+ * Copyright (C) 2018-2019 Krzysztof Kondrak
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ *
+ * =======================================================================
+ *
+ * Model loading and caching. Includes the .bsp file format
+ *
+ * =======================================================================
+ */
 
 #include "header/local.h"
 
@@ -33,12 +38,6 @@ static int 	models_known_max = 0;
 
 int		registration_sequence;
 
-
-/*
-==============
-Mod_ClusterPVS
-==============
-*/
 const byte *
 Mod_ClusterPVS(int cluster, const model_t *model)
 {
@@ -55,11 +54,6 @@ Mod_ClusterPVS(int cluster, const model_t *model)
 
 //===============================================================================
 
-/*
-===============
-Mod_Reallocate
-===============
-*/
 static void
 Mod_Reallocate (void)
 {
@@ -88,11 +82,6 @@ Mod_Reallocate (void)
 	models_known = calloc(models_known_max, sizeof(model_t));
 }
 
-/*
-===============
-Mod_Init
-===============
-*/
 void
 Mod_Init(void)
 {
@@ -107,12 +96,8 @@ Mod_Init(void)
 	Mod_Reallocate ();
 }
 
-/*
-================
-Mod_Free
-================
-*/
-static void Mod_Free (model_t *mod)
+static void
+Mod_Free(model_t *mod)
 {
 	if (!mod->extradata)
 	{
@@ -135,12 +120,8 @@ static void Mod_Free (model_t *mod)
 	}
 }
 
-/*
-================
-Mod_FreeAll
-================
-*/
-void Mod_FreeAll (void)
+void
+Mod_FreeAll (void)
 {
 	int		i;
 
@@ -151,30 +132,13 @@ void Mod_FreeAll (void)
 	}
 }
 
-/*
-================
-Mod_FreeModelsKnown
-================
-*/
-void Mod_FreeModelsKnown (void)
+void
+Mod_FreeModelsKnown (void)
 {
 	free(models_known);
 	models_known = NULL;
 }
 
-/*
-===============================================================================
-
-					BRUSHMODEL LOADING
-
-===============================================================================
-*/
-
-/*
-=================
-Mod_LoadSubmodels
-=================
-*/
 static void
 Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
@@ -220,9 +184,9 @@ Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 		}
 
 		out->radius = Mod_RadiusFromBounds(out->mins, out->maxs);
-		out->firstnode = LittleLong (in->headnode);
-		out->firstmodelsurface = LittleLong (in->firstface);
-		out->nummodelsurfaces = LittleLong (in->numfaces);
+		out->firstnode = LittleLong(in->headnode);
+		out->firstmodelsurface = LittleLong(in->firstface);
+		out->nummodelsurfaces = LittleLong(in->numfaces);
 		// visleafs
 		out->numleafs = 0;
 		//  check limits
@@ -235,12 +199,8 @@ Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 }
 
 /*
-================
-CalcSurfaceExtents
-
-Fills in s->texturemins[] and s->extents[]
-================
-*/
+ * Fills in s->texturemins[] and s->extents[]
+ */
 static void
 CalcSurfaceExtents(model_t *loadmodel, msurface_t *s)
 {
@@ -489,7 +449,7 @@ Mod_LoadBSPX(int filesize, byte* mod_base)
 }
 
 static void
-SetSurfaceLighting(model_t* loadmodel, msurface_t* out, byte* styles, int lightofs)
+SetSurfaceLighting(model_t *loadmodel, msurface_t *out, byte *styles, int lightofs)
 {
 	int i;
 
@@ -703,11 +663,6 @@ Mod_LoadLeafs(model_t *loadmodel, const byte *mod_base, const lump_t *l)
 	}
 }
 
-/*
-=================
-Mod_LoadMarksurfaces
-=================
-*/
 static void
 Mod_LoadMarksurfaces(model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
@@ -731,8 +686,7 @@ Mod_LoadMarksurfaces(model_t *loadmodel, const byte *mod_base, const lump_t *l)
 
 	for (i = 0; i < count; i++)
 	{
-		int	j;
-
+		int j;
 		j = LittleShort(in[i]);
 
 		if ((j < 0) || (j >= loadmodel->numsurfaces))
@@ -1032,12 +986,6 @@ RE_BeginRegistration (char *model)
 	r_viewcluster = -1;
 }
 
-/*
-=====================
-RE_RegisterModel
-
-=====================
-*/
 struct model_s *
 RE_RegisterModel(char *name)
 {
@@ -1098,12 +1046,8 @@ Mod_HasFreeSpace(void)
 	return (mod_loaded + mod_max) < models_known_max;
 }
 
-/*
-================
-Mod_Modellist_f
-================
-*/
-void Mod_Modellist_f (void)
+void
+Mod_Modellist_f (void)
 {
 	int		i, total, used;
 	model_t	*mod;

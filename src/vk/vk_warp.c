@@ -684,7 +684,7 @@ void R_DrawSkyBox (void)
 
 /*
 ============
-RE_SetSky_s
+RE_SetSky
 ============
 */
 // 3dstudio environment map names
