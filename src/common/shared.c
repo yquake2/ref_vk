@@ -1075,7 +1075,7 @@ Q_strcasecmp(char *s1, char *s2)
 }
 
 void
-Com_sprintf(char *dest, int size, char *fmt, ...)
+Com_sprintf(char *dest, int size, const char *fmt, ...)
 {
 	int len;
 	va_list argptr;
