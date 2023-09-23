@@ -740,11 +740,11 @@ void FS_CreatePath(char *path);
 
 void Com_BeginRedirect(int target, char *buffer, int buffersize, void (*flush)(int, char *));
 void Com_EndRedirect(void);
-void Com_Printf(char *fmt, ...) PRINTF_ATTR(1, 2);
-void Com_DPrintf(char *fmt, ...) PRINTF_ATTR(1, 2);
+void Com_Printf(const char *fmt, ...) PRINTF_ATTR(1, 2);
+void Com_DPrintf(const char *fmt, ...) PRINTF_ATTR(1, 2);
 void Com_VPrintf(int print_level, const char *fmt, va_list argptr); /* print_level is PRINT_ALL or PRINT_DEVELOPER */
-void Com_MDPrintf(char *fmt, ...) PRINTF_ATTR(1, 2);
-YQ2_ATTR_NORETURN_FUNCPTR void Com_Error(int code, char *fmt, ...) PRINTF_ATTR(2, 3);
+void Com_MDPrintf(const char *fmt, ...) PRINTF_ATTR(1, 2);
+YQ2_ATTR_NORETURN_FUNCPTR void Com_Error(int code, const char *fmt, ...) PRINTF_ATTR(2, 3);
 YQ2_ATTR_NORETURN void Com_Quit(void);
 
 /* Ugly work around for unsupported
@@ -839,7 +839,7 @@ void SV_Frame(int usec);
 // system.c
 char *Sys_ConsoleInput(void);
 void Sys_ConsoleOutput(char *string);
-YQ2_ATTR_NORETURN void Sys_Error(char *error, ...);
+YQ2_ATTR_NORETURN void Sys_Error(const char *error, ...);
 YQ2_ATTR_NORETURN void Sys_Quit(void);
 void Sys_Init(void);
 char *Sys_GetHomeDir(void);
