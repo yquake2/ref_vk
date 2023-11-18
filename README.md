@@ -133,3 +133,8 @@ are provided without any warranty of support. The simplest way to check
 is renaming the mdl/dkm/fm format file to md2 and place instead the original
 tris.md2 file. FM is rendered with all meshes without support of
 filtering/selecting the exact part of the model.
+
+### ReRelease Support
+
+Use [Yamagi Quake II ReRelease](https://github.com/yquake2/yquake2remaster/releases)
+version with 2023 Quake ReRelease version.

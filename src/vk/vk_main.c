@@ -1,24 +1,29 @@
 /*
-Copyright (C) 1997-2001 Id Software, Inc.
-Copyright (C) 2018-2019 Krzysztof Kondrak
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-// vk_rmain.c
+ * Copyright (C) 1997-2001 Id Software, Inc.
+ * Copyright (C) 2018-2019 Krzysztof Kondrak
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ *
+ * =======================================================================
+ *
+ * Refresher setup and main part of the frame generation
+ *
+ * =======================================================================
+ */
 
 #include "header/local.h"
 
@@ -406,10 +411,6 @@ R_DrawEntitiesOnList (void)
 	}
 }
 
-/*
-** Vk_DrawParticles
-**
-*/
 static void
 Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned *colortable)
 {
@@ -447,9 +448,13 @@ Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned
 				(p->origin[2] - r_origin[2]) * vpn[2];
 
 		if (scale < 20)
+		{
 			scale = 1;
+		}
 		else
+		{
 			scale = 1 + scale * 0.004;
+		}
 
 		*(int *)color = colortable[p->color];
 
@@ -520,13 +525,8 @@ Vk_DrawParticles(int num_particles, const particle_t particles[], const unsigned
 	vkCmdDraw(vk_activeCmdbuffer, (currentvertex - visibleParticles), 1, 0, 0);
 }
 
-/*
-===============
-R_DrawParticles
-===============
-*/
 static void
-R_DrawParticles (void)
+R_DrawParticles(void)
 {
 	if (vk_custom_particles->value == 1)
 	{
@@ -600,18 +600,18 @@ R_DrawParticles (void)
 	}
 }
 
-/*
-============
-R_PolyBlend
-============
-*/
 static void
-R_PolyBlend (void)
+R_PolyBlend(void)
 {
 	if (!r_polyblend->value)
+	{
 		return;
+	}
+
 	if (!v_blend[3])
+	{
 		return;
+	}
 
 	float polyTransform[] = { 0.f, 0.f, vid.width, vid.height, v_blend[0], v_blend[1], v_blend[2], v_blend[3] };
 	QVk_DrawColorRect(polyTransform, sizeof(polyTransform), RP_WORLD);
@@ -1032,7 +1032,8 @@ qboolean RE_EndWorldRenderpass(void)
 	return true;
 }
 
-static void R_SetVulkan2D (const VkViewport* viewport, const VkRect2D* scissor)
+static void
+R_SetVulkan2D(const VkViewport* viewport, const VkRect2D* scissor)
 {
 	// player configuration screen renders a model using the UI renderpass, so skip finishing RP_WORLD twice
 	if (!(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
@@ -1199,7 +1200,9 @@ R_Register( void )
 	ri.Cmd_AddCommand("modellist", Mod_Modellist_f);
 }
 
-
+/*
+ * Changes the video mode
+ */
 static int
 Vkimp_SetMode(int *pwidth, int *pheight, int mode, int fullscreen)
 {
@@ -1233,13 +1236,8 @@ Vkimp_SetMode(int *pwidth, int *pheight, int mode, int fullscreen)
 	return rserr_ok;
 }
 
-/*
-==================
-R_SetMode
-==================
-*/
 static qboolean
-R_SetMode (void)
+R_SetMode(void)
 {
 	rserr_t err;
 	int fullscreen;
@@ -1312,6 +1310,7 @@ static qboolean RE_Init( void )
 		R_Printf(PRINT_ALL, "%s() - could not R_SetMode()\n", __func__);
 		return false;
 	}
+
 	ri.Vid_MenuInit();
 
 	// print device information during startup
@@ -1329,7 +1328,8 @@ static qboolean RE_Init( void )
 ** subsystem.
 **
 */
-static void RE_ShutdownContext( void )
+static void
+RE_ShutdownContext(void)
 {
 	// Shutdown Vulkan subsystem
 	QVk_WaitAndShutdownAll();
@@ -1360,13 +1360,8 @@ void RE_Shutdown (void)
 	s_blocklights_max = NULL;
 }
 
-/*
-=====================
-RE_BeginFrame
-=====================
-*/
 static void
-RE_BeginFrame( float camera_separation )
+RE_BeginFrame(float camera_separation)
 {
 	// world has not rendered yet
 	world_rendered = false;
@@ -1430,7 +1425,7 @@ RE_EndFrame
 =====================
 */
 static void
-RE_EndFrame( void )
+RE_EndFrame(void)
 {
 	QVk_EndFrame(false);
 
@@ -1438,17 +1433,12 @@ RE_EndFrame( void )
 	world_rendered = false;
 }
 
-/*
-=============
-RE_SetPalette
-=============
-*/
 unsigned r_rawpalette[256];
 
 static void
-RE_SetPalette (const unsigned char *palette)
+RE_SetPalette(const unsigned char *palette)
 {
-	int		i;
+	int i;
 
 	byte *rp = (byte *)r_rawpalette;
 
@@ -1474,19 +1464,17 @@ RE_SetPalette (const unsigned char *palette)
 	}
 }
 
-/*
-** R_DrawBeam
-*/
-void R_DrawBeam( entity_t *currententity )
+void
+R_DrawBeam(entity_t *currententity )
 {
 #define NUM_BEAM_SEGS 6
 
-	int	i;
+	int i;
 	float r, g, b;
 
 	vec3_t perpvec;
 	vec3_t direction, normalized_direction;
-	vec3_t	start_points[NUM_BEAM_SEGS], end_points[NUM_BEAM_SEGS];
+	vec3_t start_points[NUM_BEAM_SEGS], end_points[NUM_BEAM_SEGS];
 	vec3_t oldorigin, origin;
 
 	oldorigin[0] = currententity->oldorigin[0];
@@ -1502,7 +1490,9 @@ void R_DrawBeam( entity_t *currententity )
 	normalized_direction[2] = direction[2] = oldorigin[2] - origin[2];
 
 	if (VectorNormalize(normalized_direction) == 0)
+	{
 		return;
+	}
 
 	PerpendicularVector(perpvec, normalized_direction);
 	VectorScale(perpvec, currententity->frame / 2, perpvec);
@@ -1751,16 +1741,15 @@ GetRefAPI(refimport_t imp)
 	refexport.EndWorldRenderpass = RE_EndWorldRenderpass;
 	refexport.EndFrame = RE_EndFrame;
 
-    // Tell the client that we're unsing the
+	// Tell the client that we're unsing the
 	// new renderer restart API.
-    ri.Vid_RequestRestart(RESTART_NO);
+	ri.Vid_RequestRestart(RESTART_NO);
 
 	Swap_Init ();
 
 	return refexport;
 }
 
-// this is only here so the functions in q_shared.c and q_shwin.c can link
 void R_Printf(int level, const char* msg, ...)
 {
 	va_list argptr;
@@ -1769,21 +1758,25 @@ void R_Printf(int level, const char* msg, ...)
 	va_end(argptr);
 }
 
+/*
+ * this is only here so the functions in shared source files
+ * (shared.c, rand.c, flash.c, mem.c/hunk.c) can link
+ */
 void
-Sys_Error (const char *error, ...)
+Sys_Error(const char *error, ...)
 {
-	va_list		argptr;
-	char		text[4096]; // MAXPRINTMSG == 4096
+	va_list argptr;
+	char text[4096]; // MAXPRINTMSG == 4096
 
 	va_start(argptr, error);
 	vsnprintf(text, sizeof(text), error, argptr);
 	va_end(argptr);
 
-	ri.Sys_Error (ERR_FATAL, "%s", text);
+	ri.Sys_Error(ERR_FATAL, "%s", text);
 }
 
 void
-Com_Printf (const char *msg, ...)
+Com_Printf(const char *msg, ...)
 {
 	va_list argptr;
 	va_start(argptr, msg);

@@ -173,19 +173,17 @@ typedef struct model_s
 	vec3_t		origin;	// for sounds or lights
 } model_t;
 
-//============================================================================
+void Mod_Init(void);
+const byte *Mod_ClusterPVS(int cluster, const model_t *model);
 
-void	Mod_Init (void);
-const byte	*Mod_ClusterPVS (int cluster, const model_t *model);
+void Mod_Modellist_f(void);
 
-void	Mod_Modellist_f (void);
+void *Hunk_Begin(int maxsize);
+void *Hunk_Alloc(int size);
+int Hunk_End(void);
+void Hunk_Free(void *base);
 
-void	*Hunk_Begin (int maxsize);
-void	*Hunk_Alloc (int size);
-int		Hunk_End (void);
-void	Hunk_Free (void *base);
-
-void	Mod_FreeAll (void);
+void Mod_FreeAll(void);
 void	Mod_FreeModelsKnown (void);
 
 #endif

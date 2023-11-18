@@ -343,7 +343,8 @@ The BSP tree is waled front to back, so unwinding the chain
 of alpha_surfaces will draw back to front, giving proper ordering.
 ================
 */
-void R_DrawAlphaSurfaces (void)
+void
+R_DrawAlphaSurfaces(void)
 {
 	msurface_t	*s;
 	float		intens;
@@ -357,16 +358,26 @@ void R_DrawAlphaSurfaces (void)
 	{
 		c_brush_polys++;
 		if (s->texinfo->flags & SURF_TRANS33)
+		{
 			color[3] = 0.33f;
+		}
 		else if (s->texinfo->flags & SURF_TRANS66)
+		{
 			color[3] = 0.66f;
+		}
 
 		if (s->flags & SURF_DRAWTURB)
+		{
 			EmitWaterPolys(s, s->texinfo->image, NULL, color, false);
+		}
 		else if (s->texinfo->flags & SURF_FLOWING)			// PGM	9/16/98
+		{
 			DrawVkFlowingPoly(s, s->texinfo->image, color);	// PGM
+		}
 		else
+		{
 			DrawVkPoly(s->polys, s->texinfo->image, color);
+		}
 	}
 
 	r_alpha_surfaces = NULL;
@@ -379,7 +390,8 @@ DrawTextureChains
 Draw world surfaces (mostly solid with alpha == 1.f)
 ================
 */
-static void DrawTextureChains (entity_t *currententity)
+static void
+DrawTextureChains(entity_t *currententity)
 {
 	int		i;
 	msurface_t	*s;
@@ -390,30 +402,45 @@ static void DrawTextureChains (entity_t *currententity)
 	for (i = 0, image = vktextures; i < numvktextures; i++, image++)
 	{
 		if (!image->registration_sequence)
+		{
 			continue;
+		}
+
 		if (!image->texturechain)
+		{
 			continue;
+		}
+
 		c_visible_textures++;
 
 		for (s = image->texturechain; s; s = s->texturechain)
 		{
 			if (!(s->flags & SURF_DRAWTURB))
+			{
 				R_RenderBrushPoly(s, NULL, 1.f, currententity);
+			}
 		}
 	}
 
 	for (i = 0, image = vktextures; i < numvktextures; i++, image++)
 	{
 		if (!image->registration_sequence)
+		{
 			continue;
+		}
+
 		s = image->texturechain;
 		if (!s)
+		{
 			continue;
+		}
 
 		for (; s; s = s->texturechain)
 		{
 			if (s->flags & SURF_DRAWTURB)
+			{
 				R_RenderBrushPoly(s, NULL, 1.f, currententity);
+			}
 		}
 
 		image->texturechain = NULL;
@@ -1298,4 +1325,3 @@ void Vk_EndBuildingLightmaps (void)
 {
 	LM_UploadBlock( false );
 }
-

@@ -111,8 +111,8 @@ Mod_Free(model_t *mod)
 		R_Printf(PRINT_ALL, "%s: Unload %s[%d]\n", __func__, mod->name, mod_loaded);
 	}
 
-	Hunk_Free (mod->extradata);
-	memset (mod, 0, sizeof(*mod));
+	Hunk_Free(mod->extradata);
+	memset(mod, 0, sizeof(*mod));
 	mod_loaded --;
 	if (mod_loaded < 0)
 	{
@@ -133,7 +133,7 @@ Mod_FreeAll (void)
 }
 
 void
-Mod_FreeModelsKnown (void)
+Mod_FreeModelsKnown(void)
 {
 	free(models_known);
 	models_known = NULL;
