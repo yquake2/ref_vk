@@ -31,12 +31,17 @@
 #include <math.h>
 #include <stdio.h>
 
+#ifdef USE_SDL3
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
+#else
 #if defined(__APPLE__)
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
+#endif
 #endif
 
 

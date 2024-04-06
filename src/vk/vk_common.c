@@ -1666,7 +1666,11 @@ void QVk_SetWindow(SDL_Window *window)
  */
 void QVk_GetDrawableSize(int *width, int *height)
 {
+#ifdef USE_SDL3
+	SDL_GetWindowSizeInPixels(vk_window, width, height);
+#else
 	SDL_GL_GetDrawableSize(vk_window, width, height);
+#endif
 }
 
 void QVk_WaitAndShutdownAll (void)
@@ -1754,7 +1758,11 @@ qboolean QVk_Init(void)
 	vk_config.triangle_index_max_usage = 0;
 	vk_config.triangle_index_count = TRIANGLE_INDEX_CNT;
 
+#ifdef USE_SDL3
+	if (!SDL_Vulkan_GetInstanceExtensions(&extCount))
+#else
 	if (!SDL_Vulkan_GetInstanceExtensions(vk_window, &extCount, NULL))
+#endif
 	{
 		R_Printf(PRINT_ALL, "%s() SDL_Vulkan_GetInstanceExtensions failed: %s",
 				__func__, SDL_GetError());
@@ -1769,6 +1777,14 @@ qboolean QVk_Init(void)
 	extCount++;
 #endif
 
+#ifdef USE_SDL3
+	if ((wantedExtensions = (char **)SDL_Vulkan_GetInstanceExtensions(&extCount)) == NULL)
+	{
+		R_Printf(PRINT_ALL, "%s() SDL_Vulkan_GetInstanceExtensions failed: %s",
+				__func__, SDL_GetError());
+		return false;
+	}
+#else
 	wantedExtensions = malloc(extCount * sizeof(char *));
 	if (!SDL_Vulkan_GetInstanceExtensions(vk_window, &extCount, (const char **)wantedExtensions))
 	{
@@ -1777,6 +1793,7 @@ qboolean QVk_Init(void)
 		free(wantedExtensions);
 		return false;
 	}
+#endif
 
 	// restore extensions count
 	if (r_validation->value > 0)
@@ -1892,7 +1909,9 @@ qboolean QVk_Init(void)
 		res = vkCreateInstance(&createInfo, NULL, &vk_instance);
 	}
 
+#ifndef USE_SDL3
 	free(wantedExtensions);
+#endif
 
 	if (res != VK_SUCCESS)
 	{
