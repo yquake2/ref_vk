@@ -2,20 +2,21 @@
 
 This is the vkQuake2 vulkan renderer library ported to Yamagi Quake II.
 
-
 ## Compilation
 
 You'll need:
+
 * clang or gcc,
 * GNU Make,
 * SDL2 with `sdl2-config`,
 * vulkan-headers,
 * vulkan-validationlayers if you like to debug issues.
 
+For vulkan-headers on macOS with Homebrew: `brew install molten-vk`.
+
 Type `make` to compile the library. If the compilation is successfull,
 the library can be found under *release/ref_vk.dll* (Windows) or
 *release/ref_vk.so* (unixoid systems).
-
 
 ## Usage
 
@@ -27,9 +28,11 @@ If you have run into issues, please attach output logs with OS/driver version
 and device name to the bug report. [List](https://openbenchmarking.org/test/pts/yquake2)
 of currently tested devices for the reference.
 
-Note: Game saves outputs to `Documents\YamagiQ2\stdout.txt` under
-windows.
+Note: Game saves outputs to `Documents\YamagiQ2\stdout.txt` under Windows.
 
+On macOS it is necessary to set `DYLD_LIBRARY_PATH` to load the Vulkan Portability library:
+
+`export DYLD_LIBRARY_PATH=/opt/homebrew/opt/molten-vk/lib`
 
 ## Console Variables
 
@@ -118,7 +121,7 @@ windows.
 * **vk_underwater**: Warp the scene if underwater. Set to `0` to disable
   the effect. Defaults to `1`.
 
-## Console Variables (MacOS)
+## Console Variables (macOS)
 
 * **vk_molten_metalbuffers**: enable/disable Metal buffers to bind textures
   more efficiently (>= Big Sur). (default: `0`)
