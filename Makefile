@@ -207,6 +207,9 @@ else ifeq ($(YQ2_OSTYPE),OpenBSD)
 INCLUDE ?= -I/usr/local/include
 else ifeq ($(YQ2_OSTYPE),Windows)
 INCLUDE ?= -I/usr/include
+else ifeq ($(YQ2_OSTYPE),Darwin)
+MOLTENVK_PATH ?= $(shell brew --prefix molten-vk)
+INCLUDE ?= -I$(MOLTENVK_PATH)/libexec/include -I$(MOLTENVK_PATH)/include
 endif
 
 # ----------
@@ -222,6 +225,8 @@ else ifeq ($(YQ2_OSTYPE),OpenBSD)
 LDFLAGS ?= -L/usr/local/lib
 else ifeq ($(YQ2_OSTYPE),Windows)
 LDFLAGS ?= -L/usr/lib
+else ifeq ($(YQ2_OSTYPE),Darwin)
+LDFLAGS ?= -L/usr/local/lib -L/opt/homebrew/lib
 endif
 
 # Link address sanitizer if requested.
