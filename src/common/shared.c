@@ -577,19 +577,9 @@ double sqrt(double x);
 vec_t
 VectorLength(vec3_t v)
 {
-	int i;
-	float length;
-
-	length = 0;
-
-	for (i = 0; i < 3; i++)
-	{
-		length += v[i] * v[i];
-	}
-
-	length = (float)sqrt(length);
-
-	return length;
+	return sqrtf((v[0] * v[0]) +
+               (v[1] * v[1]) +
+	       (v[2] * v[2]));
 }
 
 void
@@ -1031,7 +1021,7 @@ Q_stricmp(const char *s1, const char *s2)
 }
 
 int
-Q_strncasecmp(char *s1, char *s2, int n)
+Q_strncasecmp(const char *s1, const char *s2, int n)
 {
 	int c1, c2;
 
@@ -1068,8 +1058,22 @@ Q_strncasecmp(char *s1, char *s2, int n)
 	return 0; /* strings are equal */
 }
 
+char *Q_strcasestr(const char *haystack, const char *needle)
+{
+	size_t len = strlen(needle);
+
+	for (; *haystack; haystack++)
+	{
+		if (!Q_strncasecmp(haystack, needle, len))
+		{
+			return (char *)haystack;
+		}
+	}
+	return 0;
+}
+
 int
-Q_strcasecmp(char *s1, char *s2)
+Q_strcasecmp(const char *s1, const char *s2)
 {
 	return Q_strncasecmp(s1, s2, 99999);
 }
@@ -1187,6 +1191,12 @@ FILE *Q_fopen(const char *file, const char *mode)
 	return fopen(file, mode);
 }
 #endif
+
+int
+Q_sort_stricmp(const void *s1, const void *s2)
+{
+	return Q_stricmp(*(char**)s1, *(char**)s2);
+}
 
 int
 Q_sort_strcomp(const void *s1, const void *s2)

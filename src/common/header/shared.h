@@ -125,12 +125,8 @@ typedef unsigned char byte;
 #define YAW 1                       /* left / right */
 #define ROLL 2                      /* fall over */
 
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-#ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
+#define Q_min(a, b) (((a) < (b)) ? (a) : (b))
+#define Q_max(a, b) (((a) > (b)) ? (a) : (b))
 
 #define MAX_STRING_CHARS 2048       /* max length of a string passed to Cmd_TokenizeString */
 #define MAX_STRING_TOKENS 80        /* max tokens resulting from Cmd_TokenizeString */
@@ -323,8 +319,9 @@ void Com_PageInMemory(byte *buffer, int size);
 
 /* portable case insensitive compare */
 int Q_stricmp(const char *s1, const char *s2);
-int Q_strcasecmp(char *s1, char *s2);
-int Q_strncasecmp(char *s1, char *s2, int n);
+int Q_strcasecmp(const char *s1, const char *s2);
+int Q_strncasecmp(const char *s1, const char *s2, int n);
+char *Q_strcasestr(const char *s1, const char *s2);
 
 /* portable string lowercase */
 char *Q_strlwr(char *s);
@@ -337,6 +334,9 @@ int Q_strlcat(char *dst, const char *src, int size);
 
 /* Unicode wrappers that also make sure it's a regular file around fopen(). */
 FILE *Q_fopen(const char *file, const char *mode);
+
+/* Comparator function for qsort(), compares case-insensitive strings. */
+int Q_sort_stricmp(const void *s1, const void *s2);
 
 /* Comparator function for qsort(), compares strings. */
 int Q_sort_strcomp(const void *s1, const void *s2);

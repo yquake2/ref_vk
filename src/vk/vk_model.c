@@ -412,7 +412,7 @@ Mod_LoadBSPX(int filesize, byte* mod_base)
 	header = (dheader_t*)mod_base;
 	xofs = 0;
 	for (i = 0; i < HEADER_LUMPS; i++) {
-		xofs = max(xofs,
+		xofs = Q_max(xofs,
 			ROUNDUP(header->lumps[i].fileofs + header->lumps[i].filelen, sizeof(int)));
 	}
 

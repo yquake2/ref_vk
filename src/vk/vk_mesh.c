@@ -314,7 +314,7 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 		}
 
 		drawInfo[pipelineIdx][pipeCounters[pipelineIdx]].vertexCount = count;
-		maxTriangleFanIdxCnt = max(maxTriangleFanIdxCnt, ((count - 2) * 3));
+		maxTriangleFanIdxCnt = Q_max(maxTriangleFanIdxCnt, ((count - 2) * 3));
 
 		if (currententity->flags & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE))
 		{
@@ -532,7 +532,7 @@ Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin,
 		{
 			Vk_DrawAliasFrameLerpCommands(currententity,
 				order + mesh_nodes[i * 2],
-				order + min(paliashdr->num_glcmds, mesh_nodes[i * 2] + mesh_nodes[i * 2 + 1]),
+				order + Q_min(paliashdr->num_glcmds, mesh_nodes[i * 2] + mesh_nodes[i * 2 + 1]),
 				alpha, skin,
 				modelMatrix, leftHandOffset, translucentIdx, verts);
 		}
@@ -1046,7 +1046,7 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 			{
 				Vk_DrawAliasShadow (
 					order + mesh_nodes[i * 2],
-					order + min(paliashdr->num_glcmds, mesh_nodes[i * 2] + mesh_nodes[i * 2 + 1]),
+					order + Q_min(paliashdr->num_glcmds, mesh_nodes[i * 2] + mesh_nodes[i * 2 + 1]),
 					currententity->frame, model, currententity);
 			}
 		}
