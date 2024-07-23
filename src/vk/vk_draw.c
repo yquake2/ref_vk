@@ -32,10 +32,22 @@ Draw_InitLocal
 void Draw_InitLocal (void)
 {
 	draw_chars = R_FindPic ("conchars", (findimage_t)Vk_FindImage);
+
+	/* Anachronox */
+	if (!draw_chars)
+	{
+		draw_chars = R_FindPic ("fonts/conchars", (findimage_t)Vk_FindImage);
+	}
+
 	/* Daikatana */
 	if (!draw_chars)
 	{
-		ri.Sys_Error(ERR_FATAL, "%s: Couldn't load pics/conchars",
+		draw_chars = R_FindPic ("dkchars", (findimage_t)Vk_FindImage);
+	}
+
+	if (!draw_chars)
+	{
+		Com_Error(ERR_FATAL, "%s: Couldn't load pics/conchars",
 			__func__);
 	}
 }
@@ -221,7 +233,7 @@ void RE_Draw_Fill (int x, int y, int w, int h, int c)
 		return;
 
 	if ((unsigned)c > 255)
-		ri.Sys_Error(ERR_FATAL, "%s: bad color", __func__);
+		Com_Error(ERR_FATAL, "%s: bad color", __func__);
 
 	color.c = d_8to24table[c];
 

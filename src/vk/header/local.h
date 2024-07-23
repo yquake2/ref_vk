@@ -211,9 +211,8 @@ void Vk_ScreenShot_f (void);
 void Vk_Strings_f(void);
 void Vk_Mem_f(void);
 
-void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel);
-void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel);
-void R_DrawSpriteModel (entity_t *currententity, model_t *currentmodel);
+void R_DrawAliasModel (entity_t *currententity, const model_t *currentmodel);
+void R_DrawBrushModel (entity_t *currententity, const model_t *currentmodel);
 void R_DrawBeam (entity_t *currententity);
 void R_DrawWorld (void);
 void R_RenderDlights (void);
@@ -227,7 +226,7 @@ void R_RotateForEntity (entity_t *e, float *mvMatrix);
 void R_MarkLeaves (void);
 
 void EmitWaterPolys (msurface_t *fa, image_t *texture,
-				   float *modelMatrix, const float *color,
+				   const float *modelMatrix, const float *color,
 				   qboolean solid_surface);
 void R_AddSkySurface (msurface_t *fa);
 void R_ClearSkyBox (void);

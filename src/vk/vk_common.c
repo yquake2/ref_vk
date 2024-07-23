@@ -1461,7 +1461,7 @@ static void CreatePipelines()
 	QVk_DebugSetObjectName((uint64_t)vk_drawDLightPipeline.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Pipeline Layout: dynamic light");
 	QVk_DebugSetObjectName((uint64_t)vk_drawDLightPipeline.pl, VK_OBJECT_TYPE_PIPELINE, "Pipeline: dynamic light");
 
-	// vk_showtris render pipeline
+	/* r_showtris render pipeline */
 	VK_LOAD_VERTFRAG_SHADERS(shaders, d_light, basic_color_quad);
 	vk_showTrisPipeline.cullMode = VK_CULL_MODE_NONE;
 	vk_showTrisPipeline.depthTestEnable = VK_FALSE;
@@ -1471,7 +1471,7 @@ static void CreatePipelines()
 	QVk_DebugSetObjectName((uint64_t)vk_showTrisPipeline.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Pipeline Layout: show triangles");
 	QVk_DebugSetObjectName((uint64_t)vk_showTrisPipeline.pl, VK_OBJECT_TYPE_PIPELINE, "Pipeline: show triangles");
 
-	//vk_shadows render pipeline
+	/* vk_shadows render pipeline */
 	VK_LOAD_VERTFRAG_SHADERS(shaders, shadows, basic_color_quad);
 	vk_shadowsPipelineFan.blendOpts.blendEnable = VK_TRUE;
 	vk_shadowsPipelineFan.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -1479,7 +1479,7 @@ static void CreatePipelines()
 	QVk_DebugSetObjectName((uint64_t)vk_shadowsPipelineFan.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Pipeline Layout: draw shadows: fan");
 	QVk_DebugSetObjectName((uint64_t)vk_shadowsPipelineFan.pl, VK_OBJECT_TYPE_PIPELINE, "Pipeline: draw shadows: fan");
 
-	// underwater world warp pipeline (postprocess)
+	/* underwater world warp pipeline (postprocess) */
 	VK_LOAD_VERTFRAG_SHADERS(shaders, world_warp, world_warp);
 	vk_worldWarpPipeline.depthTestEnable = VK_FALSE;
 	vk_worldWarpPipeline.depthWriteEnable = VK_FALSE;
@@ -1488,7 +1488,7 @@ static void CreatePipelines()
 	QVk_DebugSetObjectName((uint64_t)vk_worldWarpPipeline.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Pipeline Layout: underwater view warp");
 	QVk_DebugSetObjectName((uint64_t)vk_worldWarpPipeline.pl, VK_OBJECT_TYPE_PIPELINE, "Pipeline: underwater view warp");
 
-	// postprocessing pipeline
+	/* postprocessing pipeline */
 	VK_LOAD_VERTFRAG_SHADERS(shaders, postprocess, postprocess);
 	vk_postprocessPipeline.depthTestEnable = VK_FALSE;
 	vk_postprocessPipeline.depthWriteEnable = VK_FALSE;
@@ -1700,7 +1700,7 @@ void QVk_Restart(void)
 {
 	QVk_WaitAndShutdownAll();
 	if (!QVk_Init())
-		ri.Sys_Error(ERR_FATAL, "Unable to restart Vulkan renderer");
+		Com_Error(ERR_FATAL, "Unable to restart Vulkan renderer");
 	QVk_PostInit();
 	ri.Vid_RequestRestart(RESTART_PARTIAL);
 }
@@ -1980,8 +1980,10 @@ qboolean QVk_Init(void)
 	if (vid_fullscreen->value == 2)
 	{
 		// Center viewport in "keep resolution mode".
-		vk_viewport.x = Q_max(0.f, (float)(vk_swapchain.extent.width - (uint32_t)(vid.width)) / 2.0f);
-		vk_viewport.y = Q_max(0.f, (float)(vk_swapchain.extent.height - (uint32_t)(vid.height)) / 2.0f);
+		vk_viewport.x = Q_max(
+			0.f, (float)(vk_swapchain.extent.width - (uint32_t)(vid.width)) / 2.0f);
+		vk_viewport.y = Q_max(
+			0.f, (float)(vk_swapchain.extent.height - (uint32_t)(vid.height)) / 2.0f);
 	}
 	else
 	{
@@ -1990,8 +1992,10 @@ qboolean QVk_Init(void)
 	}
 	vk_viewport.minDepth = 0.f;
 	vk_viewport.maxDepth = 1.f;
-	vk_viewport.width = Q_min((float)vid.width, (float)(vk_swapchain.extent.width) - vk_viewport.x);
-	vk_viewport.height = Q_min((float)vid.height, (float)(vk_swapchain.extent.height) - vk_viewport.y);
+	vk_viewport.width = Q_min(
+		(float)vid.width, (float)(vk_swapchain.extent.width) - vk_viewport.x);
+	vk_viewport.height = Q_min(
+		(float)vid.height, (float)(vk_swapchain.extent.height) - vk_viewport.y);
 	vk_scissor.offset.x = 0;
 	vk_scissor.offset.y = 0;
 	vk_scissor.extent = vk_swapchain.extent;
@@ -2394,16 +2398,21 @@ uint8_t *QVk_GetVertexBuffer(VkDeviceSize size, VkBuffer *dstBuffer, VkDeviceSiz
 {
 	if (vk_dynVertexBuffers[vk_activeDynBufferIdx].currentOffset + size > vk_config.vertex_buffer_size)
 	{
-		vk_config.vertex_buffer_size = Q_max(vk_config.vertex_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
+		vk_config.vertex_buffer_size = Q_max(
+			vk_config.vertex_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
 
 		R_Printf(PRINT_ALL, "Resizing dynamic vertex buffer to %ukB\n", vk_config.vertex_buffer_size / 1024);
 		int swapBufferOffset = vk_swapBuffersCnt[vk_activeSwapBufferIdx];
 		vk_swapBuffersCnt[vk_activeSwapBufferIdx] += NUM_DYNBUFFERS;
 
 		if (vk_swapBuffers[vk_activeSwapBufferIdx] == NULL)
+		{
 			vk_swapBuffers[vk_activeSwapBufferIdx] = malloc(sizeof(qvkbuffer_t) * vk_swapBuffersCnt[vk_activeSwapBufferIdx]);
+		}
 		else
+		{
 			vk_swapBuffers[vk_activeSwapBufferIdx] = realloc(vk_swapBuffers[vk_activeSwapBufferIdx], sizeof(qvkbuffer_t) * vk_swapBuffersCnt[vk_activeSwapBufferIdx]);
+		}
 
 		for (int i = 0; i < NUM_DYNBUFFERS; ++i)
 		{
@@ -2440,7 +2449,8 @@ static uint8_t *QVk_GetIndexBuffer(VkDeviceSize size, VkDeviceSize *dstOffset, i
 
 	if (vk_dynIndexBuffers[currentBufferIdx].currentOffset + aligned_size > vk_config.index_buffer_size)
 	{
-		vk_config.index_buffer_size = Q_max(vk_config.index_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
+		vk_config.index_buffer_size = Q_max(
+			vk_config.index_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
 
 		R_Printf(PRINT_ALL, "Resizing dynamic index buffer to %ukB\n", vk_config.index_buffer_size / 1024);
 		int swapBufferOffset = vk_swapBuffersCnt[vk_activeSwapBufferIdx];
@@ -2485,7 +2495,8 @@ uint8_t *QVk_GetUniformBuffer(VkDeviceSize size, uint32_t *dstOffset, VkDescript
 
 	if (vk_dynUniformBuffers[vk_activeDynBufferIdx].currentOffset + UNIFORM_ALLOC_SIZE > vk_config.uniform_buffer_size)
 	{
-		vk_config.uniform_buffer_size = Q_max(vk_config.uniform_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
+		vk_config.uniform_buffer_size = Q_max(
+			vk_config.uniform_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
 
 		R_Printf(PRINT_ALL, "Resizing dynamic uniform buffer to %ukB\n", vk_config.uniform_buffer_size / 1024);
 		int swapBufferOffset   = vk_swapBuffersCnt[vk_activeSwapBufferIdx];

@@ -27,16 +27,15 @@
 
 #include "header/local.h"
 
-YQ2_ALIGNAS_TYPE(int) static byte mod_novis[MAX_MAP_LEAFS/8];
+static YQ2_ALIGNAS_TYPE(int) byte mod_novis[MAX_MAP_LEAFS / 8];
 
 #define	MAX_MOD_KNOWN	512
-static model_t	*models_known;
-static int		mod_numknown = 0;
-static int		mod_loaded = 0;
-static int		mod_max = 0;
-static int 	models_known_max = 0;
-
-int		registration_sequence;
+static model_t *models_known;
+static int mod_numknown = 0;
+static int mod_max = 0;
+static int mod_loaded = 0;
+static int models_known_max = 0;
+int registration_sequence;
 
 const byte *
 Mod_ClusterPVS(int cluster, const model_t *model)
@@ -101,7 +100,7 @@ Mod_Free(model_t *mod)
 {
 	if (!mod->extradata)
 	{
-		// looks as empty model
+		/* looks as empty model */
 		memset (mod, 0, sizeof(*mod));
 		return;
 	}
@@ -140,17 +139,17 @@ Mod_FreeModelsKnown(void)
 }
 
 static void
-Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
+Mod_LoadSubmodels(model_t *loadmodel, const byte *mod_base, const lump_t *l)
 {
 	dmodel_t *in;
-	model_t	*out;
+	model_t *out;
 	int i, j, count;
 
 	in = (void *)(mod_base + l->fileofs);
 
 	if (l->filelen % sizeof(*in))
 	{
-		ri.Sys_Error(ERR_DROP, "%s: funny lump size in %s",
+		Com_Error(ERR_DROP, "%s: funny lump size in %s",
 				__func__, loadmodel->name);
 	}
 
@@ -192,7 +191,7 @@ Mod_LoadSubmodels (model_t *loadmodel, const byte *mod_base, const lump_t *l)
 		//  check limits
 		if (out->firstnode >= loadmodel->numnodes)
 		{
-			ri.Sys_Error(ERR_DROP, "%s: Inline model %i has bad firstnode",
+			Com_Error(ERR_DROP, "%s: Inline model %i has bad firstnode",
 					__func__, i);
 		}
 	}
@@ -508,16 +507,14 @@ Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, bspx_he
 
 	for (surfnum = 0; surfnum < count; surfnum++, in++, out++)
 	{
-		int	side;
-		int	ti;
-		int	planenum;
+		int side, ti, planenum;
 
 		out->firstedge = LittleLong(in->firstedge);
 		out->numedges = LittleShort(in->numedges);
 
 		if (out->numedges < 3)
 		{
-			ri.Sys_Error(ERR_DROP, "%s: Surface with %d edges",
+			Com_Error(ERR_DROP, "%s: Surface with %d edges",
 					__func__, out->numedges);
 		}
 		out->flags = 0;
@@ -532,7 +529,7 @@ Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, bspx_he
 
 		if (planenum < 0 || planenum >= loadmodel->numplanes)
 		{
-			ri.Sys_Error(ERR_DROP, "%s: Incorrect %d planenum.",
+			Com_Error(ERR_DROP, "%s: Incorrect %d planenum.",
 					__func__, planenum);
 		}
 		out->plane = loadmodel->planes + planenum;
@@ -541,7 +538,7 @@ Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, bspx_he
 
 		if ((ti < 0) || (ti >= loadmodel->numtexinfo))
 		{
-			ri.Sys_Error(ERR_DROP, "%s: bad texinfo number",
+			Com_Error(ERR_DROP, "%s: bad texinfo number",
 					__func__);
 		}
 
@@ -647,19 +644,6 @@ Mod_LoadLeafs(model_t *loadmodel, const byte *mod_base, const lump_t *l)
 			ri.Sys_Error(ERR_DROP, "%s: wrong marksurfaces position in %s",
 				__func__, loadmodel->name);
 		}
-
-		// gl underwater warp
-#if 0
-		if (out->contents & (CONTENTS_WATER|CONTENTS_SLIME|CONTENTS_LAVA|CONTENTS_THINWATER) )
-		{
-			for (j=0 ; j<out->nummarksurfaces ; j++)
-			{
-				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
-				for (poly = out->firstmarksurface[j]->polys ; poly ; poly=poly->next)
-					poly->flags |= SURF_UNDERWATER;
-			}
-		}
-#endif
 	}
 }
 
@@ -810,62 +794,71 @@ Loads in a model for the given name
 static model_t *
 Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 {
-	model_t	*mod;
-	void	*buf;
-	int		i, modfilelen;
+	model_t *mod;
+	void *buf;
+	int i, modfilelen;
 
 	if (!name[0])
 	{
-		ri.Sys_Error(ERR_DROP, "%s: NULL name", __func__);
+		Com_Error(ERR_DROP, "%s: NULL name", __func__);
 	}
 
-	//
-	// inline models are grabbed only from worldmodel
-	//
+	/* inline models are grabbed only from worldmodel */
 	if (name[0] == '*' && parent_model)
 	{
-		i = atoi(name+1);
+		i = (int)strtol(name + 1, (char **)NULL, 10);
+
 		if (i < 1 || i >= parent_model->numsubmodels)
-			ri.Sys_Error (ERR_DROP, "bad inline model number");
+		{
+			Com_Error(ERR_DROP, "%s: bad inline model number",
+					__func__);
+		}
+
 		return &parent_model->submodels[i];
 	}
 
-	//
-	// search the currently loaded models
-	//
-	for (i=0 , mod=models_known ; i<mod_numknown ; i++, mod++)
+	/* search the currently loaded models */
+	for (i = 0, mod = models_known; i < mod_numknown; i++, mod++)
 	{
 		if (!mod->name[0])
+		{
 			continue;
-		if (!strcmp (mod->name, name) )
+		}
+
+		if (!strcmp(mod->name, name))
+		{
 			return mod;
+		}
 	}
 
-	//
-	// find a free model slot spot
-	//
-	for (i=0 , mod=models_known ; i<mod_numknown ; i++, mod++)
+	/* find a free model slot spot */
+	for (i = 0, mod = models_known; i < mod_numknown; i++, mod++)
 	{
 		if (!mod->name[0])
-			break;	// free spot
+		{
+			break; /* free spot */
+		}
 	}
+
 	if (i == mod_numknown)
 	{
 		if (mod_numknown == models_known_max)
-			ri.Sys_Error(ERR_DROP, "%s: mod_numknown == models_known_max", __func__);
+		{
+			Com_Error(ERR_DROP, "%s: mod_numknown == models_known_max", __func__);
+		}
+
 		mod_numknown++;
 	}
+
 	strcpy (mod->name, name);
 
-	//
-	// load the file
-	//
-	modfilelen = Mod_LoadFile (mod->name, &buf);
+	/* load the file */
+	modfilelen = Mod_LoadFile(mod->name, &buf);
 	if (!buf)
 	{
 		if (crash)
 		{
-			ri.Sys_Error(ERR_DROP, "%s: %s not found",
+			Com_Error(ERR_DROP, "%s: %s not found",
 					__func__, mod->name);
 		}
 
@@ -873,23 +866,21 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 		{
 			R_Printf(PRINT_ALL, "%s: Can't load %s\n", __func__, mod->name);
 		}
-		memset (mod->name, 0, sizeof(mod->name));
+
+		memset(mod->name, 0, sizeof(mod->name));
 		return NULL;
 	}
 
-	// update count of loaded models
+	/* update count of loaded models */
 	mod_loaded ++;
 	if (r_validation->value > 0)
 	{
 		R_Printf(PRINT_ALL, "%s: Load %s[%d]\n", __func__, mod->name, mod_loaded);
 	}
 
-	//
-	// fill it in
-	//
+	/* fill it in */
 
-	// call the apropriate loader
-
+	/* call the apropriate loader */
 	switch (LittleLong(*(unsigned *)buf))
 	{
 	case DKMHEADER:
@@ -937,7 +928,7 @@ Mod_ForName (const char *name, model_t *parent_model, qboolean crash)
 
 	if (mod->extradata)
 	{
-		mod->extradatasize = Hunk_End ();
+		mod->extradatasize = Hunk_End();
 	}
 	else
 	{
@@ -957,17 +948,17 @@ Specifies the model that will be used as the world
 =====================
 */
 void
-RE_BeginRegistration (char *model)
+RE_BeginRegistration(char *model)
 {
 	char fullname[MAX_QPATH];
-	cvar_t *flushmap;
+	const cvar_t *flushmap;
 
 	Mod_Reallocate();
 
 	registration_sequence++;
 	r_oldviewcluster = -1; /* force markleafs */
 
-	Com_sprintf (fullname, sizeof(fullname), "maps/%s.bsp", model);
+	Com_sprintf(fullname, sizeof(fullname), "maps/%s.bsp", model);
 
 	/* explicitly free the old map if different
 	   this guarantees that mod_known[0] is the
@@ -976,7 +967,7 @@ RE_BeginRegistration (char *model)
 
 	if (strcmp(models_known[0].name, fullname) || flushmap->value)
 	{
-		Mod_Free (&models_known[0]);
+		Mod_Free(&models_known[0]);
 	}
 
 	r_worldmodel = Mod_ForName(fullname, NULL, true);
@@ -1047,7 +1038,7 @@ Mod_HasFreeSpace(void)
 }
 
 void
-Mod_Modellist_f (void)
+Mod_Modellist_f(void)
 {
 	int		i, total, used;
 	model_t	*mod;
@@ -1069,8 +1060,8 @@ Mod_Modellist_f (void)
 
 		if (!mod->name[0])
 			continue;
-		R_Printf(PRINT_ALL, "%8i : %s %s\n",
-			 mod->extradatasize, mod->name, in_use);
+		R_Printf(PRINT_ALL, "%8i : %s %s r: %.2f #%d\n",
+			 mod->extradatasize, mod->name, in_use, mod->radius, mod->numsubmodels);
 		total += mod->extradatasize;
 	}
 	R_Printf(PRINT_ALL, "Total resident: %i in %d models\n", total, mod_loaded);
@@ -1079,16 +1070,11 @@ Mod_Modellist_f (void)
 	R_Printf(PRINT_ALL, "Used %d of %d models%s.\n", used, mod_max, freeup ? ", has free space" : "");
 }
 
-/*
-=====================
-RE_EndRegistration
-
-=====================
-*/
-void RE_EndRegistration (void)
+void
+RE_EndRegistration(void)
 {
-	int		i;
-	model_t	*mod;
+	int i;
+	model_t *mod;
 
 	if (Mod_HasFreeSpace() && Vk_ImageHasFreeSpace())
 	{
@@ -1096,7 +1082,7 @@ void RE_EndRegistration (void)
 		return;
 	}
 
-	for (i = 0, mod = models_known ; i < mod_numknown; i++, mod++)
+	for (i = 0, mod = models_known; i < mod_numknown; i++, mod++)
 	{
 		if (!mod->name[0])
 		{
@@ -1110,5 +1096,5 @@ void RE_EndRegistration (void)
 		}
 	}
 
-	Vk_FreeUnusedImages ();
+	Vk_FreeUnusedImages();
 }

@@ -205,7 +205,7 @@ Does a water warp on the pre-fragmented vkpoly_t chain
 =============
 */
 void
-EmitWaterPolys (msurface_t *fa, image_t *texture, float *modelMatrix,
+EmitWaterPolys (msurface_t *fa, image_t *texture, const float *modelMatrix,
 			  const float *color, qboolean solid_surface)
 {
 	vkpoly_t	*p, *bp;

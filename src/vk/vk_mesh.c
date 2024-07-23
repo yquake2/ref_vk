@@ -154,7 +154,8 @@ Mesh_VertsRealloc(int count)
 Mesh_Init
 ===============
 */
-void Mesh_Init (void)
+void
+Mesh_Init(void)
 {
 	s_lerped = NULL;
 	shadowverts = NULL;
@@ -169,7 +170,7 @@ void Mesh_Init (void)
 
 	if (Mesh_VertsRealloc(MAX_VERTS))
 	{
-		ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+		Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 	}
 }
 
@@ -178,7 +179,8 @@ void Mesh_Init (void)
 Mesh_Free
 ================
 */
-void Mesh_Free (void)
+void
+Mesh_Free(void)
 {
 	if (r_validation->value > 1)
 	{
@@ -266,7 +268,7 @@ static void Vk_LerpVerts( int nverts, dtrivertx_t *v, dtrivertx_t *ov, dtrivertx
 }
 
 static void
-Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_end,
+Vk_DrawAliasFrameLerpCommands(entity_t *currententity, int *order, int *order_end,
 	float alpha, image_t *skin, float *modelMatrix, int leftHandOffset, int translucentIdx,
 	dtrivertx_t *verts)
 {
@@ -289,10 +291,11 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 
 	while (1)
 	{
-		int	count;
+		int count;
 
-		// get the vertex count and primitive type
+		/* get the vertex count and primitive type */
 		count = *order++;
+
 		if (!count || order >= order_end)
 		{
 			break; /* done */
@@ -310,13 +313,14 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 
 		if (Mesh_VertsRealloc(pipeCounters[pipelineIdx]))
 		{
-			ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+			Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 		}
 
 		drawInfo[pipelineIdx][pipeCounters[pipelineIdx]].vertexCount = count;
 		maxTriangleFanIdxCnt = Q_max(maxTriangleFanIdxCnt, ((count - 2) * 3));
 
-		if (currententity->flags & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE))
+		if (currententity->flags &
+			(RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE))
 		{
 			meshUbo.textured = 0;
 			do
@@ -326,7 +330,7 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 
 				if (Mesh_VertsRealloc(vertIdx))
 				{
-					ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+					Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 				}
 
 				// unused in this case, since texturing is disabled
@@ -338,7 +342,7 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 				vertList[pipelineIdx][vertIdx].color[2] = shadelight[2];
 				vertList[pipelineIdx][vertIdx].color[3] = alpha;
 
-				if (verts_count < index_xyz)
+				if (verts_count <= index_xyz)
 				{
 					R_Printf(PRINT_ALL, "%s: Model has issues with lerped index\n", __func__);
 					return;
@@ -363,7 +367,7 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 
 				if (Mesh_VertsRealloc(vertIdx))
 				{
-					ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+					Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 				}
 
 				// texture coordinates come from the draw list
@@ -378,7 +382,7 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 				vertList[pipelineIdx][vertIdx].color[2] = l * shadelight[2];
 				vertList[pipelineIdx][vertIdx].color[3] = alpha;
 
-				if (verts_count < index_xyz)
+				if (verts_count <= index_xyz)
 				{
 					R_Printf(PRINT_ALL, "%s: Model has issues with lerped index\n", __func__);
 					return;
@@ -394,7 +398,7 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 
 		if (Mesh_VertsRealloc(pipeCounters[pipelineIdx] + 1))
 		{
-			ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+			Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 		}
 
 		pipeCounters[pipelineIdx]++;
@@ -422,7 +426,10 @@ Vk_DrawAliasFrameLerpCommands (entity_t *currententity, int *order, int *order_e
 		memcpy(vertData, vertList[p], vaoSize);
 
 		QVk_BindPipeline(&pipelines[translucentIdx][leftHandOffset]);
-		VkDescriptorSet descriptorSets[] = { skin->vk_texture.descriptorSet, uboDescriptorSet };
+		VkDescriptorSet descriptorSets[] = {
+			skin->vk_texture.descriptorSet,
+			uboDescriptorSet
+		};
 		vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[translucentIdx][leftHandOffset].layout, 0, 2, descriptorSets, 1, &uboOffset);
 		vkCmdBindVertexBuffers(vk_activeCmdbuffer, 0, 1, &vbo, &vboOffset);
 
@@ -460,18 +467,18 @@ FIXME: batch lerp all vertexes
 =============
 */
 static void
-Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin,
+Vk_DrawAliasFrameLerp(dmdl_t *paliashdr, float backlerp, image_t *skin,
 	float *modelMatrix, int leftHandOffset, int translucentIdx, entity_t *currententity)
 {
-	daliasframe_t	*frame, *oldframe;
-	dtrivertx_t	*v, *ov, *verts;
-	int		*order;
-	float	frontlerp;
-	float	alpha;
-	vec3_t	move, delta, vectors[3];
-	vec3_t	frontv, backv;
-	int		i;
-	float	*lerp;
+	daliasframe_t *frame, *oldframe;
+	dtrivertx_t *v, *ov, *verts;
+	int *order;
+	float frontlerp;
+	float alpha;
+	vec3_t move, delta, vectors[3];
+	vec3_t frontv, backv;
+	int i;
+	float *lerp;
 	int num_mesh_nodes;
 	short *mesh_nodes;
 
@@ -486,31 +493,32 @@ Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin,
 	order = (int *)((byte *)paliashdr + paliashdr->ofs_glcmds);
 
 	if (currententity->flags & RF_TRANSLUCENT)
+	{
 		alpha = currententity->alpha;
+	}
 	else
+	{
 		alpha = 1.0;
+	}
 
 	frontlerp = 1.0 - backlerp;
 
-	// move should be the delta back to the previous frame * backlerp
+	/* move should be the delta back to the previous frame * backlerp */
 	VectorSubtract(currententity->oldorigin, currententity->origin, delta);
-	AngleVectors (currententity->angles, vectors[0], vectors[1], vectors[2]);
+	AngleVectors(currententity->angles, vectors[0], vectors[1], vectors[2]);
 
-	move[0] = DotProduct(delta, vectors[0]);	// forward
-	move[1] = -DotProduct(delta, vectors[1]);	// left
-	move[2] = DotProduct(delta, vectors[2]);	// up
+	move[0] = DotProduct(delta, vectors[0]); /* forward */
+	move[1] = -DotProduct(delta, vectors[1]); /* left */
+	move[2] = DotProduct(delta, vectors[2]); /* up */
 
-	VectorAdd (move, oldframe->translate, move);
+	VectorAdd(move, oldframe->translate, move);
 
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
 	{
-		move[i] = backlerp*move[i] + frontlerp*frame->translate[i];
-	}
+		move[i] = backlerp * move[i] + frontlerp * frame->translate[i];
 
-	for (i=0 ; i<3 ; i++)
-	{
-		frontv[i] = frontlerp*frame->scale[i];
-		backv[i] = backlerp*oldframe->scale[i];
+		frontv[i] = frontlerp * frame->scale[i];
+		backv[i] = backlerp * oldframe->scale[i];
 	}
 
 	if (Mesh_VertsRealloc(paliashdr->num_xyz))
@@ -545,13 +553,8 @@ Vk_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp, image_t *skin,
 	}
 }
 
-
-/*
-=============
-Vk_DrawAliasShadow
-=============
-*/
-static void Vk_DrawAliasShadow (int *order, int *order_end, int posenum,
+static void
+Vk_DrawAliasShadow(int *order, int *order_end, int posenum,
 	float *modelMatrix, entity_t *currententity)
 {
 	vec3_t	point;
@@ -570,8 +573,7 @@ static void Vk_DrawAliasShadow (int *order, int *order_end, int posenum,
 
 	while (1)
 	{
-		int	i;
-		int	count;
+		int i, count;
 
 		i = 0;
 		// get the vertex count and primitive type
@@ -593,21 +595,21 @@ static void Vk_DrawAliasShadow (int *order, int *order_end, int posenum,
 
 		if (Mesh_VertsRealloc(count))
 		{
-			ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+			Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 		}
 
 		do
 		{
 			if (Mesh_VertsRealloc(order[2]))
 			{
-				ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+				Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 			}
 
-			// normals and vertexes come from the frame list
-			memcpy( point, s_lerped[order[2]], sizeof( point ) );
+			/* normals and vertexes come from the frame list */
+			memcpy(point, s_lerped[order[2]], sizeof(point));
 
-			point[0] -= shadevector[0]*(point[2]+lheight);
-			point[1] -= shadevector[1]*(point[2]+lheight);
+			point[0] -= shadevector[0] * (point[2] + lheight);
+			point[1] -= shadevector[1] * (point[2] + lheight);
 			point[2] = height;
 
 			shadowverts[i][0] = point[0];
@@ -616,7 +618,8 @@ static void Vk_DrawAliasShadow (int *order, int *order_end, int posenum,
 
 			order += 3;
 			i++;
-		} while (--count);
+		}
+		while (--count);
 
 		if (i > 0)
 		{
@@ -644,11 +647,8 @@ static void Vk_DrawAliasShadow (int *order, int *order_end, int posenum,
 	}
 }
 
-
-/*
-** R_CullAliasModel
-*/
-static qboolean R_CullAliasModel( vec3_t bbox[8], entity_t *e, model_t *currentmodel )
+static qboolean
+R_CullAliasModel(vec3_t bbox[8], entity_t *e, const model_t *currentmodel)
 {
 	int i;
 	vec3_t		mins, maxs;
@@ -794,7 +794,8 @@ R_DrawAliasModel
 
 =================
 */
-void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
+void
+R_DrawAliasModel(entity_t *currententity, const model_t *currentmodel)
 {
 	int			i;
 	int			leftHandOffset = 0;
@@ -890,50 +891,48 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 		}
 	}
 
-	if ( currententity->flags & RF_GLOW )
-	{	// bonus items will pulse with time
-		float	scale;
+	if (currententity->flags & RF_GLOW)
+	{
+		/* bonus items will pulse with time */
+		float scale;
 
-		scale = 0.1 * sin(r_newrefdef.time*7);
-		for (i=0 ; i<3 ; i++)
+		scale = 0.1 * sin(r_newrefdef.time * 7);
+
+		for (i = 0; i < 3; i++)
 		{
 			float	min;
 
 			min = shadelight[i] * 0.8;
 			shadelight[i] += scale;
+
 			if (shadelight[i] < min)
+			{
 				shadelight[i] = min;
+			}
 		}
 	}
 
-	// =================
-	// PGM	ir goggles color override
-	if ( r_newrefdef.rdflags & RDF_IRGOGGLES && currententity->flags & RF_IR_VISIBLE)
+	/* ir goggles color override */
+	if ((r_newrefdef.rdflags & RDF_IRGOGGLES) &&
+		(currententity->flags & RF_IR_VISIBLE))
 	{
 		shadelight[0] = 1.0;
 		shadelight[1] = 0.0;
 		shadelight[2] = 0.0;
 	}
-	// PGM
-	// =================
 
 	shadedots = r_avertexnormal_dots[((int)(currententity->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
-	an = currententity->angles[1]/180*M_PI;
+	an = currententity->angles[1] / 180 * M_PI;
 	shadevector[0] = cos(-an);
 	shadevector[1] = sin(-an);
 	shadevector[2] = 1;
-	VectorNormalize (shadevector);
+	VectorNormalize(shadevector);
 
-	//
-	// locate the proper data
-	//
-
+	/* locate the proper data */
 	c_alias_polys += paliashdr->num_tris;
 
-	//
-	// draw all the triangles
-	//
+	/* draw all the triangles */
 	if (currententity->flags & RF_DEPTHHACK || r_newrefdef.rdflags & RDF_NOWORLDMODEL) { // hack the depth range to prevent view model from poking into walls
 		float r_proj_aspect = (float)r_newrefdef.width / r_newrefdef.height;
 		float r_proj_fovy = r_newrefdef.fov_y;
@@ -965,7 +964,7 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 	currententity->angles[PITCH] = -currententity->angles[PITCH];	// sigh.
 	{
 		float model[16];
-		image_t	*skin;
+		image_t *skin = NULL;
 		Mat_Identity(model);
 		R_RotateForEntity (currententity, model);
 
@@ -973,7 +972,9 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 
 		// select skin
 		if (currententity->skin)
+		{
 			skin = currententity->skin;	// custom player skin
+		}
 		else
 		{
 			if (currententity->skinnum >= MAX_MD2SKINS)
@@ -985,8 +986,11 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 					skin = currentmodel->skins[0];
 			}
 		}
+
 		if (!skin)
+		{
 			skin = r_notexture;	// fallback...
+		}
 
 		// draw it
 		if ( (currententity->frame >= paliashdr->num_frames)
@@ -1008,8 +1012,11 @@ void R_DrawAliasModel (entity_t *currententity, model_t *currentmodel)
 		}
 
 		if ( !r_lerpmodels->value )
+		{
 			currententity->backlerp = 0;
-		Vk_DrawAliasFrameLerp (paliashdr, currententity->backlerp, skin, model, leftHandOffset, (currententity->flags & RF_TRANSLUCENT) ? 1 : 0, currententity);
+		}
+
+		Vk_DrawAliasFrameLerp(paliashdr, currententity->backlerp, skin, model, leftHandOffset, (currententity->flags & RF_TRANSLUCENT) ? 1 : 0, currententity);
 	}
 
 	if ( ( currententity->flags & RF_WEAPONMODEL ) && ( r_lefthand->value == 1.0F ) )

@@ -631,7 +631,8 @@ void	Vk_ImageList_f (void)
 	}
 	R_Printf(PRINT_ALL, "Total texel count (not counting mipmaps): %i in %d images\n", texels, img_loaded);
 	freeup = Vk_ImageHasFreeSpace();
-	R_Printf(PRINT_ALL, "Used %d of %d images%s.\n", used, image_max, freeup ? ", has free space" : "");
+	R_Printf(PRINT_ALL, "Used %d of %d / %d images%s.\n",
+		used, image_max, MAX_VKTEXTURES, freeup ? ", has free space" : "");
 }
 
 typedef struct
@@ -858,15 +859,16 @@ Scale up the pixel values in a texture to increase the
 lighting range
 ================
 */
-static void Vk_LightScaleTexture (byte *in, int inwidth, int inheight)
+static void
+Vk_LightScaleTexture(byte *in, int inwidth, int inheight)
 {
 	int		i, c;
 	byte	*p;
 
 	p = (byte *)in;
 
-	c = inwidth*inheight;
-	for (i=0 ; i<c ; i++, p+=4)
+	c = inwidth * inheight;
+	for (i = 0; i < c; i++, p+=4)
 	{
 		p[0] = overbrightable[intensitytable[p[0]]];
 		p[1] = overbrightable[intensitytable[p[1]]];
@@ -882,8 +884,9 @@ Returns number of mip levels and scales native resolution
 if vk_picmip is set. Does not use power of 2 scaling.
 ===============
 */
-static uint32_t Vk_Upload32Native (byte *data, int width, int height, imagetype_t type,
-							 byte **texBuffer, int *upload_width, int *upload_height)
+static uint32_t
+Vk_Upload32Native(byte *data, int width, int height, imagetype_t type,
+	byte **texBuffer, int *upload_width, int *upload_height)
 {
 	int	scaled_width = width, scaled_height = height;
 	int	miplevel = 1;
@@ -911,7 +914,7 @@ static uint32_t Vk_Upload32Native (byte *data, int width, int height, imagetype_
 	{
 		*texBuffer = malloc(scaled_width * scaled_height * 4);
 		if (!*texBuffer)
-			ri.Sys_Error(ERR_DROP, "%s: too big", __func__);
+			Com_Error(ERR_DROP, "%s: too big", __func__);
 
 		ResizeSTB(data, width, height,
 				  *texBuffer, scaled_width, scaled_height);
@@ -940,75 +943,6 @@ static uint32_t Vk_Upload32Native (byte *data, int width, int height, imagetype_
 	return miplevel;
 }
 
-/*
-===============
-Vk_Upload32
-
-Returns number of mip levels and scales to nearest power of 2.
-===============
-*/
-#if 0
-static uint32_t Vk_Upload32 (byte *data, int width, int height, imagetype_t type,
-							 byte **texBuffer, int *upload_width, int *upload_height)
-{
-	int	scaled_width, scaled_height;
-	int	miplevel = 1;
-
-	*texBuffer = NULL;
-
-	for (scaled_width = 1; scaled_width < width; scaled_width <<= 1)
-		;
-	for (scaled_height = 1; scaled_height < height; scaled_height <<= 1)
-		;
-	if (type != it_pic)
-	{
-		// let people sample down the world textures for speed
-		scaled_width >>= (int)vk_picmip->value;
-		scaled_height >>= (int)vk_picmip->value;
-	}
-
-	if (scaled_width < 1)
-		scaled_width = 1;
-	if (scaled_height < 1)
-		scaled_height = 1;
-
-	*texBuffer = malloc(scaled_width * scaled_height * 4);
-	if (!*texBuffer)
-		ri.Sys_Error(ERR_DROP, "%s: too big", __func__);
-
-	*upload_width = scaled_width;
-	*upload_height = scaled_height;
-
-	if (scaled_width == width && scaled_height == height)
-	{
-		memcpy(*texBuffer, data, scaled_width * scaled_height * 4);
-	}
-	else
-	{
-		ResizeSTB(data, width, height,
-				  *texBuffer, scaled_width, scaled_height);
-	}
-
-	// world textures
-	if (type != it_pic && type != it_sky)
-	{
-		Vk_LightScaleTexture(*texBuffer, scaled_width, scaled_height);
-	}
-
-	while (scaled_width > 1 || scaled_height > 1)
-	{
-		scaled_width >>= 1;
-		scaled_height >>= 1;
-		if (scaled_width < 1)
-			scaled_width = 1;
-		if (scaled_height < 1)
-			scaled_height = 1;
-		miplevel++;
-	}
-
-	return miplevel;
-}
-#endif
 
 /*
 ===============
@@ -1017,9 +951,9 @@ Vk_Upload8
 Returns number of mip levels
 ===============
 */
-
-static uint32_t Vk_Upload8 (const byte *data, int width, int height, imagetype_t type,
-							byte **texBuffer, int *upload_width, int *upload_height)
+static uint32_t
+Vk_Upload8(const byte *data, int width, int height, imagetype_t type,
+	byte **texBuffer, int *upload_width, int *upload_height)
 {
 	unsigned	*trans;
 	int			i, s;
@@ -1029,7 +963,7 @@ static uint32_t Vk_Upload8 (const byte *data, int width, int height, imagetype_t
 
 	trans = malloc(s * sizeof(*trans));
 	if (!trans)
-		ri.Sys_Error(ERR_DROP, "%s: too large", __func__);
+		Com_Error(ERR_DROP, "%s: too large", __func__);
 
 	for (i = 0; i < s; i++)
 	{
@@ -1043,7 +977,7 @@ static uint32_t Vk_Upload8 (const byte *data, int width, int height, imagetype_t
 	{
 		for (i = 0; i < s; i++)
 		{
-			int     p;
+			int p;
 
 			p = data[i];
 
@@ -1052,16 +986,27 @@ static uint32_t Vk_Upload8 (const byte *data, int width, int height, imagetype_t
 				// to avoid alpha fringes
 				// FIXME: do a full flood fill so mips work...
 				if (i > width && data[i - width] != 255)
+				{
 					p = data[i - width];
+				}
 				else if (i < s - width && data[i + width] != 255)
+				{
 					p = data[i + width];
+				}
 				else if (i > 0 && data[i - 1] != 255)
+				{
 					p = data[i - 1];
+				}
 				else if (i < s - 1 && data[i + 1] != 255)
+				{
 					p = data[i + 1];
+				}
 				else
+				{
 					p = 0;
-				// copy rgb components
+				}
+
+				/* copy rgb components */
 				((byte *)&trans[i])[0] = ((byte *)&d_8to24table[p])[0];
 				((byte *)&trans[i])[1] = ((byte *)&d_8to24table[p])[1];
 				((byte *)&trans[i])[2] = ((byte *)&d_8to24table[p])[2];
@@ -1075,11 +1020,14 @@ static uint32_t Vk_Upload8 (const byte *data, int width, int height, imagetype_t
 		SmoothColorImage(trans, s, s >> 7);
 	}
 
-	miplevel = Vk_Upload32Native((byte *)trans, width, height, type, texBuffer, upload_width, upload_height);
+	miplevel = Vk_Upload32Native((byte *)trans, width, height, type, texBuffer,
+		upload_width, upload_height);
 
 	// Only free if *texBuffer isn't the image data we sent
 	if (!texBuffer || *texBuffer != (byte *)trans)
+	{
 		free(trans);
+	}
 
 	return miplevel;
 }
@@ -1121,19 +1069,29 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 		for (i = 0, image = vktextures; i<numvktextures; i++, image++)
 		{
 			if (image->vk_texture.resource.image == VK_NULL_HANDLE)
+			{
 				break;
+			}
+
+			if (!strcmp(image->name, name))
+			{
+				/* we already have such image */
+				image->registration_sequence = registration_sequence;
+				return image;
+			}
 		}
+
 		if (i == numvktextures)
 		{
 			if (numvktextures == MAX_VKTEXTURES)
-				ri.Sys_Error(ERR_DROP, "%s: MAX_VKTEXTURES", __func__);
+				Com_Error(ERR_DROP, "%s: MAX_VKTEXTURES", __func__);
 			numvktextures++;
 		}
 		image = &vktextures[i];
 	}
 
 	if (strlen(name) >= sizeof(image->name))
-		ri.Sys_Error(ERR_DROP, "%s: \"%s\" is too long", __func__, name);
+		Com_Error(ERR_DROP, "%s: \"%s\" is too long", __func__, name);
 	strcpy(image->name, name);
 	image->registration_sequence = registration_sequence;
 	// zero-clear Vulkan texture handle
@@ -1230,7 +1188,7 @@ Finds or loads the given image or NULL
 ===============
 */
 image_t	*
-Vk_FindImage (const char *name, imagetype_t type)
+Vk_FindImage(const char *name, imagetype_t type)
 {
 	image_t	*image;
 	int	i, len;
@@ -1266,7 +1224,7 @@ Vk_FindImage (const char *name, imagetype_t type)
 		*ptr = '/';
 	}
 
-	// look for it
+	/* look for it */
 	for (i=0, image=vktextures ; i<numvktextures ; i++,image++)
 	{
 		if (!strcmp(name, image->name))
@@ -1276,9 +1234,9 @@ Vk_FindImage (const char *name, imagetype_t type)
 		}
 	}
 
-	//
-	// load the pic from disk
-	//
+	/*
+	 * load the pic from disk
+	 */
 	image = (image_t *)R_LoadImage(name, namewe, ext, type,
 		r_retexturing->value, (loadimage_t)Vk_LoadPic);
 
@@ -1300,7 +1258,8 @@ struct image_s *RE_RegisterSkin (char *name)
 	return Vk_FindImage (name, it_skin);
 }
 
-qboolean Vk_ImageHasFreeSpace(void)
+qboolean
+Vk_ImageHasFreeSpace(void)
 {
 	int		i, used;
 	image_t	*image;
@@ -1322,7 +1281,7 @@ qboolean Vk_ImageHasFreeSpace(void)
 		image_max = used;
 	}
 
-	// should same size of free slots as currently used
+	/* should same size of free slots as currently used */
 	return (img_loaded + used) < MAX_VKTEXTURES;
 }
 
@@ -1341,11 +1300,11 @@ void Vk_FreeUnusedImages (void)
 
 	if (Vk_ImageHasFreeSpace())
 	{
-		// should be enough space for load next images
+		/* should be enough space for load next images */
 		return;
 	}
 
-	// never free r_notexture or particle texture
+	/* never free r_notexture or particle texture */
 	r_notexture->registration_sequence = registration_sequence;
 	r_particletexture->registration_sequence = registration_sequence;
 	r_squaretexture->registration_sequence = registration_sequence;
@@ -1353,18 +1312,24 @@ void Vk_FreeUnusedImages (void)
 	for (i = 0, image = vktextures; i < numvktextures; i++, image++)
 	{
 		if (image->registration_sequence == registration_sequence)
+		{
 			continue;		// used this sequence
+		}
 		if (!image->registration_sequence)
+		{
 			continue;		// free image_t slot
+		}
 		if (image->type == it_pic)
+		{
 			continue;		// don't free pics
+		}
 
 		if (r_validation->value > 0)
 		{
 			R_Printf(PRINT_ALL, "%s: Unload %s[%d]\n", __func__, image->name, img_loaded);
 		}
 
-		// free it
+		/* free it */
 		QVk_ReleaseTexture(&image->vk_texture);
 		memset(image, 0, sizeof(*image));
 
@@ -1375,7 +1340,7 @@ void Vk_FreeUnusedImages (void)
 		}
 	}
 
-	// free all unused blocks
+	/* free all unused blocks */
 	vulkan_memory_free_unused();
 }
 

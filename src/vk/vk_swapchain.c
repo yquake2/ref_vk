@@ -191,7 +191,9 @@ VkResult QVk_CreateSwapchain()
 		imageCount = Q_max(3, surfaceCaps.minImageCount);
 
 	if (surfaceCaps.maxImageCount > 0)
+	{
 		imageCount = Q_min(imageCount, surfaceCaps.maxImageCount);
+	}
 
 	VkImageUsageFlags imgUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 

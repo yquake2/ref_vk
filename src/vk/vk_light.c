@@ -27,7 +27,7 @@
 
 #include "header/local.h"
 
-int	r_dlightframecount;
+int r_dlightframecount;
 
 static void
 R_RenderDlight(dlight_t *light)
@@ -82,25 +82,22 @@ R_RenderDlight(dlight_t *light)
 	vkCmdDrawIndexed(vk_activeCmdbuffer, 48, 1, 0, 0, 0);
 }
 
-/*
-=============
-R_RenderDlights
-=============
-*/
 void
 R_RenderDlights(void)
 {
-	int		i;
-	dlight_t	*l;
+	int i;
+	dlight_t *l;
 
 	if (!vk_flashblend->value)
 	{
 		return;
 	}
 
-	r_dlightframecount = r_framecount + 1;	// because the count hasn't
-											//  advanced yet for this frame
+	/* because the count hasn't advanced yet for this frame */
+	r_dlightframecount = r_framecount + 1;
+
 	l = r_newrefdef.dlights;
+
 	for (i = 0; i < r_newrefdef.num_dlights; i++, l++)
 	{
 		R_RenderDlight(l);

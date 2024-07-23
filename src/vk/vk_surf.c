@@ -29,9 +29,8 @@
 
 #include "header/local.h"
 
-static vec3_t	modelorg;		// relative to viewpoint
-
-msurface_t	*r_alpha_surfaces;
+static vec3_t modelorg; /* relative to viewpoint */
+msurface_t *r_alpha_surfaces;
 
 #define LIGHTMAP_BYTES 4
 
@@ -105,7 +104,10 @@ static void DrawVkPoly (vkpoly_t *p, image_t *texture, float *color)
 	memcpy(vertData, verts_buffer, sizeof(polyvert_t) * p->numverts);
 	memcpy(uboData,  color, sizeof(float) * 4);
 
-	VkDescriptorSet descriptorSets[] = { texture->vk_texture.descriptorSet, uboDescriptorSet };
+	VkDescriptorSet descriptorSets[] = {
+		texture->vk_texture.descriptorSet,
+		uboDescriptorSet
+	};
 
 	float gamma = 2.1F - vid_gamma->value;
 
@@ -125,7 +127,8 @@ static void DrawVkPoly (vkpoly_t *p, image_t *texture, float *color)
 DrawVkFlowingPoly -- version of DrawVkPoly that handles scrolling texture
 ================
 */
-static void DrawVkFlowingPoly (msurface_t *fa, image_t *texture, float *color)
+static void
+DrawVkFlowingPoly(msurface_t *fa, image_t *texture, const float *color)
 {
 	int		i;
 	float	*v;
@@ -164,7 +167,10 @@ static void DrawVkFlowingPoly (msurface_t *fa, image_t *texture, float *color)
 	memcpy(vertData, verts_buffer, sizeof(polyvert_t) * p->numverts);
 	memcpy(uboData,  color, sizeof(float) * 4);
 
-	VkDescriptorSet descriptorSets[] = { texture->vk_texture.descriptorSet, uboDescriptorSet };
+	VkDescriptorSet descriptorSets[] = {
+		texture->vk_texture.descriptorSet,
+		uboDescriptorSet
+	};
 
 	float gamma = 2.1F - vid_gamma->value;
 
@@ -176,19 +182,17 @@ static void DrawVkFlowingPoly (msurface_t *fa, image_t *texture, float *color)
 	vkCmdBindIndexBuffer(vk_activeCmdbuffer, QVk_GetTriangleFanIbo((p->numverts - 2) * 3), 0, VK_INDEX_TYPE_UINT16);
 	vkCmdDrawIndexed(vk_activeCmdbuffer, (p->numverts - 2) * 3, 1, 0, 0, 0);
 }
-//PGM
-//============
 
-/*
-** R_DrawTriangleOutlines
-*/
-static void R_DrawTriangleOutlines (void)
+static void
+R_DrawTriangleOutlines(void)
 {
 	int			i, j, k;
 	vkpoly_t	*p;
 
 	if (!vk_showtris->value)
+	{
 		return;
+	}
 
 	VkBuffer vbo;
 	VkDeviceSize vboOffset;
@@ -247,12 +251,9 @@ static void R_DrawTriangleOutlines (void)
 	}
 }
 
-/*
-================
-R_RenderBrushPoly
-================
-*/
-static void R_RenderBrushPoly (msurface_t *fa, float *modelMatrix, float alpha, entity_t *currententity)
+static void
+R_RenderBrushPoly(msurface_t *fa, const float *modelMatrix, float alpha,
+	const entity_t *currententity)
 {
 	int			maps;
 	image_t		*image;
@@ -448,7 +449,9 @@ DrawTextureChains(entity_t *currententity)
 }
 
 
-static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, float alpha, entity_t *currententity )
+static void
+Vk_RenderLightmappedPoly(msurface_t *surf, const float *modelMatrix, float alpha,
+	const entity_t *currententity)
 {
 	int		i, nv = surf->polys->numverts;
 	int		map;
@@ -487,7 +490,7 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 			goto dynamic;
 	}
 
-	// dynamic this frame or dynamic previously
+	/* dynamic this frame or dynamic previously */
 	if (surf->dlightframe == r_framecount)
 	{
 	dynamic:
@@ -502,7 +505,7 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 
 	if (Mesh_VertsRealloc(nv))
 	{
-		ri.Sys_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
+		Com_Error(ERR_FATAL, "%s: can't allocate memory", __func__);
 	}
 
 	if (is_dynamic)
@@ -571,7 +574,11 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 		{
 			VkBuffer vbo;
 			VkDeviceSize vboOffset;
-			VkDescriptorSet descriptorSets[] = { image->vk_texture.descriptorSet, uboDescriptorSet, vk_state.lightmap_textures[lmtex].descriptorSet };
+			VkDescriptorSet descriptorSets[] = {
+				image->vk_texture.descriptorSet,
+				uboDescriptorSet,
+				vk_state.lightmap_textures[lmtex].descriptorSet
+			};
 			vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_drawPolyLmapPipeline.layout, 0, 3, descriptorSets, 1, &uboOffset);
 
 			for (p = surf->polys; p; p = p->chain)
@@ -626,12 +633,17 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 					lmappolyverts_buffer[i].texCoordLmap[0] = v[5];
 					lmappolyverts_buffer[i].texCoordLmap[1] = v[6];
 				}
+
 				VkBuffer vbo;
 				VkDeviceSize vboOffset;
 				uint8_t *vertData = QVk_GetVertexBuffer(sizeof(lmappolyvert_t) * nv, &vbo, &vboOffset);
 				memcpy(vertData, lmappolyverts_buffer, sizeof(lmappolyvert_t) * nv);
 
-				VkDescriptorSet descriptorSets[] = { image->vk_texture.descriptorSet, uboDescriptorSet, vk_state.lightmap_textures[lmtex].descriptorSet };
+				VkDescriptorSet descriptorSets[] = {
+					image->vk_texture.descriptorSet,
+					uboDescriptorSet,
+					vk_state.lightmap_textures[lmtex].descriptorSet
+				};
 				vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_drawPolyLmapPipeline.layout, 0, 3, descriptorSets, 1, &uboOffset);
 				vkCmdBindVertexBuffers(vk_activeCmdbuffer, 0, 1, &vbo, &vboOffset);
 				vkCmdBindIndexBuffer(vk_activeCmdbuffer, QVk_GetTriangleFanIbo((nv - 2) * 3), 0, VK_INDEX_TYPE_UINT16);
@@ -660,7 +672,11 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 				uint8_t *vertData = QVk_GetVertexBuffer(sizeof(lmappolyvert_t) * nv, &vbo, &vboOffset);
 				memcpy(vertData, lmappolyverts_buffer, sizeof(lmappolyvert_t) * nv);
 
-				VkDescriptorSet descriptorSets[] = { image->vk_texture.descriptorSet, uboDescriptorSet, vk_state.lightmap_textures[lmtex].descriptorSet };
+				VkDescriptorSet descriptorSets[] = {
+					image->vk_texture.descriptorSet,
+					uboDescriptorSet,
+					vk_state.lightmap_textures[lmtex].descriptorSet
+				};
 				vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_drawPolyLmapPipeline.layout, 0, 3, descriptorSets, 1, &uboOffset);
 				vkCmdBindVertexBuffers(vk_activeCmdbuffer, 0, 1, &vbo, &vboOffset);
 				vkCmdBindIndexBuffer(vk_activeCmdbuffer, QVk_GetTriangleFanIbo((nv - 2) * 3), 0, VK_INDEX_TYPE_UINT16);
@@ -674,15 +690,11 @@ static void Vk_RenderLightmappedPoly( msurface_t *surf, float *modelMatrix, floa
 	}
 }
 
-/*
-=================
-R_DrawInlineBModel
-=================
-*/
-static void R_DrawInlineBModel (entity_t *currententity, model_t *currentmodel, float *modelMatrix)
+static void
+R_DrawInlineBModel(entity_t *currententity, const model_t *currentmodel, float *modelMatrix)
 {
-	int			i;
-	msurface_t	*psurf;
+	int i;
+	msurface_t *psurf;
 	float		alpha = 1.f;
 
 	// calculate dynamic lighting for bmodel
@@ -707,20 +719,18 @@ static void R_DrawInlineBModel (entity_t *currententity, model_t *currentmodel, 
 		alpha = .25f;
 	}
 
-	//
-	// draw texture
-	//
-	for (i = 0; i<currentmodel->nummodelsurfaces; i++, psurf++)
+	/* draw texture */
+	for (i = 0; i < currentmodel->nummodelsurfaces; i++, psurf++)
 	{
-		float	dot;
-		cplane_t	*pplane;
+		cplane_t *pplane;
+		float dot;
 
-		// find which side of the node we are on
+		/* find which side of the node we are on */
 		pplane = psurf->plane;
 
 		dot = DotProduct(modelorg, pplane->normal) - pplane->dist;
 
-		// draw the polygon
+		/* draw the polygon */
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
 		{
@@ -741,26 +751,25 @@ static void R_DrawInlineBModel (entity_t *currententity, model_t *currentmodel, 
 	}
 }
 
-/*
-=================
-R_DrawBrushModel
-=================
-*/
-void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel)
+void
+R_DrawBrushModel(entity_t *currententity, const model_t *currentmodel)
 {
-	vec3_t		mins, maxs;
-	qboolean	rotated;
+	vec3_t mins, maxs;
+	qboolean rotated;
 	float model[16];
 
 	if (currentmodel->nummodelsurfaces == 0)
+	{
 		return;
+	}
 
 	if (currententity->angles[0] || currententity->angles[1] || currententity->angles[2])
 	{
 		int	i;
 
 		rotated = true;
-		for (i = 0; i<3; i++)
+
+		for (i = 0; i < 3; i++)
 		{
 			mins[i] = currententity->origin[i] - currentmodel->radius;
 			maxs[i] = currententity->origin[i] + currentmodel->radius;
@@ -781,10 +790,11 @@ void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel)
 	memset(vk_lms.lightmap_surfaces, 0, sizeof(vk_lms.lightmap_surfaces));
 
 	VectorSubtract(r_newrefdef.vieworg, currententity->origin, modelorg);
+
 	if (rotated)
 	{
-		vec3_t	temp;
-		vec3_t	forward, right, up;
+		vec3_t temp;
+		vec3_t forward, right, up;
 
 		VectorCopy(modelorg, temp);
 		AngleVectors(currententity->angles, forward, right, up);
@@ -804,45 +814,39 @@ void R_DrawBrushModel (entity_t *currententity, model_t *currentmodel)
 	R_DrawInlineBModel(currententity, currentmodel, model);
 }
 
-/*
-=============================================================
-
-	WORLD MODEL
-
-=============================================================
-*/
-
-/*
-================
-R_RecursiveWorldNode
-================
-*/
-static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
+static void
+R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 {
-	int			c, side, sidebit;
-	cplane_t	*plane;
-	msurface_t	*surf;
-	mleaf_t		*pleaf;
-	float		dot;
-	image_t		*image;
+	int c, side, sidebit;
+	cplane_t *plane;
+	msurface_t *surf;
+	mleaf_t *pleaf;
+	float dot;
+	image_t *image;
 
 	if (node->contents == CONTENTS_SOLID)
-		return;		// solid
+	{
+		return; /* solid */
+	}
 
 	if (node->visframe != r_visframecount)
+	{
 		return;
+	}
 
-	if (r_cull->value && R_CullBox (node->minmaxs, node->minmaxs+3, frustum))
+	if (r_cull->value && R_CullBox(node->minmaxs, node->minmaxs + 3, frustum))
+	{
 		return;
+	}
 
-	// if a leaf node, draw stuff
+	/* if a leaf node, draw stuff */
 	if (node->contents != CONTENTS_NODE)
 	{
 		msurface_t	**mark;
 
 		pleaf = (mleaf_t *)node;
 
-		// check for door connected areas
+		/* check for door connected areas */
 		if (!R_AreaVisible(r_newrefdef.areabits, pleaf))
 			return;	// not visible
 
@@ -855,30 +859,31 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 			{
 				(*mark)->visframe = r_framecount;
 				mark++;
-			} while (--c);
+			}
+			while (--c);
 		}
 
 		return;
 	}
 
-	// node is just a decision point, so go down the apropriate sides
-	// find which side of the node we are on
+	/* node is just a decision point, so go down the apropriate
+	   sides find which side of the node we are on */
 	plane = node->plane;
 
 	switch (plane->type)
 	{
-	case PLANE_X:
-		dot = modelorg[0] - plane->dist;
-		break;
-	case PLANE_Y:
-		dot = modelorg[1] - plane->dist;
-		break;
-	case PLANE_Z:
-		dot = modelorg[2] - plane->dist;
-		break;
-	default:
-		dot = DotProduct(modelorg, plane->normal) - plane->dist;
-		break;
+		case PLANE_X:
+			dot = modelorg[0] - plane->dist;
+			break;
+		case PLANE_Y:
+			dot = modelorg[1] - plane->dist;
+			break;
+		case PLANE_Z:
+			dot = modelorg[2] - plane->dist;
+			break;
+		default:
+			dot = DotProduct(modelorg, plane->normal) - plane->dist;
+			break;
 	}
 
 	if (dot >= 0)
@@ -892,21 +897,26 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 		sidebit = SURF_PLANEBACK;
 	}
 
-	// recurse down the children, front side first
-	R_RecursiveWorldNode (node->children[side], currententity);
+	/* recurse down the children, front side first */
+	R_RecursiveWorldNode(node->children[side], currententity);
 
-	// draw stuff
-	for ( c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c ; c--, surf++)
+	/* draw stuff */
+	for (c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c ; c--, surf++)
 	{
 		if (surf->visframe != r_framecount)
+		{
 			continue;
+		}
 
-		if ( (surf->flags & SURF_PLANEBACK) != sidebit )
-			continue;		// wrong side
+		if ((surf->flags & SURF_PLANEBACK) != sidebit)
+		{
+			continue; /* wrong side */
+		}
 
 		if (surf->texinfo->flags & SURF_SKY)
-		{	// just adds to visible sky bounds
-			R_AddSkySurface (surf);
+		{
+			/* just adds to visible sky bounds */
+			R_AddSkySurface(surf);
 		}
 		else if (surf->texinfo->flags & (SURF_TRANS33|SURF_TRANS66))
 		{	// add to the translucent chain
@@ -931,98 +941,109 @@ static void R_RecursiveWorldNode (mnode_t *node, entity_t *currententity)
 		}
 	}
 
-	// recurse down the back side
-	R_RecursiveWorldNode (node->children[!side], currententity);
+	/* recurse down the back side */
+	R_RecursiveWorldNode(node->children[!side], currententity);
 }
 
-
-/*
-=============
-R_DrawWorld
-=============
-*/
-void R_DrawWorld (void)
+void
+R_DrawWorld(void)
 {
-	entity_t	ent;
+	entity_t ent;
 
 	if (!r_drawworld->value)
+	{
 		return;
+	}
 
-	if ( r_newrefdef.rdflags & RDF_NOWORLDMODEL )
+	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL)
+	{
 		return;
+	}
 
 	VectorCopy(r_newrefdef.vieworg, modelorg);
 
-	// auto cycle the world frame for texture animation
-	memset (&ent, 0, sizeof(ent));
-	ent.frame = (int)(r_newrefdef.time*2);
+	/* auto cycle the world frame for texture animation */
+	memset(&ent, 0, sizeof(ent));
+	ent.frame = (int)(r_newrefdef.time * 2);
 
-	memset (vk_lms.lightmap_surfaces, 0, sizeof(vk_lms.lightmap_surfaces));
-	R_ClearSkyBox ();
+	memset(vk_lms.lightmap_surfaces, 0, sizeof(vk_lms.lightmap_surfaces));
 
-	R_RecursiveWorldNode (r_worldmodel->nodes, &ent);
+	R_ClearSkyBox();
+	R_RecursiveWorldNode(r_worldmodel->nodes, &ent);
 
 	/*
 	** theoretically nothing should happen in the next two functions
 	** if multitexture is enabled - in practice, this code renders non-transparent liquids!
 	*/
-	DrawTextureChains (&ent);
-
-	R_DrawSkyBox ();
-
-	R_DrawTriangleOutlines ();
+	DrawTextureChains(&ent);
+	R_DrawSkyBox();
+	R_DrawTriangleOutlines();
 }
 
-
 /*
-===============
-R_MarkLeaves
-
-Mark the leaves and nodes that are in the PVS for the current
-cluster
-===============
-*/
-void R_MarkLeaves (void)
+ * Mark the leaves and nodes that are
+ * in the PVS for the current cluster
+ */
+void
+R_MarkLeaves(void)
 {
-	const byte	*vis;
-	YQ2_ALIGNAS_TYPE(int) byte fatvis[MAX_MAP_LEAFS/8];
-	mnode_t	*node;
-	int		i;
-	mleaf_t	*leaf;
+	const byte *vis;
+	YQ2_ALIGNAS_TYPE(int) byte fatvis[MAX_MAP_LEAFS / 8];
+	mnode_t *node;
+	int i;
+	mleaf_t *leaf;
 
-	if (r_oldviewcluster == r_viewcluster && r_oldviewcluster2 == r_viewcluster2 && !r_novis->value && r_viewcluster != -1)
+	if ((r_oldviewcluster == r_viewcluster) &&
+		(r_oldviewcluster2 == r_viewcluster2) &&
+		!r_novis->value &&
+		(r_viewcluster != -1))
+	{
 		return;
+	}
 
-	// development aid to let you run around and see exactly where
-	// the pvs ends
+	/* development aid to let you run around
+	   and see exactly where the pvs ends */
 	if (r_lockpvs->value)
+	{
 		return;
+	}
 
 	r_visframecount++;
 	r_oldviewcluster = r_viewcluster;
 	r_oldviewcluster2 = r_viewcluster2;
 
-	if (r_novis->value || r_viewcluster == -1 || !r_worldmodel->vis)
+	if (r_novis->value || (r_viewcluster == -1) || !r_worldmodel->vis)
 	{
-		// mark everything
-		for (i=0 ; i<r_worldmodel->numleafs ; i++)
+		/* mark everything */
+		for (i = 0; i < r_worldmodel->numleafs; i++)
+		{
 			r_worldmodel->leafs[i].visframe = r_visframecount;
-		for (i=0 ; i<r_worldmodel->numnodes ; i++)
+		}
+
+		for (i = 0; i < r_worldmodel->numnodes; i++)
+		{
 			r_worldmodel->nodes[i].visframe = r_visframecount;
+		}
+
 		return;
 	}
 
-	vis = Mod_ClusterPVS (r_viewcluster, r_worldmodel);
-	// may have to combine two clusters because of solid water boundaries
+	vis = Mod_ClusterPVS(r_viewcluster, r_worldmodel);
+
+	/* may have to combine two clusters because of solid water boundaries */
 	if (r_viewcluster2 != r_viewcluster)
 	{
-		int	c;
+		int c;
 
-		memcpy (fatvis, vis, (r_worldmodel->numleafs+7)/8);
-		vis = Mod_ClusterPVS (r_viewcluster2, r_worldmodel);
-		c = (r_worldmodel->numleafs+31)/32;
-		for (i=0 ; i<c ; i++)
+		memcpy(fatvis, vis, (r_worldmodel->numleafs + 7) / 8);
+		vis = Mod_ClusterPVS(r_viewcluster2, r_worldmodel);
+		c = (r_worldmodel->numleafs + 31) / 32;
+
+		for (i = 0; i < c; i++)
+		{
 			((int *)fatvis)[i] |= ((int *)vis)[i];
+		}
+
 		vis = fatvis;
 	}
 
