@@ -853,7 +853,7 @@ R_DrawAliasModel(entity_t *currententity, const model_t *currentmodel)
 	}
 	else
 	{
-		R_LightPoint(currententity->origin, shadelight, currententity);
+		R_LightPoint(r_worldmodel->grid, currententity->origin, shadelight, currententity);
 
 		// player lighting hack for communication back to server
 		// big hack!

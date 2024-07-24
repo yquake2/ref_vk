@@ -283,8 +283,77 @@ RecursiveLightPoint(mnode_t *node, vec3_t start, vec3_t end, vec3_t pointcolor)
 	return RecursiveLightPoint(node->children[!side], mid, end, pointcolor);
 }
 
+static int
+BSPX_LightGridSingleValue(const bspxlightgrid_t *grid, const lightstyle_t *lightstyles, int x, int y, int z, vec3_t res_diffuse)
+{
+	unsigned int node;
+
+	node = grid->rootnode;
+	while (!(node & LGNODE_LEAF))
+	{
+		struct bspxlgnode_s *n;
+		if (node & LGNODE_MISSING)
+			return 0;	//failure
+		n = grid->nodes + node;
+		node = n->child[
+				((x>=n->mid[0])<<2)|
+				((y>=n->mid[1])<<1)|
+				((z>=n->mid[2])<<0)];
+	}
+
+	{
+		struct bspxlgleaf_s *leaf = &grid->leafs[node & ~LGNODE_LEAF];
+		struct bspxlgsamp_s *samp;
+		int i;
+
+		x -= leaf->mins[0];
+		y -= leaf->mins[1];
+		z -= leaf->mins[2];
+		if (x >= leaf->size[0] ||
+			y >= leaf->size[1] ||
+			z >= leaf->size[2])
+			return 0;	//sample we're after is out of bounds...
+
+		i = x + leaf->size[0]*(y + leaf->size[1]*z);
+		samp = leaf->rgbvalues + i;
+
+		//no hdr support
+		for (i = 0; i < 4; i++)
+		{
+			if (samp->map[i].style == ((byte)(~0u)))
+				break;	//no more
+			res_diffuse[0] += samp->map[i].rgb[0] * lightstyles[samp->map[i].style].rgb[0] / 255.0;
+			res_diffuse[1] += samp->map[i].rgb[1] * lightstyles[samp->map[i].style].rgb[1] / 255.0;
+			res_diffuse[2] += samp->map[i].rgb[2] * lightstyles[samp->map[i].style].rgb[2] / 255.0;
+		}
+	}
+	return 1;
+}
+
+static void
+BSPX_LightGridValue(const bspxlightgrid_t *grid, const lightstyle_t *lightstyles,
+	const vec3_t point, vec3_t res_diffuse)
+{
+	int tile[3];
+	int i;
+	int s;
+
+	VectorSet(res_diffuse, 0, 0, 0);	//assume worst
+
+	for (i = 0; i < 3; i++)
+		tile[i] = (point[i] - grid->mins[i]) * grid->gridscale[i];
+
+	for (i = 0, s = 0; i < 8; i++)
+		s += BSPX_LightGridSingleValue(grid, lightstyles,
+			tile[0]+!!(i&1),
+			tile[1]+!!(i&2),
+			tile[2]+!!(i&4), res_diffuse);
+
+	VectorScale(res_diffuse, 1.0/s, res_diffuse);	//average the successful ones
+}
+
 void
-R_LightPoint(vec3_t p, vec3_t color, entity_t *currententity)
+R_LightPoint(const bspxlightgrid_t *grid, vec3_t p, vec3_t color, entity_t *currententity)
 {
 	vec3_t		end, pointcolor, dist;
 	float		r;
@@ -294,6 +363,13 @@ R_LightPoint(vec3_t p, vec3_t color, entity_t *currententity)
 	if (!r_worldmodel->lightdata || !currententity)
 	{
 		color[0] = color[1] = color[2] = 1.0;
+		return;
+	}
+
+	if (grid)
+	{
+		BSPX_LightGridValue(grid, r_newrefdef.lightstyles,
+			currententity->origin, color);
 		return;
 	}
 

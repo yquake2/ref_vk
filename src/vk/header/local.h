@@ -183,7 +183,7 @@ extern	float	r_viewproj_matrix[16];
 
 extern	float *s_blocklights, *s_blocklights_max;
 
-void R_LightPoint (vec3_t p, vec3_t color, entity_t *currententity);
+void R_LightPoint (const bspxlightgrid_t *grid, vec3_t p, vec3_t color, entity_t *currententity);
 void R_PushDlights (void);
 
 //====================================================================

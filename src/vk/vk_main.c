@@ -243,7 +243,7 @@ R_DrawNullModel(entity_t *currententity)
 	}
 	else
 	{
-		R_LightPoint(currententity->origin, shadelight, currententity);
+		R_LightPoint(r_worldmodel->grid, currententity->origin, shadelight, currententity);
 	}
 
 	float model[16];
@@ -1071,7 +1071,7 @@ R_SetLightLevel (void)
 	}
 
 	/* save off light value for server to look at */
-	R_LightPoint(r_newrefdef.vieworg, shadelight, NULL);
+	R_LightPoint(r_worldmodel->grid, r_newrefdef.vieworg, shadelight, NULL);
 
 	/* pick the greatest component, which should be the
 	 * same as the mono value returned by software */
