@@ -32,7 +32,7 @@
 #include "shared_safe.h"
 #include "crc.h"
 
-#define VKVERSION "1.0.7"
+#define VKVERSION "1.0.8"
 
 #ifndef YQ2OSTYPE
 #error YQ2OSTYPE should be defined by the build system
