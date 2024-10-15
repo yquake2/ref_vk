@@ -499,7 +499,7 @@ Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, const b
 
 	lminfos = Mod_LoadBSPXFindLump(bspx_header, "DECOUPLED_LM", &lminfosize, mod_base);
 	if (lminfos != NULL && lminfosize / sizeof(dlminfo_t) != loadmodel->numsurfaces) {
-		R_Printf(PRINT_ALL, "%s: [%s] decoupled_lm size %ld does not match surface count %d\n",
+		R_Printf(PRINT_ALL, "%s: [%s] decoupled_lm size %u does not match surface count %d\n",
 			__func__, loadmodel->name, lminfosize / sizeof(dlminfo_t), loadmodel->numsurfaces);
 		lminfos = NULL;
 	}
