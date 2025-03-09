@@ -28,8 +28,8 @@
 #ifndef __VK_LOCAL_H__
 #define __VK_LOCAL_H__
 
-#include <math.h>
 #include <stdio.h>
+#include <math.h>
 
 #ifdef USE_SDL3
 #include <SDL3/SDL.h>
@@ -72,17 +72,17 @@
 // fall over
 #define	ROLL	2
 
-extern	viddef_t	vid;
+extern viddef_t vid;
 
 typedef struct image_s
 {
-	char	name[MAX_QPATH];			// game path, including extension
-	imagetype_t	type;
-	int		width, height;				// source image
-	int		upload_width, upload_height;	// after power of two and picmip
-	int		registration_sequence;		// 0 = free
-	struct msurface_s	*texturechain;	// for sort-by-texture world drawing
-	qvktexture_t vk_texture;			// Vulkan texture handle
+	char name[MAX_QPATH];               /* game path, including extension */
+	imagetype_t type;
+	int width, height;                  /* source image */
+	int upload_width, upload_height;    /* after power of two and picmip */
+	int registration_sequence;          /* 0 = free */
+	struct msurface_s *texturechain;    /* for sort-by-texture world drawing */
+	qvktexture_t vk_texture;            /* Vulkan texture handle */
 } image_t;
 
 #define		MAX_VKTEXTURES	1024
@@ -228,26 +228,26 @@ void R_MarkLeaves (void);
 void EmitWaterPolys (msurface_t *fa, image_t *texture,
 				   const float *modelMatrix, const float *color,
 				   qboolean solid_surface);
-void R_AddSkySurface (msurface_t *fa);
-void R_ClearSkyBox (void);
-void R_DrawSkyBox (void);
+void R_AddSkySurface(msurface_t *fa);
+void R_ClearSkyBox(void);
+void R_DrawSkyBox(void);
 void R_MarkSurfaceLights(dlight_t *light, int bit, mnode_t *node,
 	int r_dlightframecount);
 
-struct image_s	*RE_Draw_FindPic (char *name);
+struct image_s	*RE_Draw_FindPic(const char *name);
 
-void	RE_Draw_GetPicSize (int *w, int *h, char *name);
-void	RE_Draw_PicScaled (int x, int y, char *name, float scale);
-void	RE_Draw_StretchPic (int x, int y, int w, int h, char *name);
+void	RE_Draw_GetPicSize (int *w, int *h, const char *name);
+void	RE_Draw_PicScaled (int x, int y, const char *name, float scale);
+void	RE_Draw_StretchPic (int x, int y, int w, int h, const char *name);
 void	RE_Draw_CharScaled (int x, int y, int num, float scale);
-void	RE_Draw_TileClear (int x, int y, int w, int h, char *name);
+void	RE_Draw_TileClear (int x, int y, int w, int h, const char *name);
 void	RE_Draw_Fill (int x, int y, int w, int h, int c);
 void	RE_Draw_FadeScreen (void);
 void	RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int bits);
 
 qboolean	RE_EndWorldRenderpass( void );
 
-struct image_s *RE_RegisterSkin (char *name);
+struct image_s *RE_RegisterSkin (const char *name);
 
 image_t *Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 		    int height, int realheight, size_t data_size, imagetype_t type,
@@ -258,9 +258,9 @@ void	Vk_LmapTextureMode( char *string );
 void	Vk_ImageList_f (void);
 
 void Vk_BuildPolygonFromSurface(msurface_t *fa, model_t *currentmodel);
-void Vk_CreateSurfaceLightmap (msurface_t *surf);
-void Vk_EndBuildingLightmaps (void);
-void Vk_BeginBuildingLightmaps (model_t *m);
+void Vk_CreateSurfaceLightmap(msurface_t *surf);
+void Vk_EndBuildingLightmaps(void);
+void Vk_BeginBuildingLightmaps(model_t *m);
 
 void	Vk_InitImages (void);
 void	Vk_ShutdownImages (void);
@@ -268,9 +268,9 @@ void	Vk_FreeUnusedImages (void);
 qboolean Vk_ImageHasFreeSpace(void);
 
 void	RE_BeginRegistration (char *model);
-struct model_s	*RE_RegisterModel (char *name);
-struct image_s	*RE_RegisterSkin (char *name);
-void	RE_SetSky_s (const char *name, float rotate, const vec3_t axis);
+struct model_s	*RE_RegisterModel(char *name);
+struct image_s	*RE_RegisterSkin(const char *name);
+void	RE_SetSky (const char *name, float rotate, vec3_t axis);
 void	RE_EndRegistration (void);
 
 void Mat_Identity(float *matrix);
@@ -304,7 +304,7 @@ typedef struct
 	uint32_t    triangle_index_count;
 } vkconfig_t;
 
-#define MAX_LIGHTMAPS 128
+#define MAX_LIGHTMAPS 256
 #define DYNLIGHTMAP_OFFSET MAX_LIGHTMAPS
 
 typedef struct
@@ -312,13 +312,13 @@ typedef struct
 	float inverse_intensity;
 	qboolean fullscreen;
 
-	int     prev_mode;
+	int prev_mode;
 
 	unsigned char *d_16to8table;
 
 	qvktexture_t lightmap_textures[MAX_LIGHTMAPS*2];
 
-	int	currenttextures[2];
+	int currenttextures[2];
 	int currenttmu;
 
 	float camera_separation;

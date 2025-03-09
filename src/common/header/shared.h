@@ -37,8 +37,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <inttypes.h>
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202000L // C23 or newer
+typedef bool qboolean;
+#else
 #ifdef true
  #undef true
 #endif
@@ -48,6 +50,8 @@
 #endif
 
 typedef enum {false, true}  qboolean;
+#endif
+
 typedef unsigned char byte;
 
 #ifndef NULL
@@ -330,6 +334,14 @@ char *Q_strlwr(char *s);
 int Q_strlcpy(char *dst, const char *src, int size);
 int Q_strlcat(char *dst, const char *src, int size);
 
+/* Delete n characters from s starting at index i */
+void Q_strdel(char *s, size_t i, size_t n);
+
+/* Insert src into dest starting at index i, total, n is the total size of the buffer */
+/* Returns length of src on success, 0 if there is not enough space in dest for src */
+size_t Q_strins(char *dest, const char *src, size_t i, size_t n);
+qboolean Q_strisnum(const char *s);
+
 /* ============================================= */
 
 /* Unicode wrappers that also make sure it's a regular file around fopen(). */
@@ -405,7 +417,7 @@ int Hunk_End(void);
 #define SFF_SYSTEM 0x10
 
 /* pass in an attribute mask of things you wish to REJECT */
-char *Sys_FindFirst(char *path, unsigned musthave, unsigned canthave);
+char *Sys_FindFirst(const char *path, unsigned musthave, unsigned canthave);
 char *Sys_FindNext(unsigned musthave, unsigned canthave);
 void Sys_FindClose(void);
 
