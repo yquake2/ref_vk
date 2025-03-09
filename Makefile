@@ -295,9 +295,16 @@ SDLLDFLAGS := $(shell sdl2-config --libs)
 endif
 endif
 
+ifeq ($(WITH_SDL3),yes)
+# The renderer libs don't need libSDL3main, libmingw32 or -mwindows.
+ifeq ($(YQ2_OSTYPE), Windows)
+DLL_SDLLDFLAGS = $(subst -mwindows,,$(subst -lmingw32,,$(subst -lSDL3main,,$(SDLLDFLAGS))))
+endif
+else
 # The renderer libs don't need libSDL2main, libmingw32 or -mwindows.
 ifeq ($(YQ2_OSTYPE), Windows)
 DLL_SDLLDFLAGS = $(subst -mwindows,,$(subst -lmingw32,,$(subst -lSDL2main,,$(SDLLDFLAGS))))
+endif
 endif
 
 # ----------
@@ -342,14 +349,16 @@ ref_vk:
 release/ref_vk.dll : LDFLAGS += -shared
 
 else ifeq ($(YQ2_OSTYPE), Darwin)
+
 ref_vk:
-	@echo "===> Building ref_vk.dlylib"
+	@echo "===> Building ref_vk.dylib"
 	${Q}mkdir -p release
 	$(MAKE) release/ref_vk.dylib
 
 release/ref_vk.dylib : LDFLAGS += -shared
 
-else
+else # not Windows or Darwin
+
 ref_vk:
 	@echo "===> Building ref_vk.so"
 	${Q}mkdir -p release

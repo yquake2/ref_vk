@@ -1,0 +1,51 @@
+name: Testbuild for Linux (aarch64)
+run-name: testbuild_linux_aarch64
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    types:
+      - edited
+      - opened
+      - synchronize
+concurrency:
+  # Cancel concurrent workflows for the same PR or commit hash.
+  group: ${{github.workflow}}-${{github.event_name == 'pull_request' && github.head_ref || github.sha}}
+  cancel-in-progress: true
+jobs:
+  build_ubuntu_aarch64:
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: ubuntu
+    steps:
+    - name: Install build dependencies
+      run: |
+        sudo apt update
+        sudo apt update
+        sudo apt install libgl1-mesa-dev libsdl2-dev libopenal-dev libcurl4-openssl-dev \
+            libavformat-dev libswscale-dev libvulkan-dev build-essential
+    - name: Check out repository code
+      uses: actions/checkout@v4
+    - name: Build
+      run: |
+        # Public runners come with 4 CPUs.
+        make -j4
+    - name: Create testbuild package
+      run: |
+        # Create release directory tree
+        mkdir -p publish/ref_vk-linux_aarch64-${{github.sha}}/misc/docs
+        # Copy release assets
+        cp -r release/* publish/ref_vk-linux_aarch64-${{github.sha}}/
+        # Copy misc assets
+        cp LICENSE publish/ref_vk-linux_aarch64-${{github.sha}}/misc/docs/LICENSE.txt
+        cp README.md publish/ref_vk-linux_aarch64-${{github.sha}}/misc/docs/README.txt
+    - name: Upload testbuild package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ref_vk-linux_aarch64-${{github.sha}}
+        path: publish/
+        if-no-files-found: error
