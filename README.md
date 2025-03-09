@@ -137,6 +137,13 @@ is renaming the mdl/dkm/fm format file to md2 and place instead the original
 tris.md2 file. FM is rendered with all meshes without support of
 filtering/selecting the exact part of the model.
 
+## Releases
+
+Our CI builds **unsupported** Linux, MacOS and Windows binaries at every
+commit. The artifacts can be found here:
+
+* [Github Actions](https://github.com/yquake2/ref_vk/actions)
+
 ### ReRelease Support
 
 Use [Yamagi Quake II ReRelease](https://github.com/yquake2/yquake2remaster/releases)
