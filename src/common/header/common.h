@@ -32,7 +32,7 @@
 #include "shared_safe.h"
 #include "crc.h"
 
-#define VKVERSION "1.0.9"
+#define VKVERSION "1.0.10"
 
 #ifndef YQ2OSTYPE
 #error YQ2OSTYPE should be defined by the build system
@@ -866,5 +866,7 @@ const char *Sys_GetBinaryDir(void);
 void Sys_SetupFPU(void);
 
 /* ======================================================================= */
+
+void Mods_NamesFinish(void);
 
 #endif

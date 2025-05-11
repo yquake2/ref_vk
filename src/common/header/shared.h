@@ -35,24 +35,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <strings.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202000L // C23 or newer
-typedef bool qboolean;
-#else
-#ifdef true
- #undef true
-#endif
-
-#ifdef false
- #undef false
-#endif
-
-typedef enum {false, true}  qboolean;
-#endif
-
+typedef int qboolean;
 typedef unsigned char byte;
 
 #ifndef NULL
@@ -69,19 +56,23 @@ typedef unsigned char byte;
   #if defined(__GNUC__)
 	#define YQ2_ATTR_MALLOC         __attribute__ ((__malloc__))
 	#define YQ2_ATTR_INLINE         __attribute__((always_inline)) inline
+	#define YQ2_ATTR_RETURNS_NONNULL __attribute__ ((returns_nonnull))
   #elif defined(_MSC_VER)
 	#define YQ2_ATTR_MALLOC         __declspec(restrict)
 	#define YQ2_ATTR_INLINE         __forceinline
+	#define YQ2_ATTR_RETURNS_NONNULL
   #else
 	// no equivalent per see
 	#define YQ2_ATTR_MALLOC
 	#define YQ2_ATTR_INLINE         inline
+	#define YQ2_ATTR_RETURNS_NONNULL
   #endif
 #elif defined(__GNUC__) // GCC and clang should support this attribute
 	#define YQ2_ALIGNAS_SIZE(SIZE)  __attribute__(( __aligned__(SIZE) ))
 	#define YQ2_ALIGNAS_TYPE(TYPE)  __attribute__(( __aligned__(__alignof__(TYPE)) ))
 	// must be used as prefix (YQ2_ATTR_NORETURN void bla();)!
 	#define YQ2_ATTR_NORETURN       __attribute__ ((noreturn))
+	#define YQ2_ATTR_RETURNS_NONNULL __attribute__ ((returns_nonnull))
 	#define YQ2_ATTR_MALLOC         __attribute__ ((__malloc__))
 	#define YQ2_ATTR_INLINE         __attribute__((always_inline)) inline
 	// GCC supports this extension since 4.6
@@ -102,6 +93,7 @@ typedef unsigned char byte;
 
 	// must be used as prefix (YQ2_ATTR_NORETURN void bla();)!
 	#define YQ2_ATTR_NORETURN       __declspec(noreturn)
+	#define YQ2_ATTR_RETURNS_NONNULL
 	#define YQ2_ATTR_MALLOC         __declspec(restrict)
 	#define YQ2_ATTR_INLINE         __forceinline
 	#define YQ2_STATIC_ASSERT(C, M) assert((C) && M)
@@ -110,6 +102,7 @@ typedef unsigned char byte;
 	#define YQ2_ALIGNAS_SIZE(SIZE)
 	#define YQ2_ALIGNAS_TYPE(TYPE)
 	#define YQ2_ATTR_NORETURN
+	#define YQ2_ATTR_RETURNS_NONNULL
 	#define YQ2_ATTR_MALLOC
 	#define YQ2_ATTR_INLINE         inline
 	#define YQ2_STATIC_ASSERT(C, M) assert((C) && M)
@@ -308,7 +301,7 @@ void RotatePointAroundVector(vec3_t dst,
 
 char *COM_SkipPath(char *pathname);
 void COM_StripExtension(char *in, char *out);
-const char *COM_FileExtension(const char *in);
+YQ2_ATTR_RETURNS_NONNULL const char *COM_FileExtension(const char *in);
 void COM_FileBase(char *in, char *out);
 void COM_FilePath(const char *in, char *out);
 void COM_DefaultExtension(char *path, const char *extension);
