@@ -16,6 +16,9 @@ concurrency:
 jobs:
   build_ubuntu_aarch64:
     runs-on: ubuntu-24.04-arm
+    permissions:
+      actions: read
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -24,7 +27,6 @@ jobs:
     steps:
     - name: Install build dependencies
       run: |
-        sudo apt update
         sudo apt update
         sudo apt install libgl1-mesa-dev libsdl2-dev libopenal-dev libcurl4-openssl-dev \
             libavformat-dev libswscale-dev libvulkan-dev build-essential
