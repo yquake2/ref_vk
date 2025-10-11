@@ -5,7 +5,7 @@
 #  - Vulkan renderer lib (ref_vk.so / rev_vk.dll)       #
 #                                                       #
 # Dependencies:                                         #
-# - SDL2                                                #
+# - SDL3                                                #
 # - Vulkan headers                                      #
 #                                                       #
 # Platforms:                                            #
@@ -20,7 +20,7 @@
 # -------------------------
 
 # Builds with SDL 3 instead of SDL 2.
-WITH_SDL3:=no
+WITH_SDL3:=yes
 
 # ----------
 
