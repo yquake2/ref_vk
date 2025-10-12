@@ -44,9 +44,12 @@ jobs:
     - name: Build
       shell: msys2 {0}
       run: |
-        sed -i 's|WITH_SDL3:=no|WITH_SDL3:=yes|g' Makefile
+        # Download and extract SDL3 devel files.
+        wget -c https://github.com/libsdl-org/SDL/releases/download/release-3.2.24/SDL3-devel-3.2.24-mingw.tar.gz
+        tar xf SDL3-devel-3.2.24-mingw.tar.gz
+        mv SDL3-3.2.24 SDL3
         # Public runners come with 4 CPUs.
-        make -j4
+        PKG_CONFIG_PATH=SDL3/i686-w64-mingw32/lib/pkgconfig make -j4
     - name: Create testbuild package
       shell: msys2 {0}
       run: |

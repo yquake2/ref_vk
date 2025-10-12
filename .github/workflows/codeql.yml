@@ -33,6 +33,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
+    - name: Set SDL2 default
+      run: |
+        sed -i 's/WITH_SDL3:=yes/WITH_SDL3:=no/g' Makefile
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
