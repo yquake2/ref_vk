@@ -46,7 +46,7 @@ jobs:
         cp LICENSE publish/ref_vk-linux_aarch64-${{github.sha}}/misc/docs/LICENSE.txt
         cp README.md publish/ref_vk-linux_aarch64-${{github.sha}}/misc/docs/README.txt
     - name: Upload testbuild package
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ref_vk-linux_aarch64-${{github.sha}}
         path: publish/
