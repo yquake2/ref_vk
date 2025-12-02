@@ -475,10 +475,11 @@ void
 AddPointToBounds(const vec3_t v, vec3_t mins, vec3_t maxs)
 {
 	int i;
-	vec_t val;
 
 	for (i = 0; i < 3; i++)
 	{
+		vec_t val;
+
 		val = v[i];
 
 		if (val < mins[i])
@@ -535,13 +536,15 @@ VectorCompare(const vec3_t v1, const vec3_t v2)
 vec_t
 VectorNormalize(vec3_t v)
 {
-	float length, ilength;
+	float length;
 
 	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 	length = (float)sqrt(length);
 
 	if (length)
 	{
+		float ilength;
+
 		ilength = 1 / length;
 		v[0] *= ilength;
 		v[1] *= ilength;
@@ -560,7 +563,7 @@ VectorNormalize2(const vec3_t v, vec3_t out)
 }
 
 void
-VectorMA(vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
+VectorMA(const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc)
 {
 	vecc[0] = veca[0] + scale * vecb[0];
 	vecc[1] = veca[1] + scale * vecb[1];
@@ -568,13 +571,13 @@ VectorMA(vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
 }
 
 vec_t
-_DotProduct(vec3_t v1, vec3_t v2)
+_DotProduct(const vec3_t v1, const vec3_t v2)
 {
 	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
 void
-_VectorSubtract(vec3_t veca, vec3_t vecb, vec3_t out)
+_VectorSubtract(const vec3_t veca, const vec3_t vecb, vec3_t out)
 {
 	out[0] = veca[0] - vecb[0];
 	out[1] = veca[1] - vecb[1];
@@ -582,7 +585,7 @@ _VectorSubtract(vec3_t veca, vec3_t vecb, vec3_t out)
 }
 
 void
-_VectorAdd(vec3_t veca, vec3_t vecb, vec3_t out)
+_VectorAdd(const vec3_t veca, const vec3_t vecb, vec3_t out)
 {
 	out[0] = veca[0] + vecb[0];
 	out[1] = veca[1] + vecb[1];
@@ -590,7 +593,7 @@ _VectorAdd(vec3_t veca, vec3_t vecb, vec3_t out)
 }
 
 void
-_VectorCopy(vec3_t in, vec3_t out)
+_VectorCopy(const vec3_t in, vec3_t out)
 {
 	out[0] = in[0];
 	out[1] = in[1];
@@ -730,10 +733,10 @@ Q_log2(int val)
 
 /* ==================================================================================== */
 
-char *
-COM_SkipPath(char *pathname)
+const char *
+COM_SkipPath(const char *pathname)
 {
-	char *last;
+	const char *last;
 
 	last = pathname;
 
@@ -751,7 +754,7 @@ COM_SkipPath(char *pathname)
 }
 
 void
-COM_StripExtension(char *in, char *out)
+COM_StripExtension(const char *in, char *out)
 {
 	while (*in && *in != '.')
 	{
@@ -775,9 +778,9 @@ COM_FileExtension(const char *in)
 }
 
 void
-COM_FileBase(char *in, char *out)
+COM_FileBase(const char *in, char *out)
 {
-	char *s, *s2;
+	const char *s, *s2;
 
 	s = in + strlen(in) - 1;
 
@@ -857,12 +860,12 @@ qboolean bigendien;
 
 /* can't just use function pointers, or dll linkage can
    mess up when qcommon is included in multiple places */
-short (*_BigShort)(short l);
-short (*_LittleShort)(short l);
-int (*_BigLong)(int l);
-int (*_LittleLong)(int l);
-float (*_BigFloat)(float l);
-float (*_LittleFloat)(float l);
+static short (*_BigShort)(short l);
+static short (*_LittleShort)(short l);
+static int (*_BigLong)(int l);
+static int (*_LittleLong)(int l);
+static float (*_BigFloat)(float l);
+static float (*_LittleFloat)(float l);
 
 short
 BigShort(short l)
@@ -900,7 +903,7 @@ LittleFloat(float l)
 	return _LittleFloat(l);
 }
 
-short
+static short
 ShortSwap(short l)
 {
 	byte b1, b2;
@@ -911,13 +914,13 @@ ShortSwap(short l)
 	return (b1 << 8) + b2;
 }
 
-short
+static short
 ShortNoSwap(short l)
 {
 	return l;
 }
 
-int
+static int
 LongSwap(int l)
 {
 	byte b1, b2, b3, b4;
@@ -930,13 +933,13 @@ LongSwap(int l)
 	return ((int)b1 << 24) + ((int)b2 << 16) + ((int)b3 << 8) + b4;
 }
 
-int
+static int
 LongNoSwap(int l)
 {
 	return l;
 }
 
-float
+static float
 FloatSwap(float f)
 {
 	union
@@ -953,7 +956,7 @@ FloatSwap(float f)
 	return dat2.f;
 }
 
-float
+static float
 FloatNoSwap(float f)
 {
 	return f;
@@ -1017,7 +1020,7 @@ char com_token[MAX_TOKEN_CHARS];
 /*
  * Parse a token out of a string
  */
-char *
+const char *
 COM_Parse(char **data_p)
 {
 	int c;
@@ -1109,7 +1112,7 @@ done:
 static int paged_total = 0;
 
 void
-Com_PageInMemory(byte *buffer, int size)
+Com_PageInMemory(const byte *buffer, int size)
 {
 	int i;
 
@@ -1140,10 +1143,12 @@ Q_stricmp(const char *s1, const char *s2)
 int
 Q_strncasecmp(const char *s1, const char *s2, int n)
 {
-	int c1, c2;
+	int c1;
 
 	do
 	{
+		int c2;
+
 		c1 = *s1++;
 		c2 = *s2++;
 
@@ -1196,6 +1201,19 @@ Q_strcasecmp(const char *s1, const char *s2)
 }
 
 void
+Q_replacebackslash(char *curr)
+{
+	while (*curr)
+	{
+		if (*curr == '\\')
+		{
+			*curr = '/';
+		}
+		curr++;
+	}
+}
+
+void
 Com_sprintf(char *dest, int size, const char *fmt, ...)
 {
 	int len;
@@ -1207,7 +1225,7 @@ Com_sprintf(char *dest, int size, const char *fmt, ...)
 
 	if (len >= size)
 	{
-		Com_Printf("Com_sprintf: overflow\n");
+		Com_Printf("%s: overflow\n", __func__);
 	}
 }
 
@@ -1245,6 +1263,44 @@ Q_strlcpy(char *dst, const char *src, int size)
 	}
 
 	return s - src;
+}
+
+size_t
+Q_strlcpy_ascii(char *d, const char *s, size_t n)
+{
+	size_t ns = 0;
+	char c;
+	int dzero = n == 0;
+
+	if (!dzero)
+	{
+		n--;
+	}
+
+	for (; *s != '\0'; s++)
+	{
+		c = *s;
+		c &= 127;
+
+		if ((c >= 32) && (c < 127))
+		{
+			if (n)
+			{
+				*d = c;
+				d++;
+				n--;
+			}
+
+			ns++;
+		}
+	}
+
+	if (!dzero)
+	{
+		*d = '\0';
+	}
+
+	return ns;
 }
 
 int
@@ -1321,6 +1377,34 @@ Q_strisnum(const char *s)
 	return true;
 }
 
+char *
+Q_strchrs(const char *s, const char *chrs)
+{
+	char *hit;
+
+	for (; *chrs != '\0'; chrs++)
+	{
+		hit = strchr(s, *chrs);
+		if (hit)
+		{
+			return hit;
+		}
+	}
+
+	return NULL;
+}
+
+char *
+Q_strchr0(const char *s, char c)
+{
+	while (*s != c && *s != '\0')
+	{
+		s++;
+	}
+
+	return (char *)s;
+}
+
 /*
  * An unicode compatible fopen() Wrapper for Windows.
  */
@@ -1395,76 +1479,79 @@ Q_sort_strcomp(const void *s1, const void *s2)
  * or an empty string.
  */
 char *
-Info_ValueForKey(char *s, char *key)
+Info_ValueForKey(const char *s, const char *key)
 {
-	char pkey[512];
-	static char value[2][512]; /* use two buffers so compares
-							     work without stomping on each other */
-	static int valueindex;
-	char *o;
+	/* use two buffers so compares
+	   work without stomping on each other
+	*/
+	static char value[2][MAX_INFO_VALUE];
+	static int valueindex = 0;
+
+	const char *kstart, *vstart;
+	char *v;
+	size_t klen, vlen;
 
 	valueindex ^= 1;
+	v = value[valueindex];
+	*v = '\0';
 
-	if (*s == '\\')
+	klen = strlen(key);
+
+	while (*s != '\0')
 	{
-		s++;
-	}
-
-	while (1)
-	{
-		o = pkey;
-
-		while (*s != '\\')
+		if (*s == '\\')
 		{
-			if (!*s)
+			s++;
+		}
+
+		kstart = s;
+		s = Q_strchr0(s, '\\');
+
+		if (*s == '\0')
+		{
+			break;
+		}
+
+		vstart = s + 1;
+		s = Q_strchr0(vstart, '\\');
+
+		if (!strncmp(kstart, key, klen) &&
+			kstart[klen] == '\\')
+		{
+			vlen = s - vstart;
+
+			if (vlen > 0)
 			{
-				return "";
+				vlen++; /* Q_strlcpy accounts for null char */
+
+				Q_strlcpy(v, vstart,
+					(vlen < MAX_INFO_VALUE) ? vlen : MAX_INFO_VALUE);
 			}
 
-			*o++ = *s++;
+			break;
 		}
-
-		*o = 0;
-		s++;
-
-		o = value[valueindex];
-
-		while (*s != '\\' && *s)
-		{
-			*o++ = *s++;
-		}
-
-		*o = 0;
-
-		if (!strcmp(key, pkey))
-		{
-			return value[valueindex];
-		}
-
-		if (!*s)
-		{
-			return "";
-		}
-
-		s++;
 	}
+
+	return v;
 }
 
 void
-Info_RemoveKey(char *s, char *key)
+Info_RemoveKey(char *s, const char *key)
 {
-	char *start;
-	char pkey[512];
-	char value[512];
-	char *o;
+	char *kstart;
+	size_t klen;
 
-	if (strstr(key, "\\"))
+	if (strchr(key, '\\'))
 	{
 		return;
 	}
 
-	while (1)
+	klen = strlen(key);
+
+	while (*s != '\0')
 	{
+		char *start;
+
 		start = s;
 
 		if (*s == '\\')
@@ -1472,38 +1559,20 @@ Info_RemoveKey(char *s, char *key)
 			s++;
 		}
 
-		o = pkey;
+		/* key segment */
+		kstart = s;
+		s = Q_strchr0(s, '\\');
 
-		while (*s != '\\')
+		if (*s != '\0')
 		{
-			if (!*s)
-			{
-				return;
-			}
-
-			*o++ = *s++;
+			/* value segment */
+			s = Q_strchr0(s + 1, '\\');
 		}
 
-		*o = 0;
-		s++;
-
-		o = value;
-
-		while (*s != '\\' && *s)
+		if (!strncmp(kstart, key, klen) &&
+			(kstart[klen] == '\\' || kstart[klen] == '\0'))
 		{
-			*o++ = *s++;
-		}
-
-		*o = 0;
-
-		if (!strcmp(key, pkey))
-		{
-			memmove(start, s, strlen(s) + 1); /* remove this part */
-			return;
-		}
-
-		if (!*s)
-		{
+			memmove(start, s, strlen(s) + 1);
 			return;
 		}
 	}
@@ -1514,15 +1583,37 @@ Info_RemoveKey(char *s, char *key)
  * because they can mess up the server's parsing
  */
 qboolean
-Info_Validate(char *s)
+Info_Validate(const char *s)
 {
-	if (strstr(s, "\""))
+	return (Q_strchrs(s, "\";") == NULL) ? true : false;
+}
+
+static qboolean
+Info_ValidateKeyValue(const char *key, const char *value)
+{
+	const char *hit;
+
+	hit = Q_strchrs(key, "\"\\;");
+	if (hit)
 	{
+		Com_Printf("Can't use keys with a '%c'\n", *hit);
 		return false;
 	}
 
-	if (strstr(s, ";"))
+	if (value)
 	{
+		hit = Q_strchrs(value, "\"\\");
+		if (hit)
+		{
+			Com_Printf("Can't use values with a '%c'\n", *hit);
+			return false;
+		}
+	}
+
+	if ((strlen(key) > MAX_INFO_KEY - 1) ||
+		(value && (strlen(value) > MAX_INFO_VALUE - 1)))
+	{
+		Com_Printf("Keys and values must be < %i characters.\n", MAX_INFO_KEY);
 		return false;
 	}
 
@@ -1530,70 +1621,38 @@ Info_Validate(char *s)
 }
 
 void
-Info_SetValueForKey(char *s, char *key, char *value)
+Info_SetValueForKey(char *s, const char *key, const char *value)
 {
-	char newi[MAX_INFO_STRING], *v;
-	int c;
-	int maxsize = MAX_INFO_STRING;
+	char newi[MAX_INFO_KEYVAL];
+	size_t slen, needed;
+	char *dest;
 
 	if (!key)
 	{
 		return;
 	}
 
-	if (strstr(key, "\\") || (value && strstr(value, "\\")))
+	if (!Info_ValidateKeyValue(key, value))
 	{
-		Com_Printf("Can't use keys or values with a \\\n");
-		return;
-	}
-
-	if (strstr(key, ";"))
-	{
-		Com_Printf("Can't use keys with a semicolon\n");
-		return;
-	}
-
-	if (strstr(key, "\"") || (value && strstr(value, "\"")))
-	{
-		Com_Printf("Can't use keys or values with a \"\n");
-		return;
-	}
-
-	if ((strlen(key) > MAX_INFO_KEY - 1) || (value && (strlen(value) > MAX_INFO_KEY - 1)))
-	{
-		Com_Printf("Keys and values must be < 64 characters.\n");
 		return;
 	}
 
 	Info_RemoveKey(s, key);
 
-	if (!value || !strlen(value))
+	if (!value || *value == '\0')
 	{
 		return;
 	}
 
 	Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, value);
 
-	if (strlen(newi) + strlen(s) >= maxsize)
+	slen = strlen(s);
+	dest = s + slen;
+
+	needed = Q_strlcpy_ascii(dest, newi, MAX_INFO_STRING - slen);
+	if (needed > (MAX_INFO_STRING - slen - 1))
 	{
 		Com_Printf("Info string length exceeded\n");
-		return;
+		*dest = '\0';
 	}
-
-	/* only copy ascii values */
-	s += strlen(s);
-	v = newi;
-
-	while (*v)
-	{
-		c = *v++;
-		c &= 127; /* strip high bits */
-
-		if ((c >= 32) && (c < 127))
-		{
-			*s++ = c;
-		}
-	}
-
-	*s = 0;
 }

@@ -31,12 +31,6 @@
 
 // Not exported by default but not static
 float Q_fabs(float f);
-short ShortSwap(short l);
-short ShortNoSwap(short l);
-int LongSwap(int l);
-int LongNoSwap(int l);
-float FloatSwap(float f);
-float FloatNoSwap(float f);
 
 /*
  * TODO: Sync with yquake
