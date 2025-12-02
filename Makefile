@@ -1,28 +1,64 @@
-# ----------------------------------------------------- #
-# Makefile for the Vulkan renderer lib for Quake II     #
-#                                                       #
-# Just type "make" to compile the                       #
-#  - Vulkan renderer lib (ref_vk.so / rev_vk.dll)       #
-#                                                       #
-# Dependencies:                                         #
-# - SDL3                                                #
-# - Vulkan headers                                      #
-#                                                       #
-# Platforms:                                            #
-# - FreeBSD                                             #
-# - Linux                                               #
-# - Mac OS X                                            #
-# - OpenBSD                                             #
-# - Windows                                             #
-# ----------------------------------------------------- #
+# ------------------------------------------------------ #
+# Makefile for the Vulkan renderer lib for Quake II      #
+#                                                        #
+# Just type "make" to compile the                        #
+#  - Vulkan renderer lib (ref_vk.so / rev_vk.dll)        #
+#                                                        #
+# Base dependencies:                                     #
+#  - SDL 2 or SDL 3                                      #
+#  - Vulkan headers                                      #
+#                                                        #
+# Platforms:                                             #
+#  - FreeBSD                                             #
+#  - Linux                                               #
+#  - NetBSD                                              #
+#  - OpenBSD                                             #
+#  - OS X                                                #
+#  - Windows (MinGW)                                     #
+# ------------------------------------------------------ #
+
+# Variables
+# ---------
+# ASAN
+#   Builds with address sanitizer, includes DEBUG.
+# DEBUG
+#   Builds a debug build, forces -O0 and adds debug symbols.
+# MINGW_CHOST
+#   If you use mingw this can specify architecture.
+#   Available values:
+#   x86_64-w64-mingw32 -> indicates x86_64
+#   i686-w64-mingw32   -> indicates i386
+# QUIET
+#   If defined, "===> CC ..." lines are silenced.
+# UBSAN
+#   Builds with undefined behavior sanitizer.includes DEBUG.
+# VERBOSE
+#   Prints full compile, linker and misc commands.
+# WERR
+#   Treat compiler warnings as errors.
+#   If defined, -Werror is added to compiler flags.
+# ----------
 
 # User configurable options
 # -------------------------
 
-# Builds with SDL 3 instead of SDL 2.
+# WITH_SDL3
+# When disabled SDL 2 is used instead of SDL 3.
 WITH_SDL3:=yes
 
+# PKG_CONFIG
+# Specify program that configures SDL.
+# Needs to be overridable for cross-compilation.
+PKG_CONFIG ?= pkgconf
+
 # ----------
+
+# Normalize QUIET value to either "x" or ""
+ifdef QUIET
+	override QUIET := "x"
+else
+	override QUIET := ""
+endif
 
 # Detect the OS
 ifdef SystemRoot
@@ -62,11 +98,6 @@ YQ2_ARCH ?= $(shell uname -m)
 endif
 endif
 
-# On Windows / MinGW $(CC) is undefined by default.
-ifeq ($(YQ2_OSTYPE),Windows)
-CC ?= gcc
-endif
-
 # Detect the compiler
 ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang version"), 1)
 COMPILER := clang
@@ -90,11 +121,27 @@ endif
 
 # ----------
 
+# Set up build and bin output directories
+
+# Root dir names
+override BINROOT :=
+override BUILDROOT := build
+
+ifdef DEBUG
+	override BINDIR := $(BINROOT)debug
+	override BUILDDIR := $(BUILDROOT)/debug
+else
+	override BINDIR := $(BINROOT)release
+	override BUILDDIR := $(BUILDROOT)/release
+endif
+
+# ----------
+
 # Base CFLAGS. These may be overridden by the environment.
 # Highest supported optimizations are -O2, higher levels
 # will likely break this crappy code.
 ifdef DEBUG
-CFLAGS ?= -O0 -g -Wall -pipe -DDEBUG
+CFLAGS ?= -O0 -g -Wall -Wpointer-arith -pipe -Werror=format-security -DDEBUG
 ifdef ASAN
 override CFLAGS += -fsanitize=address -DUSE_SANITIZER
 endif
@@ -102,7 +149,12 @@ ifdef UBSAN
 override CFLAGS += -fsanitize=undefined -DUSE_SANITIZER
 endif
 else
-CFLAGS ?= -O2 -Wall -pipe -fomit-frame-pointer
+CFLAGS ?= -O2 -Wall -Wpointer-arith -pipe -fomit-frame-pointer
+endif
+
+# Treat warnings as errors
+ifdef WERR
+override CFLAGS += -Werror
 endif
 
 # Always needed are:
@@ -145,7 +197,11 @@ endif
 ifeq ($(COMPILER), clang)
 	# -Wno-missing-braces because otherwise clang complains
 	#  about totally valid 'vec3_t bla = {0}' constructs.
-	override CFLAGS += -Wno-missing-braces
+	# -fno-common avoids linker warnings due
+	#  uninitialized global variables treated as "common".
+	#  On most platforms clang sets no-commom by default,
+	#  MacOS is a prominent exception.
+	override CFLAGS += -Wno-missing-braces -fno-common
 else ifeq ($(COMPILER), gcc)
 	# GCC 8.0 or higher.
 	ifeq ($(shell test $(COMPILERVER) -ge 80000; echo $$?),0)
@@ -195,7 +251,7 @@ endif
 
 # Extra CFLAGS for SDL.
 ifeq ($(WITH_SDL3),yes)
-SDLCFLAGS := $(shell pkgconf --cflags sdl3)
+SDLCFLAGS := $(shell $(PKG_CONFIG) --cflags sdl3)
 SDLCFLAGS += -DUSE_SDL3
 else
 SDLCFLAGS := $(shell sdl2-config --cflags)
@@ -285,7 +341,7 @@ ifeq ($(WITH_SDL3),yes)
 ifeq ($(YQ2_OSTYPE), Darwin)
 SDLLDFLAGS := -lSDL3
 else
-SDLLDFLAGS := $(shell pkgconf --libs sdl3)
+SDLLDFLAGS := $(shell $(PKG_CONFIG) --libs sdl3)
 endif
 else
 ifeq ($(YQ2_OSTYPE), Darwin)
@@ -332,45 +388,48 @@ all: ref_vk
 # Cleanup
 clean:
 	@echo "===> CLEAN"
-	${Q}rm -Rf build release/*
+	${Q}rm -Rf build debug/* release/*
 
 cleanall:
 	@echo "===> CLEAN"
-	${Q}rm -Rf build release
+	${Q}rm -Rf build debug release
 
 # ----------
 
 ifeq ($(YQ2_OSTYPE), Windows)
+
 ref_vk:
 	@echo "===> Building ref_vk.dll"
-	${Q}mkdir -p release
-	$(MAKE) release/ref_vk.dll
+	${Q}mkdir -p $(BINDIR)
+	$(MAKE) $(BINDIR)/ref_vk.dll
 
-release/ref_vk.dll : LDFLAGS += -shared
+$(BINDIR)/ref_vk.dll : LDFLAGS += -shared
 
 else ifeq ($(YQ2_OSTYPE), Darwin)
 
 ref_vk:
 	@echo "===> Building ref_vk.dylib"
-	${Q}mkdir -p release
-	$(MAKE) release/ref_vk.dylib
+	${Q}mkdir -p $(BINDIR)
+	$(MAKE) $(BINDIR)/ref_vk.dylib
 
-release/ref_vk.dylib : LDFLAGS += -shared
+$(BINDIR)/ref_vk.dylib : LDFLAGS += -shared
 
 else # not Windows or Darwin
 
 ref_vk:
 	@echo "===> Building ref_vk.so"
-	${Q}mkdir -p release
-	$(MAKE) release/ref_vk.so
+	${Q}mkdir -p $(BINDIR)
+	$(MAKE) $(BINDIR)/ref_vk.so
 
-release/ref_vk.so : CFLAGS += -fPIC
-release/ref_vk.so : LDFLAGS += -shared
+$(BINDIR)/ref_vk.so : CFLAGS += -fPIC
+$(BINDIR)/ref_vk.so : LDFLAGS += -shared
 
 endif # OS specific ref_vk stuff
 
-build/%.o: %.c
-	@echo "===> CC $<"
+$(BUILDDIR)/%.o: %.c
+	@if [ -z $(QUIET) ]; then\
+		echo "===> CC $<";\
+	fi
 	${Q}mkdir -p $(@D)
 	${Q}$(CC) -c $(CFLAGS) $(SDLCFLAGS) $(INCLUDE) -o $@ $<
 
@@ -416,32 +475,32 @@ endif
 
 # ----------
 
-# Rewrite pathes to our object directory
-REFVK_OBJS = $(patsubst %,build/%,$(REFVK_OBJS_))
+# Rewrite paths to our object directory.
+REFVK_OBJS = $(patsubst %,$(BUILDDIR)/%,$(REFVK_OBJS_))
 
 # ----------
 
-# Generate header dependencies
+# Generate header dependencies.
 REFVK_DEPS= $(REFVK_OBJS:.o=.d)
 
 # ----------
 
-# Suck header dependencies in
+# Suck header dependencies in.
 -include $(REFVK_DEPS)
 
 # ----------
 
-# release/ref_vk.so
+# ref_vk.so
 ifeq ($(YQ2_OSTYPE), Windows)
-release/ref_vk.dll : $(REFVK_OBJS)
+$(BINDIR)/ref_vk.dll : $(REFVK_OBJS)
 	@echo "===> LD $@"
 	${Q}$(CC) $(LDFLAGS) $(REFVK_OBJS) $(LDLIBS) $(DLL_SDLLDFLAGS) -o $@
 else ifeq ($(YQ2_OSTYPE), Darwin)
-release/ref_vk.dylib : $(REFVK_OBJS)
+$(BINDIR)/ref_vk.dylib : $(REFVK_OBJS)
 	@echo "===> LD $@"
 	${Q}$(CC) $(LDFLAGS) $(REFVK_OBJS) $(LDLIBS) $(SDLLDFLAGS) -o $@
 else
-release/ref_vk.so : $(REFVK_OBJS)
+$(BINDIR)/ref_vk.so : $(REFVK_OBJS)
 	@echo "===> LD $@"
 	${Q}$(CC) $(LDFLAGS) $(REFVK_OBJS) $(LDLIBS) $(SDLLDFLAGS) -o $@
 endif
