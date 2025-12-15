@@ -62,7 +62,7 @@ jobs:
         cp LICENSE publish/ref_vk-win32-${{github.sha}}/misc/docs/LICENSE.txt
         cp README.md publish/ref_vk-win32-${{github.sha}}/misc/docs/README.txt
     - name: Upload testbuild package
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
       with:
         name: ref_vk-win32-${{github.sha}}
