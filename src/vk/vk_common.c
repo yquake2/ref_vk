@@ -304,7 +304,7 @@ static const VkSampleCountFlagBits msaaModes[] = {
 	VK_SAMPLE_COUNT_1_BIT
 };
 
-// internal helper
+/* internal helper */
 static VkSampleCountFlagBits GetSampleCount(int msaa, VkSampleCountFlagBits supportedMsaa)
 {
 	int step = 0, value = 64;
@@ -321,7 +321,7 @@ static VkSampleCountFlagBits GetSampleCount(int msaa, VkSampleCountFlagBits supp
 	return msaaModes[step];
 }
 
-// internal helper
+/* internal helper */
 static void DestroyImageViews()
 {
 	if(!vk_imageviews)
@@ -335,13 +335,23 @@ static void DestroyImageViews()
 	vk_imageviews = NULL;
 }
 
-// internal helper
-static VkResult CreateImageViews()
+/* internal helper */
+static VkResult
+CreateImageViews(void)
 {
 	VkResult res = VK_SUCCESS;
-	vk_imageviews = (VkImageView *)malloc(vk_swapchain.imageCount * sizeof(VkImageView));
+	size_t i;
 
-	for (size_t i = 0; i < vk_swapchain.imageCount; ++i)
+	vk_imageviews = (VkImageView *)malloc(vk_swapchain.imageCount * sizeof(VkImageView));
+	YQ2_COM_CHECK_OOM(vk_imageviews, "malloc()",
+		vk_swapchain.imageCount * sizeof(VkImageView))
+	if (!vk_imageviews)
+	{
+		/* unaware about YQ2_ATTR_NORETURN_FUNCPTR? */
+		return VK_ERROR_OUT_OF_HOST_MEMORY;
+	}
+
+	for (i = 0; i < vk_swapchain.imageCount; ++i)
 	{
 		res = QVk_CreateImageView(&vk_swapchain.images[i],
 			VK_IMAGE_ASPECT_COLOR_BIT, &vk_imageviews[i], vk_swapchain.format, 1);
@@ -1059,19 +1069,6 @@ static void ReleaseSwapBuffers()
 		vk_swapDescriptorSets[releaseBufferIdx] = NULL;
 		vk_swapDescSetsCnt[releaseBufferIdx] = 0;
 	}
-}
-
-// internal helper
-static int NextPow2(int v)
-{
-	v--;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v++;
-	return v;
 }
 
 // internal helper
@@ -2155,7 +2152,8 @@ qboolean QVk_Init(void)
 	return true;
 }
 
-VkResult QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor)
+VkResult
+QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor)
 {
 	// reset tracking variables
 	vk_state.current_pipeline = VK_NULL_HANDLE;
@@ -2218,7 +2216,8 @@ VkResult QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor)
 	return VK_SUCCESS;
 }
 
-VkResult QVk_EndFrame(qboolean force)
+VkResult
+QVk_EndFrame(qboolean force)
 {
 	// continue only if QVk_BeginFrame() had been previously issued
 	if (!vk_frameStarted)
@@ -2288,7 +2287,8 @@ VkResult QVk_EndFrame(qboolean force)
 	return renderResult;
 }
 
-void QVk_BeginRenderpass(qvkrenderpasstype_t rpType)
+void
+QVk_BeginRenderpass(qvkrenderpasstype_t rpType)
 {
 	const VkClearValue clearColors[3] = {
 		{.color = {.float32 = { 1.f, .0f, .5f, 1.f } } },
@@ -2356,7 +2356,8 @@ void QVk_BeginRenderpass(qvkrenderpasstype_t rpType)
 	vk_state.current_renderpass = rpType;
 }
 
-qboolean QVk_RecreateSwapchain()
+qboolean
+QVk_RecreateSwapchain()
 {
 	VkResult result = VK_SUCCESS;
 	vkDeviceWaitIdle( vk_device.logical );
@@ -2396,7 +2397,8 @@ qboolean QVk_RecreateSwapchain()
 	return true;
 }
 
-uint8_t *QVk_GetVertexBuffer(VkDeviceSize size, VkBuffer *dstBuffer, VkDeviceSize *dstOffset)
+uint8_t *
+QVk_GetVertexBuffer(VkDeviceSize size, VkBuffer *dstBuffer, VkDeviceSize *dstOffset)
 {
 	if (vk_dynVertexBuffers[vk_activeDynBufferIdx].currentOffset + size > vk_config.vertex_buffer_size)
 	{
@@ -2444,7 +2446,8 @@ uint8_t *QVk_GetVertexBuffer(VkDeviceSize size, VkBuffer *dstBuffer, VkDeviceSiz
 	return (uint8_t *)vk_dynVertexBuffers[vk_activeDynBufferIdx].pMappedData + (*dstOffset);
 }
 
-static uint8_t *QVk_GetIndexBuffer(VkDeviceSize size, VkDeviceSize *dstOffset, int currentBufferIdx)
+static uint8_t *
+QVk_GetIndexBuffer(VkDeviceSize size, VkDeviceSize *dstOffset, int currentBufferIdx)
 {
 	// align to 4 bytes, so that we can reuse the buffer for both VK_INDEX_TYPE_UINT16 and VK_INDEX_TYPE_UINT32
 	const uint32_t aligned_size = ROUNDUP(size, 4);
@@ -2485,7 +2488,9 @@ static uint8_t *QVk_GetIndexBuffer(VkDeviceSize size, VkDeviceSize *dstOffset, i
 
 	vk_config.index_buffer_usage = vk_dynIndexBuffers[currentBufferIdx].currentOffset;
 	if (vk_config.index_buffer_max_usage < vk_config.index_buffer_usage)
+	{
 		vk_config.index_buffer_max_usage = vk_config.index_buffer_usage;
+	}
 
 	return (uint8_t *)vk_dynIndexBuffers[currentBufferIdx].pMappedData + (*dstOffset);
 }
@@ -2549,7 +2554,8 @@ uint8_t *QVk_GetUniformBuffer(VkDeviceSize size, uint32_t *dstOffset, VkDescript
 	return (uint8_t *)vk_dynUniformBuffers[vk_activeDynBufferIdx].pMappedData + (*dstOffset);
 }
 
-uint8_t *QVk_GetStagingBuffer(VkDeviceSize size, int alignment, VkCommandBuffer *cmdBuffer, VkBuffer *buffer, uint32_t *dstOffset)
+uint8_t *
+QVk_GetStagingBuffer(VkDeviceSize size, int alignment, VkCommandBuffer *cmdBuffer, VkBuffer *buffer, uint32_t *dstOffset)
 {
 	qvkstagingbuffer_t * stagingBuffer = &vk_stagingBuffers[vk_activeStagingBuffer];
 	stagingBuffer->currentOffset = ROUNDUP(stagingBuffer->currentOffset, alignment);
@@ -2635,7 +2641,8 @@ VkBuffer QVk_GetTriangleStripIbo(VkDeviceSize indexCount)
 	return *vk_triangleStripIbo;
 }
 
-void QVk_SubmitStagingBuffers()
+void
+QVk_SubmitStagingBuffers(void)
 {
 	for (int i = 0; i < NUM_DYNBUFFERS; ++i)
 	{
@@ -2644,7 +2651,8 @@ void QVk_SubmitStagingBuffers()
 	}
 }
 
-VkSampler QVk_UpdateTextureSampler(qvktexture_t *texture, qvksampler_t samplerType, qboolean clampToEdge)
+VkSampler
+QVk_UpdateTextureSampler(qvktexture_t *texture, qvksampler_t samplerType, qboolean clampToEdge)
 {
 	const int samplerIndex = samplerType + (clampToEdge ? S_SAMPLER_CNT : 0);
 
@@ -2676,7 +2684,8 @@ VkSampler QVk_UpdateTextureSampler(qvktexture_t *texture, qvksampler_t samplerTy
 	return vk_samplers[samplerIndex];
 }
 
-void QVk_DrawColorRect(float *ubo, VkDeviceSize uboSize, qvkrenderpasstype_t rpType)
+void
+QVk_DrawColorRect(float *ubo, VkDeviceSize uboSize, qvkrenderpasstype_t rpType)
 {
 	uint32_t uboOffset;
 	VkDescriptorSet uboDescriptorSet;
@@ -2695,7 +2704,8 @@ void QVk_DrawColorRect(float *ubo, VkDeviceSize uboSize, qvkrenderpasstype_t rpT
 	vkCmdDrawIndexed(vk_activeCmdbuffer, 6, 1, 0, 0, 0);
 }
 
-void QVk_DrawTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture)
+void
+QVk_DrawTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture)
 {
 	uint32_t uboOffset;
 	VkDescriptorSet uboDescriptorSet;
@@ -2722,7 +2732,8 @@ void QVk_DrawTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *textu
 	vkCmdDrawIndexed(vk_activeCmdbuffer, 6, 1, 0, 0, 0);
 }
 
-void QVk_BindPipeline(qvkpipeline_t *pipeline)
+void
+QVk_BindPipeline(qvkpipeline_t *pipeline)
 {
 	if (vk_state.current_pipeline != pipeline->pl)
 	{
@@ -2731,7 +2742,8 @@ void QVk_BindPipeline(qvkpipeline_t *pipeline)
 	}
 }
 
-const char *QVk_GetError(VkResult errorCode)
+const char *
+QVk_GetError(VkResult errorCode)
 {
 #define ERRSTR(r) case VK_ ##r: return "VK_"#r
 	switch (errorCode)
@@ -2763,5 +2775,4 @@ const char *QVk_GetError(VkResult errorCode)
 		default: return "<unknown>";
 	}
 #undef ERRSTR
-	return "UNKNOWN ERROR";
 }

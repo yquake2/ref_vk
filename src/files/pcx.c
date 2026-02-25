@@ -483,7 +483,7 @@ LoadPCX(const char *origname, byte **pic, byte **palette, int *width, int *heigh
 	PCX_Decode(filename, raw, len, pic, palette, width, height, bitsPerPixel);
 
 	if(*pic && *bitsPerPixel == 8 && width && height
-		&& *width == 319 && *height == 239
+		&& *width == 320 && *height == 240
 		&& Q_strcasecmp(filename, "pics/quit.pcx") == 0
 		&& Com_BlockChecksum(raw, len) == 3329419434u)
 	{
