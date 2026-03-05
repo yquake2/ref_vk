@@ -76,7 +76,7 @@ Mod_Reallocate (void)
 		models_known_max = ROUNDUP(mod_max * 4, 16);
 	}
 
-	R_Printf(PRINT_ALL, "Reallocate space for %d models.\n", models_known_max);
+	Com_Printf("Reallocate space for %d models.\n", models_known_max);
 
 	models_known = calloc(models_known_max, sizeof(model_t));
 }
@@ -107,7 +107,7 @@ Mod_Free(model_t *mod)
 
 	if (r_validation->value > 0)
 	{
-		R_Printf(PRINT_ALL, "%s: Unload %s[%d]\n", __func__, mod->name, mod_loaded);
+		Com_Printf("%s: Unload %s[%d]\n", __func__, mod->name, mod_loaded);
 	}
 
 	Hunk_Free(mod->extradata);
@@ -423,7 +423,7 @@ Mod_LoadBSPX(int filesize, byte* mod_base)
 	xheader = (bspx_header_t*)(mod_base + xofs);
 	if (LittleLong(xheader->ident) != BSPXHEADER)
 	{
-		R_Printf(PRINT_ALL, "%s: Incorrect header ident.\n", __func__);
+		Com_Printf("%s: Incorrect header ident.\n", __func__);
 		return NULL;
 	}
 
@@ -501,7 +501,7 @@ Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, const b
 	if ((lminfos != NULL) &&
 		(lminfosize / sizeof(dlminfo_t) != loadmodel->numsurfaces))
 	{
-		R_Printf(PRINT_ALL, "%s: [%s] decoupled_lm size " YQ2_COM_PRIdS " does not match surface count %d\n",
+		Com_Printf("%s: [%s] decoupled_lm size " YQ2_COM_PRIdS " does not match surface count %d\n",
 			__func__, loadmodel->name, lminfosize / sizeof(dlminfo_t), loadmodel->numsurfaces);
 		lminfos = NULL;
 	}
@@ -1026,7 +1026,7 @@ Mod_ForName(const char *name, model_t *parent_model, qboolean crash)
 
 		if (r_validation->value > 0)
 		{
-			R_Printf(PRINT_ALL, "%s: Can't load %s\n", __func__, mod->name);
+			Com_Printf("%s: Can't load %s\n", __func__, mod->name);
 		}
 
 		memset(mod->name, 0, sizeof(mod->name));
@@ -1037,7 +1037,7 @@ Mod_ForName(const char *name, model_t *parent_model, qboolean crash)
 	mod_loaded ++;
 	if (r_validation->value > 0)
 	{
-		R_Printf(PRINT_ALL, "%s: Load %s[%d]\n", __func__, mod->name, mod_loaded);
+		Com_Printf("%s: Load %s[%d]\n", __func__, mod->name, mod_loaded);
 	}
 
 	/* fill it in */
@@ -1209,7 +1209,7 @@ Mod_Modellist_f(void)
 	total = 0;
 	used = 0;
 
-	R_Printf(PRINT_ALL,"Loaded models:\n");
+	Com_Printf("Loaded models:\n");
 	for (i=0, mod=models_known ; i < mod_numknown ; i++, mod++)
 	{
 		char *in_use = "";
@@ -1222,14 +1222,14 @@ Mod_Modellist_f(void)
 
 		if (!mod->name[0])
 			continue;
-		R_Printf(PRINT_ALL, "%8i : %s %s r: %.2f #%d\n",
+		Com_Printf("%8i : %s %s r: %.2f #%d\n",
 			 mod->extradatasize, mod->name, in_use, mod->radius, mod->numsubmodels);
 		total += mod->extradatasize;
 	}
-	R_Printf(PRINT_ALL, "Total resident: %i in %d models\n", total, mod_loaded);
+	Com_Printf("Total resident: %i in %d models\n", total, mod_loaded);
 	// update statistics
 	freeup = Mod_HasFreeSpace();
-	R_Printf(PRINT_ALL, "Used %d of %d models%s.\n", used, mod_max, freeup ? ", has free space" : "");
+	Com_Printf("Used %d of %d models%s.\n", used, mod_max, freeup ? ", has free space" : "");
 }
 
 void

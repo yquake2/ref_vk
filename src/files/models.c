@@ -69,7 +69,7 @@ Mod_LoadCmdList (const char *mod_name, dmdl_t *pheader, int *pincmd)
 
 	if (poutcmd[pheader->num_glcmds-1] != 0)
 	{
-		R_Printf(PRINT_ALL, "%s: Entity %s has possible last element issues with %d verts.\n",
+		Com_Printf("%s: Entity %s has possible last element issues with %d verts.\n",
 			__func__, mod_name, poutcmd[pheader->num_glcmds-1]);
 	}
 }
@@ -207,7 +207,7 @@ Mod_LoadDKMCmdList (const char *mod_name, dmdl_t *pheader, int *pincmd)
 
 		if (pendcmd < poutcmd)
 		{
-			R_Printf(PRINT_ALL, "%s: Entity %s has possible broken glcmd.\n",
+			Com_Printf("%s: Entity %s has possible broken glcmd.\n",
 				__func__, mod_name);
 			break;
 		}
@@ -293,7 +293,7 @@ Mod_LoadMDL (const char *mod_name, const void *buffer, int modfilelen,
 	version = LittleLong (pinmodel->version);
 	if (version != MDL_VERSION)
 	{
-		R_Printf(PRINT_ALL, "%s: %s has wrong version number (%i should be %i)",
+		Com_Printf("%s: %s has wrong version number (%i should be %i)",
 				__func__, mod_name, version, MDL_VERSION);
 		return NULL;
 	}
@@ -323,49 +323,49 @@ Mod_LoadMDL (const char *mod_name, const void *buffer, int modfilelen,
 	/* validate */
 	if (skinheight > MAX_LBM_HEIGHT)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has a skin taller than %d",
+		Com_Printf("%s: model %s has a skin taller than %d",
 				__func__, mod_name, MAX_LBM_HEIGHT);
 		return NULL;
 	}
 
 	if (skinwidth > MAX_LBM_HEIGHT)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has a skin wider than %d",
+		Com_Printf("%s: model %s has a skin wider than %d",
 				__func__, mod_name, MAX_LBM_HEIGHT);
 		return NULL;
 	}
 
 	if (num_xyz <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no vertices",
+		Com_Printf("%s: model %s has no vertices",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (num_xyz > MAX_VERTS)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has too many vertices",
+		Com_Printf("%s: model %s has too many vertices",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (num_tris <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no triangles",
+		Com_Printf("%s: model %s has no triangles",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (num_frames <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no frames",
+		Com_Printf("%s: model %s has no frames",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (modfilelen < ofs_end)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s is too big.",
+		Com_Printf("%s: model %s is too big.",
 				__func__, mod_name);
 		return NULL;
 	}
@@ -419,7 +419,7 @@ Mod_LoadMDL (const char *mod_name, const void *buffer, int modfilelen,
 			curr_pos += sizeof(int);
 			if (skin_type)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has unsupported skin type %d",
+				Com_Printf("%s: model %s has unsupported skin type %d",
 						__func__, mod_name, skin_type);
 				return NULL;
 			}
@@ -542,7 +542,7 @@ Mod_LoadMDL (const char *mod_name, const void *buffer, int modfilelen,
 
 			if (frame_type)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has unsupported frame type %d",
+				Com_Printf("%s: model %s has unsupported frame type %d",
 						__func__, mod_name, frame_type);
 				return NULL;
 			}
@@ -597,7 +597,7 @@ Mod_LoadMD2 (const char *mod_name, const void *buffer, int modfilelen,
 	version = LittleLong (pinmodel->version);
 	if (version != ALIAS_VERSION)
 	{
-		R_Printf(PRINT_ALL, "%s: %s has wrong version number (%i should be %i)",
+		Com_Printf("%s: %s has wrong version number (%i should be %i)",
 				__func__, mod_name, version, ALIAS_VERSION);
 		return NULL;
 	}
@@ -605,7 +605,7 @@ Mod_LoadMD2 (const char *mod_name, const void *buffer, int modfilelen,
 	ofs_end = LittleLong(pinmodel->ofs_end);
 	if (ofs_end < 0 || ofs_end > modfilelen)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s file size(%d) too small, should be %d",
+		Com_Printf("%s: model %s file size(%d) too small, should be %d",
 				__func__, mod_name, modfilelen, ofs_end);
 		return NULL;
 	}
@@ -619,49 +619,49 @@ Mod_LoadMD2 (const char *mod_name, const void *buffer, int modfilelen,
 
 	if (pheader->skinheight > MAX_LBM_HEIGHT)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has a skin taller than %d",
+		Com_Printf("%s: model %s has a skin taller than %d",
 				__func__, mod_name, MAX_LBM_HEIGHT);
 		return NULL;
 	}
 
 	if (pheader->num_xyz <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no vertices",
+		Com_Printf("%s: model %s has no vertices",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (pheader->num_xyz > MAX_VERTS)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has too many vertices",
+		Com_Printf("%s: model %s has too many vertices",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (pheader->num_st <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no st vertices",
+		Com_Printf("%s: model %s has no st vertices",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (pheader->num_tris <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no triangles",
+		Com_Printf("%s: model %s has no triangles",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (pheader->num_frames <= 0)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s has no frames",
+		Com_Printf("%s: model %s has no frames",
 				__func__, mod_name);
 		return NULL;
 	}
 
 	if (pheader->num_skins > MAX_MD2SKINS)
 	{
-		R_Printf(PRINT_ALL, "%s has too many skins (%i > %i), "
+		Com_Printf("%s has too many skins (%i > %i), "
 				"extra sprites will be ignored\n",
 				mod_name, pheader->num_skins, MAX_MD2SKINS);
 		pheader->num_skins = MAX_MD2SKINS;
@@ -749,13 +749,13 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 
 			if (sizeof(fmheader_t) > size)
 			{
-				R_Printf(PRINT_ALL, "%s: Too short header", __func__);
+				Com_Printf("%s: Too short header", __func__);
 				return NULL;
 			}
 
 			if (version != 2)
 			{
-				R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+				Com_Printf("%s: Invalid %s version %d",
 					__func__, blockname, version);
 				return NULL;
 			}
@@ -784,42 +784,42 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 
 			if (dmdlheader.skinheight > MAX_LBM_HEIGHT)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has a skin taller than %d",
+				Com_Printf("%s: model %s has a skin taller than %d",
 						__func__, mod_name, MAX_LBM_HEIGHT);
 				return NULL;
 			}
 
 			if (dmdlheader.num_xyz <= 0)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has no vertices",
+				Com_Printf("%s: model %s has no vertices",
 						__func__, mod_name);
 				return NULL;
 			}
 
 			if (dmdlheader.num_xyz > MAX_VERTS)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has too many vertices",
+				Com_Printf("%s: model %s has too many vertices",
 						__func__, mod_name);
 				return NULL;
 			}
 
 			if (dmdlheader.num_st <= 0)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has no st vertices",
+				Com_Printf("%s: model %s has no st vertices",
 						__func__, mod_name);
 				return NULL;
 			}
 
 			if (dmdlheader.num_tris <= 0)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has no triangles",
+				Com_Printf("%s: model %s has no triangles",
 						__func__, mod_name);
 				return NULL;
 			}
 
 			if (dmdlheader.num_frames <= 0)
 			{
-				R_Printf(PRINT_ALL, "%s: model %s has no frames",
+				Com_Printf("%s: model %s has no frames",
 						__func__, mod_name);
 				return NULL;
 			}
@@ -832,7 +832,7 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 		else {
 			if (!pheader)
 			{
-				R_Printf(PRINT_ALL, "%s: %s has broken header.",
+				Com_Printf("%s: %s has broken header.",
 					__func__, mod_name);
 				return NULL;
 			}
@@ -840,13 +840,13 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 			{
 				if (version != 1)
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+					Com_Printf("%s: Invalid %s version %d",
 						__func__, blockname, version);
 					return NULL;
 				}
 				if (size != (pheader->num_skins * MAX_SKINNAME))
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s size",
+					Com_Printf("%s: Invalid %s size",
 						__func__, blockname);
 					return NULL;
 				}
@@ -856,13 +856,13 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 			{
 				if (version != 1)
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+					Com_Printf("%s: Invalid %s version %d",
 						__func__, blockname, version);
 					return NULL;
 				}
 				if (size != (pheader->num_st * sizeof(dstvert_t)))
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s size",
+					Com_Printf("%s: Invalid %s size",
 						__func__, blockname);
 					return NULL;
 				}
@@ -873,13 +873,13 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 			{
 				if (version != 1)
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+					Com_Printf("%s: Invalid %s version %d",
 						__func__, blockname, version);
 					return NULL;
 				}
 				if (size != (pheader->num_tris * sizeof(dtriangle_t)))
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s size",
+					Com_Printf("%s: Invalid %s size",
 						__func__, blockname);
 					return NULL;
 				}
@@ -892,13 +892,13 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 
 				if (version != 1)
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+					Com_Printf("%s: Invalid %s version %d",
 						__func__, blockname, version);
 					return NULL;
 				}
 				if (size != (pheader->num_frames * pheader->framesize))
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s size",
+					Com_Printf("%s: Invalid %s size",
 						__func__, blockname);
 					return NULL;
 				}
@@ -909,13 +909,13 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 			{
 				if (version != 1)
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+					Com_Printf("%s: Invalid %s version %d",
 						__func__, blockname, version);
 					return NULL;
 				}
 				if (size != (pheader->num_glcmds * sizeof(int)))
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s size",
+					Com_Printf("%s: Invalid %s size",
 						__func__, blockname);
 					return NULL;
 				}
@@ -930,14 +930,14 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 
 				if (version != 3)
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s version %d",
+					Com_Printf("%s: Invalid %s version %d",
 						__func__, blockname, version);
 					return NULL;
 				}
 				/* 516 mesh node size */
 				if (size != (num_mesh_nodes * 516))
 				{
-					R_Printf(PRINT_ALL, "%s: Invalid %s size",
+					Com_Printf("%s: Invalid %s size",
 						__func__, blockname);
 					return NULL;
 				}
@@ -973,7 +973,7 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 			}
 			else
 			{
-				R_Printf(PRINT_ALL, "%s: %s Unknown block %s\n",
+				Com_Printf("%s: %s Unknown block %s\n",
 					__func__, mod_name, blockname);
 				return NULL;
 			}
@@ -984,7 +984,7 @@ Mod_LoadFlexModel(const char *mod_name, const void *buffer, int modfilelen,
 
 	if (pheader->num_skins > MAX_MD2SKINS)
 	{
-		R_Printf(PRINT_ALL, "%s has too many skins (%i > %i), "
+		Com_Printf("%s has too many skins (%i > %i), "
 				"extra skins will be ignored\n",
 				mod_name, pheader->num_skins, MAX_MD2SKINS);
 		pheader->num_skins = MAX_MD2SKINS;
@@ -1021,7 +1021,7 @@ Mod_LoadDKMModel(const char *mod_name, const void *buffer, int modfilelen,
 
 	if (sizeof(dkm_header_t) > modfilelen)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s file size(%d) too small",
+		Com_Printf("%s: model %s file size(%d) too small",
 				__func__, mod_name, modfilelen);
 	}
 
@@ -1031,21 +1031,21 @@ Mod_LoadDKMModel(const char *mod_name, const void *buffer, int modfilelen,
 
 	if (header.ident != DKMHEADER)
 	{
-		R_Printf(PRINT_ALL, "%s: %s has wrong ident (%i should be %i)",
+		Com_Printf("%s: %s has wrong ident (%i should be %i)",
 				__func__, mod_name, header.ident, DKMHEADER);
 		return NULL;
 	}
 
 	if (header.version != DKM1_VERSION && header.version != DKM2_VERSION)
 	{
-		R_Printf(PRINT_ALL, "%s: %s has wrong version number (%i should be %i)",
+		Com_Printf("%s: %s has wrong version number (%i should be %i)",
 				__func__, mod_name, header.version, DKM2_VERSION);
 		return NULL;
 	}
 
 	if (header.ofs_end < 0 || header.ofs_end > modfilelen)
 	{
-		R_Printf(PRINT_ALL, "%s: model %s file size(%d) too small, should be %d",
+		Com_Printf("%s: model %s file size(%d) too small, should be %d",
 				__func__, mod_name, modfilelen, header.ofs_end);
 		return NULL;
 	}
@@ -1107,7 +1107,7 @@ Mod_LoadDKMModel(const char *mod_name, const void *buffer, int modfilelen,
 
 	if (pheader->num_skins > MAX_MD2SKINS)
 	{
-		R_Printf(PRINT_ALL, "%s has too many skins (%i > %i), "
+		Com_Printf("%s has too many skins (%i > %i), "
 				"extra skins will be ignored\n",
 				mod_name, pheader->num_skins, MAX_MD2SKINS);
 		pheader->num_skins = MAX_MD2SKINS;
@@ -1198,14 +1198,14 @@ Mod_LoadSP2 (const char *mod_name, const void *buffer, int modfilelen,
 
 	if (sprout->version != SPRITE_VERSION)
 	{
-		R_Printf(PRINT_ALL, "%s has wrong version number (%i should be %i)",
+		Com_Printf("%s has wrong version number (%i should be %i)",
 				mod_name, sprout->version, SPRITE_VERSION);
 		return NULL;
 	}
 
 	if (sprout->numframes > MAX_MD2SKINS)
 	{
-		R_Printf(PRINT_ALL, "%s has too many frames (%i > %i), "
+		Com_Printf("%s has too many frames (%i > %i), "
 				"extra frames will be ignored\n",
 				mod_name, sprout->numframes, MAX_MD2SKINS);
 		sprout->numframes = MAX_MD2SKINS;
@@ -1646,7 +1646,7 @@ Mod_LoadTexinfo(const char *name, mtexinfo_t **texinfo, int *numtexinfo,
 		image = GetTexImage(in->texture, find_image);
 		if (!image)
 		{
-			R_Printf(PRINT_ALL, "%s: Couldn't load %s\n",
+			Com_Printf("%s: Couldn't load %s\n",
 				__func__, in->texture);
 			image = notexture;
 		}

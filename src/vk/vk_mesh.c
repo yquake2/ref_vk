@@ -184,7 +184,7 @@ Mesh_Free(void)
 {
 	if (r_validation->value > 1)
 	{
-		R_Printf(PRINT_ALL, "%s: Deallocated %d mesh verts\n",
+		Com_Printf("%s: Deallocated %d mesh verts\n",
 			__func__, verts_count);
 	}
 	verts_count = 0;
@@ -344,7 +344,7 @@ Vk_DrawAliasFrameLerpCommands(entity_t *currententity, int *order, int *order_en
 
 				if (verts_count <= index_xyz)
 				{
-					R_Printf(PRINT_ALL, "%s: Model has issues with lerped index\n", __func__);
+					Com_Printf("%s: Model has issues with lerped index\n", __func__);
 					return;
 				}
 
@@ -384,7 +384,7 @@ Vk_DrawAliasFrameLerpCommands(entity_t *currententity, int *order, int *order_en
 
 				if (verts_count <= index_xyz)
 				{
-					R_Printf(PRINT_ALL, "%s: Model has issues with lerped index\n", __func__);
+					Com_Printf("%s: Model has issues with lerped index\n", __func__);
 					return;
 				}
 
@@ -662,13 +662,13 @@ R_CullAliasModel(vec3_t bbox[8], entity_t *e, const model_t *currentmodel)
 
 	if ( ( e->frame >= paliashdr->num_frames ) || ( e->frame < 0 ) )
 	{
-		R_Printf(PRINT_ALL, "%s %s: no such frame %d\n",
+		Com_Printf("%s %s: no such frame %d\n",
 			__func__, currentmodel->name, e->frame);
 		e->frame = 0;
 	}
 	if ( ( e->oldframe >= paliashdr->num_frames ) || ( e->oldframe < 0 ) )
 	{
-		R_Printf(PRINT_ALL, "%s %s: no such oldframe %d\n",
+		Com_Printf("%s %s: no such oldframe %d\n",
 			__func__, currentmodel->name, e->oldframe);
 		e->oldframe = 0;
 	}
@@ -996,7 +996,7 @@ R_DrawAliasModel(entity_t *currententity, const model_t *currentmodel)
 		if ( (currententity->frame >= paliashdr->num_frames)
 			|| (currententity->frame < 0) )
 		{
-			R_Printf(PRINT_ALL, "%s %s: no such frame %d\n",
+			Com_Printf("%s %s: no such frame %d\n",
 				__func__, currentmodel->name, currententity->frame);
 			currententity->frame = 0;
 			currententity->oldframe = 0;
@@ -1005,7 +1005,7 @@ R_DrawAliasModel(entity_t *currententity, const model_t *currentmodel)
 		if ( (currententity->oldframe >= paliashdr->num_frames)
 			|| (currententity->oldframe < 0))
 		{
-			R_Printf(PRINT_ALL, "%s %s: no such oldframe %d\n",
+			Com_Printf("%s %s: no such oldframe %d\n",
 				__func__, currentmodel->name, currententity->oldframe);
 			currententity->frame = 0;
 			currententity->oldframe = 0;

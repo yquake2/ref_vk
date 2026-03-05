@@ -98,7 +98,8 @@ RE_Draw_CharScaled(int x, int y, int num, float scale)
 RE_Draw_FindPic
 =============
 */
-image_t	*RE_Draw_FindPic(const char *name)
+image_t *
+RE_Draw_FindPic(const char *name)
 {
 	return R_FindPic(name, (findimage_t)Vk_FindImage);
 }
@@ -111,7 +112,7 @@ RE_Draw_GetPicSize
 void
 RE_Draw_GetPicSize(int *w, int *h, const char *name)
 {
-	image_t *image;
+	const image_t *image;
 
 	image = R_FindPic(name, (findimage_t)Vk_FindImage);
 	if (!image)
@@ -140,7 +141,7 @@ RE_Draw_StretchPic (int x, int y, int w, int h, const char *name)
 	vk = R_FindPic(name, (findimage_t)Vk_FindImage);
 	if (!vk)
 	{
-		R_Printf(PRINT_ALL, "%s(): Can't find pic: %s\n", __func__, name);
+		Com_Printf("%s(): Can't find pic: %s\n", __func__, name);
 		return;
 	}
 
@@ -164,7 +165,7 @@ RE_Draw_PicScaled(int x, int y, const char *name, float scale)
 	vk = R_FindPic(name, (findimage_t)Vk_FindImage);
 	if (!vk)
 	{
-		R_Printf(PRINT_ALL, "%s(): Can't find pic: %s\n", __func__, name);
+		Com_Printf("%s(): Can't find pic: %s\n", __func__, name);
 		return;
 	}
 
@@ -190,7 +191,7 @@ RE_Draw_TileClear(int x, int y, int w, int h, const char *name)
 	image = R_FindPic(name, (findimage_t)Vk_FindImage);
 	if (!image)
 	{
-		R_Printf(PRINT_ALL, "%s(): Can't find pic: %s\n", __func__, name);
+		Com_Printf("%s(): Can't find pic: %s\n", __func__, name);
 		return;
 	}
 
@@ -288,7 +289,9 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const b
 	unsigned *raw_image32;
 
 	if (!vk_frameStarted)
+	{
 		return;
+	}
 
 	if (bits == 32)
 	{
@@ -331,6 +334,13 @@ void RE_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, const b
 		}
 
 		raw_image32 = malloc(cols * rows * sizeof(unsigned));
+		YQ2_COM_CHECK_OOM(raw_image32, "malloc()",
+			cols * rows * sizeof(unsigned))
+		if (!raw_image32)
+		{
+			/* unaware about YQ2_ATTR_NORETURN_FUNCPTR? */
+			return;
+		}
 
 		source = image_scaled;
 		dest = raw_image32;
