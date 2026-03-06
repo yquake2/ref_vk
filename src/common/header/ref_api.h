@@ -215,6 +215,8 @@ typedef struct
 	void	(EXPORT *EndFrame) (void);
 	qboolean	(EXPORT *EndWorldRenderpass) (void); // finish world rendering, apply postprocess and switch to UI render pass
 
+	void 	(EXPORT *DrawPicScaledCol) (int x, int y, const char *pic, float factor, const float color[3]);
+
 	//void	(EXPORT *AppActivate)( qboolean activate );
 } refexport_t;
 
