@@ -1749,6 +1749,9 @@ GetRefAPI(refimport_t imp)
 
 	refexport.DrawStretchRaw = RE_Draw_StretchRaw;
 
+	/* TODO: not implemented yet */
+	refexport.DrawPicScaledCol = NULL;
+
 	refexport.Init = RE_Init;
 	refexport.IsVSyncActive = RE_IsVsyncActive;
 	refexport.Shutdown = RE_Shutdown;

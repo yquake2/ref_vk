@@ -124,8 +124,7 @@ typedef enum {
 	RESTART_PARTIAL
 } ref_restart_t;
 
-// FIXME: bump API_VERSION?
-#define	API_VERSION		7
+#define	API_VERSION		8
 #define EXPORT
 #define IMPORT
 
@@ -215,6 +214,8 @@ typedef struct
 	void	(EXPORT *BeginFrame)( float camera_separation );
 	void	(EXPORT *EndFrame) (void);
 	qboolean	(EXPORT *EndWorldRenderpass) (void); // finish world rendering, apply postprocess and switch to UI render pass
+
+	void 	(EXPORT *DrawPicScaledCol) (int x, int y, const char *pic, float factor, const float color[3]);
 
 	//void	(EXPORT *AppActivate)( qboolean activate );
 } refexport_t;
