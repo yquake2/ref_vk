@@ -2,6 +2,7 @@
 
 This is the vkQuake2 vulkan renderer library ported to Yamagi Quake II.
 
+[![Coverity Scan](https://img.shields.io/coverity/scan/33054)](https://scan.coverity.com/projects/yquake2-ref_vk)
 [![Top Language](https://img.shields.io/github/languages/top/yquake2/ref_vk.svg)](https://github.com/yquake2/ref_vk)
 [![Code Size](https://img.shields.io/github/languages/code-size/yquake2/ref_vk.svg)](https://github.com/yquake2/ref_vk)
 [![Release](https://img.shields.io/github/release/yquake2/ref_vk.svg)](https://github.com/yquake2/ref_vk/releases/latest)
