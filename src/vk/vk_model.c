@@ -531,7 +531,7 @@ Mod_LoadFaces(model_t *loadmodel, const byte *mod_base, const lump_t *l, const b
 			out->flags |= SURF_PLANEBACK;
 		}
 
-		if (planenum < 0 || planenum >= loadmodel->numplanes)
+		if (planenum >= loadmodel->numplanes)
 		{
 			Com_Error(ERR_DROP, "%s: Incorrect %d planenum.",
 					__func__, planenum);
@@ -962,6 +962,7 @@ Mod_ForName(const char *name, model_t *parent_model, qboolean crash)
 	if (!name[0])
 	{
 		Com_Error(ERR_DROP, "%s: NULL name", __func__);
+		return NULL;
 	}
 
 	/* inline models are grabbed only from worldmodel */
@@ -973,6 +974,7 @@ Mod_ForName(const char *name, model_t *parent_model, qboolean crash)
 		{
 			Com_Error(ERR_DROP, "%s: bad inline model number",
 					__func__);
+			return NULL;
 		}
 
 		return &parent_model->submodels[i];
@@ -1005,13 +1007,15 @@ Mod_ForName(const char *name, model_t *parent_model, qboolean crash)
 	{
 		if (mod_numknown == models_known_max)
 		{
-			Com_Error(ERR_DROP, "%s: mod_numknown == models_known_max", __func__);
+			Com_Error(ERR_DROP, "%s: mod_numknown == models_known_max",
+				__func__);
+			return NULL;
 		}
 
 		mod_numknown++;
 	}
 
-	strcpy(mod->name, name);
+	Q_strlcpy(mod->name, name, sizeof(mod->name));
 
 	/* load the file */
 	modfilelen = Mod_LoadFile(mod->name, &buf);
@@ -1022,6 +1026,7 @@ Mod_ForName(const char *name, model_t *parent_model, qboolean crash)
 		{
 			Com_Error(ERR_DROP, "%s: %s not found",
 					__func__, mod->name);
+			return NULL;
 		}
 
 		if (r_validation->value > 0)

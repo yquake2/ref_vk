@@ -513,7 +513,14 @@ R_LoadImage(const char *name, const char* namewe, const char *ext, imagetype_t t
 
 			LoadPCX (namewe, &pic, &palette, &width, &height, &bitsPerPixel);
 			if (!pic)
+			{
+				if (palette)
+				{
+					free(palette);
+				}
+
 				return NULL;
+			}
 
 			image = load_image(name, pic,
 				width, width,
