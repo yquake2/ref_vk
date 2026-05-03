@@ -238,6 +238,7 @@ extern VkDescriptorSetLayout vk_samplerDescSetLayout;
 
 // *** pipelines ***
 extern qvkpipeline_t vk_drawTexQuadPipeline[RP_COUNT];
+extern qvkpipeline_t vk_drawTintedTexQuadPipeline[RP_COUNT];
 extern qvkpipeline_t vk_drawColorQuadPipeline[RP_COUNT];
 extern qvkpipeline_t vk_drawModelPipelineFan[RP_COUNT];
 extern qvkpipeline_t vk_drawNoDepthModelPipelineFan;
@@ -331,6 +332,7 @@ VkBuffer	QVk_GetTriangleFanIbo(VkDeviceSize indexCount);
 VkBuffer	QVk_GetTriangleStripIbo(VkDeviceSize indexCount);
 void		QVk_DrawColorRect(float *ubo, VkDeviceSize uboSize, qvkrenderpasstype_t rpType);
 void		QVk_DrawTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture);
+void		QVk_DrawColoredTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture, const float colorTint[3]);
 void		QVk_BindPipeline(qvkpipeline_t *pipeline);
 void		QVk_SubmitStagingBuffers(void);
 qboolean	QVk_CheckExtent(void);
