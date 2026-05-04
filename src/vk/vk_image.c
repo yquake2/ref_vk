@@ -1118,6 +1118,40 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 	if (type == it_skin && bits == 8)
 		FloodFillSkin(pic, width, height);
 
+	/* Normalize crosshair images to white so that color tinting in the
+	   fragment shader produces the correct hue regardless of the
+	   original palette color used in the crosshair PCX. Matches anything
+	   under pics/ch<digit>... (ch1..ch3 ship with the game; mods commonly
+	   add ch4..ch9 etc.). Mutates the caller's pic[] in place. */
+	if (bits == 8 && strncmp(name, "pics/ch", 7) == 0 &&
+			name[7] >= '0' && name[7] <= '9')
+	{
+		int i, best = 0;
+		float best_lum = -1.0f;
+
+		for (i = 0; i < 255; i++)
+		{
+			byte r = ((byte *)&d_8to24table[i])[0];
+			byte g = ((byte *)&d_8to24table[i])[1];
+			byte b = ((byte *)&d_8to24table[i])[2];
+			float lum = 0.299f * r + 0.587f * g + 0.114f * b;
+
+			if (lum > best_lum)
+			{
+				best_lum = lum;
+				best = i;
+			}
+		}
+
+		for (i = 0; i < width * height; i++)
+		{
+			if (pic[i] != 255)
+			{
+				pic[i] = (byte)best;
+			}
+		}
+	}
+
 	upload_width = realwidth;
 	upload_height = realheight;
 

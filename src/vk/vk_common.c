@@ -134,6 +134,8 @@ qboolean vk_initialized = false;
 // render pipelines
 qvkpipeline_t vk_drawTexQuadPipeline[RP_COUNT]    = {
 	QVKPIPELINE_INIT, QVKPIPELINE_INIT, QVKPIPELINE_INIT };
+qvkpipeline_t vk_drawTintedTexQuadPipeline[RP_COUNT] = {
+	QVKPIPELINE_INIT, QVKPIPELINE_INIT, QVKPIPELINE_INIT };
 qvkpipeline_t vk_drawColorQuadPipeline[RP_COUNT]  = {
 	QVKPIPELINE_INIT, QVKPIPELINE_INIT, QVKPIPELINE_INIT };
 qvkpipeline_t vk_drawModelPipelineFan[RP_COUNT]   = {
@@ -1355,6 +1357,18 @@ CreatePipelines(void)
 			va("Pipeline: textured quad (%s)", renderpassObjectNames[i]));
 	}
 
+	// textured quad pipeline with constant RGB tint (used for crosshair colouring)
+	VK_LOAD_VERTFRAG_SHADERS(shaders, basic, basic_tinted);
+	for (int i = 0; i < RP_COUNT; ++i)
+	{
+		vk_drawTintedTexQuadPipeline[i].depthTestEnable = VK_FALSE;
+		QVk_CreatePipeline(samplerUboDsLayouts, 2, &vertInfoRG_RG, &vk_drawTintedTexQuadPipeline[i], &vk_renderpasses[i], shaders, 2);
+		QVk_DebugSetObjectName((uint64_t)vk_drawTintedTexQuadPipeline[i].layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+			va("Pipeline Layout: tinted textured quad (%s)", renderpassObjectNames[i]));
+		QVk_DebugSetObjectName((uint64_t)vk_drawTintedTexQuadPipeline[i].pl, VK_OBJECT_TYPE_PIPELINE,
+			va("Pipeline: tinted textured quad (%s)", renderpassObjectNames[i]));
+	}
+
 	// draw particles pipeline (using a texture)
 	VK_LOAD_VERTFRAG_SHADERS(shaders, particle, basic);
 	vk_drawParticlesPipeline.depthWriteEnable = VK_TRUE;
@@ -1569,6 +1583,7 @@ QVk_Shutdown(void)
 			QVk_DestroyPipeline(&vk_drawColorQuadPipeline[i]);
 			QVk_DestroyPipeline(&vk_drawModelPipelineFan[i]);
 			QVk_DestroyPipeline(&vk_drawTexQuadPipeline[i]);
+			QVk_DestroyPipeline(&vk_drawTintedTexQuadPipeline[i]);
 		}
 		QVk_DestroyPipeline(&vk_drawNullModelPipeline);
 		QVk_DestroyPipeline(&vk_drawNoDepthModelPipelineFan);
@@ -2837,6 +2852,11 @@ QVk_DrawColorRect(float *ubo, VkDeviceSize uboSize, qvkrenderpasstype_t rpType)
 	vkCmdDrawIndexed(vk_activeCmdbuffer, 6, 1, 0, 0, 0);
 }
 
+/* Offset of the fragment-stage push constant range in basic.frag /
+   basic_tinted.frag. The vertex-stage range occupies bytes 0..67
+   (mat4 vpMatrix), so the fragment range starts at byte 68. */
+#define VK_BASIC_FRAG_PC_OFFSET (17 * sizeof(float))
+
 void
 QVk_DrawTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture)
 {
@@ -2855,9 +2875,51 @@ QVk_DrawTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture)
 	float gamma = 2.1F - vid_gamma->value;
 
 	vkCmdPushConstants(vk_activeCmdbuffer, vk_drawTexQuadPipeline[vk_state.current_renderpass].layout,
-		VK_SHADER_STAGE_FRAGMENT_BIT, 17 * sizeof(float), sizeof(gamma), &gamma);
+		VK_SHADER_STAGE_FRAGMENT_BIT, VK_BASIC_FRAG_PC_OFFSET, sizeof(gamma), &gamma);
 
 	vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_drawTexQuadPipeline[vk_state.current_renderpass].layout, 0, 2, descriptorSets, 1, &uboOffset);
+	vkCmdBindVertexBuffers(vk_activeCmdbuffer, 0, 1,
+		&vk_texRectVbo.resource.buffer, &offsets);
+	vkCmdBindIndexBuffer(vk_activeCmdbuffer,
+		vk_rectIbo.resource.buffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(vk_activeCmdbuffer, 6, 1, 0, 0, 0);
+}
+
+/*
+ * Like QVk_DrawTexRect, but binds the tinted-texture pipeline (basic_tinted.frag)
+ * and pushes a constant RGB tint that the fragment shader multiplies into the
+ * gamma-corrected texel. Kept on its own pipeline so the rest of the renderer
+ * (which shares basic.frag with several other pipelines) is unaffected.
+ */
+void
+QVk_DrawColoredTexRect(const float *ubo, VkDeviceSize uboSize, qvktexture_t *texture, const float colorTint[3])
+{
+	uint32_t uboOffset;
+	VkDescriptorSet uboDescriptorSet;
+	uint8_t *uboData = QVk_GetUniformBuffer(uboSize, &uboOffset, &uboDescriptorSet);
+	memcpy(uboData, ubo, uboSize);
+
+	QVk_BindPipeline(&vk_drawTintedTexQuadPipeline[vk_state.current_renderpass]);
+	VkDeviceSize offsets = 0;
+	VkDescriptorSet descriptorSets[] = {
+		texture->descriptorSet,
+		uboDescriptorSet
+	};
+
+	struct {
+		float gamma;
+		float _pad[2];
+		float colorTint[3];
+	} fragPC = {
+		.gamma = 2.1F - vid_gamma->value,
+		.colorTint = { colorTint[0], colorTint[1], colorTint[2] },
+	};
+
+	vkCmdPushConstants(vk_activeCmdbuffer, vk_drawTintedTexQuadPipeline[vk_state.current_renderpass].layout,
+		VK_SHADER_STAGE_FRAGMENT_BIT, VK_BASIC_FRAG_PC_OFFSET, sizeof(fragPC), &fragPC);
+
+	vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		vk_drawTintedTexQuadPipeline[vk_state.current_renderpass].layout, 0, 2, descriptorSets, 1, &uboOffset);
 	vkCmdBindVertexBuffers(vk_activeCmdbuffer, 0, 1,
 		&vk_texRectVbo.resource.buffer, &offsets);
 	vkCmdBindIndexBuffer(vk_activeCmdbuffer,

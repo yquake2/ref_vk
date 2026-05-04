@@ -127,11 +127,15 @@ RE_Draw_GetPicSize(int *w, int *h, const char *name)
 
 /*
 =============
-RE_Draw_StretchPic
+DrawStretchPicCommon
+
+Shared body for RE_Draw_StretchPic and RE_Draw_PicScaledCol. If `color`
+is non-NULL, binds the tinted-quad pipeline and applies the RGB tint;
+otherwise binds the regular textured-quad pipeline.
 =============
 */
-void
-RE_Draw_StretchPic (int x, int y, int w, int h, const char *name)
+static void
+DrawStretchPicCommon(int x, int y, int w, int h, const char *name, const float *color)
 {
 	image_t *vk;
 
@@ -148,7 +152,21 @@ RE_Draw_StretchPic (int x, int y, int w, int h, const char *name)
 	float imgTransform[] = { (float)x / vid.width, (float)y / vid.height,
 							 (float)w / vid.width, (float)h / vid.height,
 							  0, 0, 1, 1 };
-	QVk_DrawTexRect(imgTransform, sizeof(imgTransform), &vk->vk_texture);
+	if (color)
+		QVk_DrawColoredTexRect(imgTransform, sizeof(imgTransform), &vk->vk_texture, color);
+	else
+		QVk_DrawTexRect(imgTransform, sizeof(imgTransform), &vk->vk_texture);
+}
+
+/*
+=============
+RE_Draw_StretchPic
+=============
+*/
+void
+RE_Draw_StretchPic (int x, int y, int w, int h, const char *name)
+{
+	DrawStretchPicCommon(x, y, w, h, name, NULL);
 }
 
 
@@ -170,6 +188,30 @@ RE_Draw_PicScaled(int x, int y, const char *name, float scale)
 	}
 
 	RE_Draw_StretchPic(x, y, vk->width*scale, vk->height*scale, name);
+}
+
+/*
+=============
+RE_Draw_PicScaledCol
+
+Like RE_Draw_PicScaled, but multiplies the texture by a constant RGB
+tint. Used by the engine to color the crosshair via the
+crosshair_color_r/g/b cvars.
+=============
+*/
+void
+RE_Draw_PicScaledCol(int x, int y, const char *name, float scale, const float color[3])
+{
+	image_t *vk;
+
+	vk = R_FindPic(name, (findimage_t)Vk_FindImage);
+	if (!vk)
+	{
+		Com_Printf("%s(): Can't find pic: %s\n", __func__, name);
+		return;
+	}
+
+	DrawStretchPicCommon(x, y, vk->width * scale, vk->height * scale, name, color);
 }
 
 /*

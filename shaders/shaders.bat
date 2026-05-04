@@ -1,5 +1,6 @@
 %VULKAN_SDK%\bin\glslangValidator.exe --variable-name basic_vert_spv -V basic.vert -o ../src/vk/spirv/basic_vert.c
 %VULKAN_SDK%\bin\glslangValidator.exe --variable-name basic_frag_spv -V basic.frag -o ../src/vk/spirv/basic_frag.c
+%VULKAN_SDK%\bin\glslangValidator.exe --variable-name basic_tinted_frag_spv -V basic_tinted.frag -o ../src/vk/spirv/basic_tinted_frag.c
 %VULKAN_SDK%\bin\glslangValidator.exe --variable-name basic_color_quad_vert_spv -V basic_color_quad.vert -o ../src/vk/spirv/basic_color_quad_vert.c
 %VULKAN_SDK%\bin\glslangValidator.exe --variable-name basic_color_quad_frag_spv -V basic_color_quad.frag -o ../src/vk/spirv/basic_color_quad_frag.c
 %VULKAN_SDK%\bin\glslangValidator.exe --variable-name model_vert_spv -V model.vert -o ../src/vk/spirv/model_vert.c

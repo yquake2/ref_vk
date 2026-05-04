@@ -35,6 +35,10 @@ extern const size_t basic_vert_size;
 extern const uint32_t basic_frag_spv[];
 extern const size_t basic_frag_size;
 
+// textured quad (alpha) with constant RGB tint
+extern const uint32_t basic_tinted_frag_spv[];
+extern const size_t basic_tinted_frag_size;
+
 // colored quad (alpha)
 extern const uint32_t basic_color_quad_vert_spv[];
 extern const size_t basic_color_quad_vert_size;
