@@ -58,7 +58,7 @@
 #define VK_VERIFY(x) { \
 	VkResult res = (x); \
 	if(res != VK_SUCCESS) { \
-		Com_Printf("%s:%d: VkResult verification failed: %s\n", \
+		Sys_Error("%s:%d: VkResult verification failed: %s\n", \
 			 __func__, __LINE__, QVk_GetError(res)); \
 	} \
 }
