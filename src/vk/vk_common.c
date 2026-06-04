@@ -86,10 +86,10 @@ qvkrenderpass_t vk_renderpasses[RP_COUNT] = {
 };
 
 // Vulkan pools
-VkCommandPool vk_commandPool[NUM_CMDBUFFERS] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
+VkCommandPool vk_commandPool[NUM_CMDBUFFERS] = { 0 };
 VkCommandPool vk_transferCommandPool = VK_NULL_HANDLE;
 VkDescriptorPool vk_descriptorPool = VK_NULL_HANDLE;
-static VkCommandPool vk_stagingCommandPool[NUM_DYNBUFFERS] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
+static VkCommandPool vk_stagingCommandPool[NUM_DYNBUFFERS] = { 0 };
 // Vulkan image views
 static VkImageView *vk_imageviews = NULL;
 // Vulkan framebuffers
@@ -256,7 +256,7 @@ static VkDescriptorSet *vk_swapDescriptorSets[NUM_SWAPBUFFER_SLOTS];
 #define UNIFORM_ALLOC_SIZE 1024
 // start values for dynamic buffer sizes - bound to change if the application runs out of space (sizes in bytes)
 #define VERTEX_BUFFER_SIZE (1024 * 1024)
-#define INDEX_BUFFER_SIZE (2 * 1024)
+#define INDEX_BUFFER_SIZE (1024 * 1024)
 #define UNIFORM_BUFFER_SIZE (2048 * 1024)
 // staging buffer is constant in size but has a max limit beyond which it will be submitted
 #define STAGING_BUFFER_MAXSIZE (8192 * 1024)
@@ -1335,12 +1335,19 @@ CreatePipelines(void)
 	VK_VERTINFO(RGB_RGBA_RG, sizeof(float) * 9,	VK_INPUTATTR_DESC(0, VK_FORMAT_R32G32B32_SFLOAT, 0),
 												VK_INPUTATTR_DESC(1, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 3),
 												VK_INPUTATTR_DESC(2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 7));
-	// no vertices passed to the pipeline (postprocessing)
+	/* no vertices passed to the pipeline (postprocessing) */
 	VkPipelineVertexInputStateCreateInfo vertInfoNull = VK_NULL_VERTEXINPUT_CINF;
 
 	// shared descriptor set layouts
-	VkDescriptorSetLayout samplerUboDsLayouts[] = { vk_samplerDescSetLayout, vk_uboDescSetLayout };
-	VkDescriptorSetLayout samplerUboLmapDsLayouts[] = { vk_samplerDescSetLayout, vk_uboDescSetLayout, vk_samplerLightmapDescSetLayout };
+	const VkDescriptorSetLayout samplerUboDsLayouts[] = {
+		vk_samplerDescSetLayout,
+		vk_uboDescSetLayout
+	};
+	const VkDescriptorSetLayout samplerUboLmapDsLayouts[] = {
+		vk_samplerDescSetLayout,
+		vk_uboDescSetLayout,
+		vk_samplerLightmapDescSetLayout
+	};
 
 	// shader array (vertex and fragment, no compute... yet)
 	qvkshader_t shaders[SHADER_INDEX_SIZE] = {0};
@@ -1576,15 +1583,18 @@ QVk_Shutdown(void)
 
 	if (vk_instance != VK_NULL_HANDLE)
 	{
+		size_t i;
+
 		Com_Printf("Shutting down Vulkan\n");
 
-		for (int i = 0; i < RP_COUNT; ++i)
+		for (i = 0; i < RP_COUNT; ++i)
 		{
 			QVk_DestroyPipeline(&vk_drawColorQuadPipeline[i]);
 			QVk_DestroyPipeline(&vk_drawModelPipelineFan[i]);
 			QVk_DestroyPipeline(&vk_drawTexQuadPipeline[i]);
 			QVk_DestroyPipeline(&vk_drawTintedTexQuadPipeline[i]);
 		}
+
 		QVk_DestroyPipeline(&vk_drawNullModelPipeline);
 		QVk_DestroyPipeline(&vk_drawNoDepthModelPipelineFan);
 		QVk_DestroyPipeline(&vk_drawLefthandModelPipelineFan);
@@ -1605,46 +1615,67 @@ QVk_Shutdown(void)
 		QVk_FreeBuffer(&vk_texRectVbo);
 		QVk_FreeBuffer(&vk_colorRectVbo);
 		QVk_FreeBuffer(&vk_rectIbo);
-		for (int i = 0; i < NUM_DYNBUFFERS; ++i)
+
+		for (i = 0; i < NUM_DYNBUFFERS; ++i)
 		{
 			if (vk_dynUniformBuffers[i].resource.buffer != VK_NULL_HANDLE)
 			{
 				buffer_unmap(&vk_dynUniformBuffers[i].resource);
 				QVk_FreeBuffer(&vk_dynUniformBuffers[i]);
 			}
+
 			if (vk_dynIndexBuffers[i].resource.buffer != VK_NULL_HANDLE)
 			{
 				buffer_unmap(&vk_dynIndexBuffers[i].resource);
 				QVk_FreeBuffer(&vk_dynIndexBuffers[i]);
 			}
+
 			if (vk_dynVertexBuffers[i].resource.buffer != VK_NULL_HANDLE)
 			{
 				buffer_unmap(&vk_dynVertexBuffers[i].resource);
 				QVk_FreeBuffer(&vk_dynVertexBuffers[i]);
 			}
+
 			DestroyStagingBuffer(&vk_stagingBuffers[i]);
+
 			if (vk_stagingCommandPool[i] != VK_NULL_HANDLE)
 			{
 				vkDestroyCommandPool(vk_device.logical, vk_stagingCommandPool[i], NULL);
 				vk_stagingCommandPool[i] = VK_NULL_HANDLE;
 			}
 		}
+
 		if (vk_descriptorPool != VK_NULL_HANDLE)
+		{
 			vkDestroyDescriptorPool(vk_device.logical, vk_descriptorPool, NULL);
+		}
+
 		if (vk_uboDescSetLayout != VK_NULL_HANDLE)
+		{
 			vkDestroyDescriptorSetLayout(vk_device.logical, vk_uboDescSetLayout, NULL);
+		}
+
 		if (vk_samplerDescSetLayout != VK_NULL_HANDLE)
+		{
 			vkDestroyDescriptorSetLayout(vk_device.logical, vk_samplerDescSetLayout, NULL);
+		}
+
 		if (vk_samplerLightmapDescSetLayout != VK_NULL_HANDLE)
+		{
 			vkDestroyDescriptorSetLayout(vk_device.logical, vk_samplerLightmapDescSetLayout, NULL);
-		for (int i = 0; i < RP_COUNT; i++)
+		}
+
+		for (i = 0; i < RP_COUNT; i++)
 		{
 			if (vk_renderpasses[i].rp != VK_NULL_HANDLE)
+			{
 				vkDestroyRenderPass(vk_device.logical, vk_renderpasses[i].rp, NULL);
+			}
+
 			vk_renderpasses[i].rp = VK_NULL_HANDLE;
 		}
 
-		for (int i = 0; i < NUM_CMDBUFFERS; i++)
+		for (i = 0; i < NUM_CMDBUFFERS; i++)
 		{
 			if (vk_commandPool[i] != VK_NULL_HANDLE)
 			{
@@ -1653,17 +1684,23 @@ QVk_Shutdown(void)
 				vk_commandPool[i] = VK_NULL_HANDLE;
 			}
 		}
+
 		if (vk_commandbuffers != NULL)
 		{
 			free(vk_commandbuffers);
 			vk_commandbuffers = NULL;
 		}
+
 		if (vk_transferCommandPool != VK_NULL_HANDLE)
+		{
 			vkDestroyCommandPool(vk_device.logical, vk_transferCommandPool, NULL);
+		}
+
 		DestroySamplers();
 		DestroyFramebuffers();
 		DestroyImageViews();
 		DestroyDrawBuffers();
+
 		if (vk_swapchain.sc != VK_NULL_HANDLE)
 		{
 			vkDestroySwapchainKHR(vk_device.logical, vk_swapchain.sc, NULL);
@@ -1672,10 +1709,9 @@ QVk_Shutdown(void)
 			vk_swapchain.images = NULL;
 			vk_swapchain.imageCount = 0;
 		}
+
 		if (vk_device.logical != VK_NULL_HANDLE)
 		{
-			int i;
-
 			for (i = 0; i < NUM_CMDBUFFERS; ++i)
 			{
 				vkDestroySemaphore(vk_device.logical, vk_imageAvailableSemaphores[i], NULL);
@@ -1683,13 +1719,20 @@ QVk_Shutdown(void)
 				vkDestroyFence(vk_device.logical, vk_fences[i], NULL);
 			}
 		}
-		// free all memory
+
+		/* free all memory */
 		vulkan_memory_delete();
 
 		if (vk_device.logical != VK_NULL_HANDLE)
+		{
 			vkDestroyDevice(vk_device.logical, NULL);
+		}
+
 		if(vk_surface != VK_NULL_HANDLE)
+		{
 			vkDestroySurfaceKHR(vk_instance, vk_surface, NULL);
+		}
+
 		QVk_DestroyValidationLayers();
 
 		vkDestroyInstance(vk_instance, NULL);
@@ -1747,7 +1790,7 @@ QVk_WaitAndShutdownAll(void)
 	vk_initialized = false;
 }
 
-void 
+void
 QVk_Restart(void)
 {
 	QVk_WaitAndShutdownAll();
@@ -1776,7 +1819,7 @@ QVk_PostInit(void)
 qboolean
 QVk_Init(void)
 {
-	int i;
+	size_t i;
 
 	PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion = (PFN_vkEnumerateInstanceVersion)vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
 	uint32_t instanceVersion = VK_API_VERSION_1_0;
@@ -1798,21 +1841,11 @@ QVk_Init(void)
 
 	uint32_t extCount;
 	char **wantedExtensions;
-	memset(vk_config.supported_present_modes, 0, sizeof(vk_config.supported_present_modes));
-	memset(vk_config.extensions, 0, sizeof(vk_config.extensions));
-	memset(vk_config.layers, 0, sizeof(vk_config.layers));
+	memset(&vk_config, 0, sizeof(vk_config));
 	vk_config.vk_version = instanceVersion;
-	vk_config.vertex_buffer_usage  = 0;
-	vk_config.vertex_buffer_max_usage = 0;
 	vk_config.vertex_buffer_size   = VERTEX_BUFFER_SIZE;
-	vk_config.index_buffer_usage   = 0;
-	vk_config.index_buffer_max_usage = 0;
 	vk_config.index_buffer_size    = INDEX_BUFFER_SIZE;
-	vk_config.uniform_buffer_usage = 0;
-	vk_config.uniform_buffer_max_usage = 0;
 	vk_config.uniform_buffer_size  = UNIFORM_BUFFER_SIZE;
-	vk_config.triangle_index_usage = 0;
-	vk_config.triangle_index_max_usage = 0;
 	vk_config.triangle_index_count = TRIANGLE_INDEX_CNT;
 
 #ifdef USE_SDL3
@@ -2031,6 +2064,7 @@ QVk_Init(void)
 	{
 		return false;
 	}
+
 	Com_Printf("...created Vulkan surface\n");
 
 	// create Vulkan device - see if the user prefers any specific device if there's more than one GPU in the system
@@ -2038,10 +2072,13 @@ QVk_Init(void)
 	{
 		return false;
 	}
+
 	QVk_DebugSetObjectName((uintptr_t)vk_device.physical, VK_OBJECT_TYPE_PHYSICAL_DEVICE, va("Physical Device: %s", vk_config.vendor_name));
 
 	if (r_validation->value > 0)
+	{
 		vulkan_memory_types_show();
+	}
 
 	// setup swapchain
 	res = QVk_CreateSwapchain();
@@ -2050,6 +2087,7 @@ QVk_Init(void)
 		Com_Printf("%s(): Could not create Vulkan swapchain: %s\n", __func__, QVk_GetError(res));
 		return false;
 	}
+
 	Com_Printf("...created Vulkan swapchain\n");
 
 	// set viewport and scissor
@@ -2066,6 +2104,7 @@ QVk_Init(void)
 		vk_viewport.x = 0.f;
 		vk_viewport.y = 0.f;
 	}
+
 	vk_viewport.minDepth = 0.f;
 	vk_viewport.maxDepth = 1.f;
 	vk_viewport.width = Q_min(
@@ -2082,6 +2121,7 @@ QVk_Init(void)
 		.pNext = NULL,
 		.flags = VK_FENCE_CREATE_SIGNALED_BIT
 	};
+
 	VkSemaphoreCreateInfo sCreateInfo = {
 		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		.pNext = NULL,
@@ -2095,11 +2135,11 @@ QVk_Init(void)
 		VK_VERIFY(vkCreateSemaphore(vk_device.logical, &sCreateInfo, NULL, &vk_renderFinishedSemaphores[i]));
 
 		QVk_DebugSetObjectName((uint64_t)vk_fences[i],
-			VK_OBJECT_TYPE_FENCE, va("Fence #%d", i));
+			VK_OBJECT_TYPE_FENCE, va("Fence #" YQ2_COM_PRIdS, i));
 		QVk_DebugSetObjectName((uint64_t)vk_imageAvailableSemaphores[i],
-			VK_OBJECT_TYPE_SEMAPHORE, va("Semaphore: image available #%d", i));
+			VK_OBJECT_TYPE_SEMAPHORE, va("Semaphore: image available #" YQ2_COM_PRIdS, i));
 		QVk_DebugSetObjectName((uint64_t)vk_renderFinishedSemaphores[i],
-			VK_OBJECT_TYPE_SEMAPHORE, va("Semaphore: render finished #%d", i));
+			VK_OBJECT_TYPE_SEMAPHORE, va("Semaphore: render finished #" YQ2_COM_PRIdS, i));
 	}
 	Com_Printf("...created synchronization objects\n");
 
@@ -2118,9 +2158,11 @@ QVk_Init(void)
 	res = CreateRenderpasses();
 	if (res != VK_SUCCESS)
 	{
-		Com_Printf("%s(): Could not create Vulkan render passes: %s\n", __func__, QVk_GetError(res));
+		Com_Printf("%s(): Could not create Vulkan render passes: %s\n",
+			__func__, QVk_GetError(res));
 		return false;
 	}
+
 	Com_Printf("...created %d Vulkan render passes\n", RP_COUNT);
 
 	// setup command pools
@@ -2129,17 +2171,20 @@ QVk_Init(void)
 		res = QVk_CreateCommandPool(&vk_commandPool[i], vk_device.gfxFamilyIndex);
 		if (res != VK_SUCCESS)
 		{
-			Com_Printf("%s(): Could not create Vulkan command pool #%d for graphics: %s\n", __func__, i, QVk_GetError(res));
+			Com_Printf("%s(): Could not create Vulkan command pool #" YQ2_COM_PRIdS " for graphics: %s\n",
+				__func__, i, QVk_GetError(res));
 			return false;
 		}
+
 		QVk_DebugSetObjectName((uint64_t)vk_commandPool[i],
-			VK_OBJECT_TYPE_COMMAND_POOL, va("Command Pool #%d: Graphics", i));
+			VK_OBJECT_TYPE_COMMAND_POOL, va("Command Pool #" YQ2_COM_PRIdS ": Graphics", i));
 	}
 
 	res = QVk_CreateCommandPool(&vk_transferCommandPool, vk_device.transferFamilyIndex);
 	if (res != VK_SUCCESS)
 	{
-		Com_Printf("%s(): Could not create Vulkan command pool for transfer: %s\n", __func__, QVk_GetError(res));
+		Com_Printf("%s(): Could not create Vulkan command pool for transfer: %s\n",
+			__func__, QVk_GetError(res));
 		return false;
 	}
 
@@ -2154,16 +2199,19 @@ QVk_Init(void)
 	res = CreateImageViews();
 	if (res != VK_SUCCESS)
 	{
-		Com_Printf("%s(): Could not create Vulkan image views: %s\n", __func__, QVk_GetError(res));
+		Com_Printf("%s(): Could not create Vulkan image views: %s\n",
+			__func__, QVk_GetError(res));
 		return false;
 	}
+
 	Com_Printf("...created %d Vulkan image view(s)\n", vk_swapchain.imageCount);
 
 	// setup framebuffers
 	res = CreateFramebuffers();
 	if (res != VK_SUCCESS)
 	{
-		Com_Printf("%s(): Could not create Vulkan framebuffers: %s\n", __func__, QVk_GetError(res));
+		Com_Printf("%s(): Could not create Vulkan framebuffers: %s\n",
+			__func__, QVk_GetError(res));
 		return false;
 	}
 	Com_Printf("...created %d Vulkan framebuffers\n", vk_swapchain.imageCount);
@@ -2253,7 +2301,8 @@ QVk_BeginFrame(const VkViewport* viewport, const VkRect2D* scissor)
 
 	ReleaseSwapBuffers();
 
-	VkResult result = vkAcquireNextImageKHR(vk_device.logical, vk_swapchain.sc, 500000000, vk_imageAvailableSemaphores[vk_activeBufferIdx], VK_NULL_HANDLE, &vk_imageIndex);
+	VkResult result = vkAcquireNextImageKHR(vk_device.logical, vk_swapchain.sc, 500000000 /* 0.5 sec */,
+		vk_imageAvailableSemaphores[vk_activeBufferIdx], VK_NULL_HANDLE, &vk_imageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_SURFACE_LOST_KHR || result == VK_TIMEOUT)
 	{
 		vk_recreateSwapchainNeeded = true;
@@ -2453,12 +2502,18 @@ QVk_RecreateSwapchain()
 	DestroyImageViews();
 
 	if (!QVk_CheckExtent())
+	{
 		return false;
+	}
 
-	VK_VERIFY(result = QVk_CreateSwapchain());
+	result = QVk_CreateSwapchain();
 
 	if (result != VK_SUCCESS)
+	{
+		Com_Printf("%s:%d: VkResult verification failed: %s\n",
+			 __func__, __LINE__, QVk_GetError(result));
 		return false;
+	}
 
 	vk_viewport.width = (float)vid.width;
 	vk_viewport.height = (float)vid.height;
@@ -2467,15 +2522,23 @@ QVk_RecreateSwapchain()
 	DestroyDrawBuffers();
 	CreateDrawBuffers();
 
-	VK_VERIFY(result = CreateImageViews());
+	result = CreateImageViews();
 
 	if (result != VK_SUCCESS)
+	{
+		Com_Printf("%s:%d: VkResult verification failed: %s\n",
+			 __func__, __LINE__, QVk_GetError(result));
 		return false;
+	}
 
-	VK_VERIFY(result = CreateFramebuffers());
+	result = CreateFramebuffers();
 
 	if (result != VK_SUCCESS)
+	{
+		Com_Printf("%s:%d: VkResult verification failed: %s\n",
+			 __func__, __LINE__, QVk_GetError(result));
 		return false;
+	}
 
 	QVk_UpdateTextureSampler(&vk_colorbuffer, S_NEAREST_UNNORMALIZED, false);
 	QVk_UpdateTextureSampler(&vk_colorbufferWarp, S_NEAREST_UNNORMALIZED, false);
@@ -2542,7 +2605,9 @@ QVk_GetVertexBuffer(VkDeviceSize size, VkBuffer *dstBuffer, VkDeviceSize *dstOff
 
 	vk_config.vertex_buffer_usage = vk_dynVertexBuffers[vk_activeDynBufferIdx].currentOffset;
 	if (vk_config.vertex_buffer_max_usage < vk_config.vertex_buffer_usage)
+	{
 		vk_config.vertex_buffer_max_usage = vk_config.vertex_buffer_usage;
+	}
 
 	return (uint8_t *)vk_dynVertexBuffers[vk_activeDynBufferIdx].pMappedData + (*dstOffset);
 }
@@ -2556,7 +2621,7 @@ QVk_GetIndexBuffer(VkDeviceSize size, VkDeviceSize *dstOffset, int currentBuffer
 	if (vk_dynIndexBuffers[currentBufferIdx].currentOffset + aligned_size > vk_config.index_buffer_size)
 	{
 		void *tmp;
-		int i;
+		size_t i;
 
 		vk_config.index_buffer_size = Q_max(
 			vk_config.index_buffer_size * BUFFER_RESIZE_FACTOR, NextPow2(size));
@@ -2595,9 +2660,9 @@ QVk_GetIndexBuffer(VkDeviceSize size, VkDeviceSize *dstOffset, int currentBuffer
 			vk_dynIndexBuffers[i].pMappedData = buffer_map(&vk_dynIndexBuffers[i].resource);
 
 			QVk_DebugSetObjectName((uint64_t)vk_dynIndexBuffers[i].resource.buffer,
-				VK_OBJECT_TYPE_BUFFER, va("Dynamic Index Buffer #%d", i));
+				VK_OBJECT_TYPE_BUFFER, va("Dynamic Index Buffer #" YQ2_COM_PRIdS, i));
 			QVk_DebugSetObjectName((uint64_t)vk_dynIndexBuffers[i].resource.memory,
-				VK_OBJECT_TYPE_DEVICE_MEMORY, va("Memory: Dynamic Index Buffer #%d", i));
+				VK_OBJECT_TYPE_DEVICE_MEMORY, va("Memory: Dynamic Index Buffer #" YQ2_COM_PRIdS, i));
 		}
 	}
 
@@ -2746,13 +2811,21 @@ QVk_GetStagingBuffer(VkDeviceSize size, int alignment, VkCommandBuffer *cmdBuffe
 	}
 
 	if (cmdBuffer)
+	{
 		*cmdBuffer = stagingBuffer->cmdBuffer;
-	if (buffer)
-		*buffer = stagingBuffer->resource.buffer;
-	if (dstOffset)
-		*dstOffset = stagingBuffer->currentOffset;
+	}
 
-	unsigned char *data = (uint8_t *)stagingBuffer->pMappedData + stagingBuffer->currentOffset;
+	if (buffer)
+	{
+		*buffer = stagingBuffer->resource.buffer;
+	}
+
+	if (dstOffset)
+	{
+		*dstOffset = stagingBuffer->currentOffset;
+	}
+
+	byte *data = (uint8_t *)stagingBuffer->pMappedData + stagingBuffer->currentOffset;
 	stagingBuffer->currentOffset += size;
 
 	return data;
