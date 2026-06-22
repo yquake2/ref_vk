@@ -32,7 +32,7 @@ jobs:
         sudo apt install libgl1-mesa-dev libsdl2-dev libopenal-dev libcurl4-openssl-dev \
             libavformat-dev libswscale-dev libvulkan-dev build-essential snapd
     - name: Check out repository code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Build
       run: |
         # Public runners come with 4 CPUs.
