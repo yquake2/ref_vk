@@ -1,0 +1,66 @@
+name: Testbuild for x86 and x86_64 Windows with MinGW
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    types:
+      - edited
+      - opened
+      - synchronize
+concurrency:
+  # Cancel concurrent workflows for the same PR or commit hash.
+  group: ${{github.workflow}}-${{github.event_name == 'pull_request' && github.head_ref || github.sha}}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      # Abuse the build matrix to hack around inconsistent naming.
+      matrix:
+        include:
+          - arch: x86
+            family: i686
+            winapi: win32
+          - arch: x64
+            family: x86_64
+            winapi: win64
+    name: win_buildenv_${{matrix.winapi}}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+      - name: Setup build environment
+        shell: bash
+        run: |
+          curl -o makebuildenv.sh https://raw.githubusercontent.com/yquake2/yquake2/refs/heads/master/stuff/winbuild/makebuildenv.sh
+          chmod +x makebuildenv.sh
+          ./makebuildenv.sh buildenv
+          echo "${GITHUB_WORKSPACE}/buildenv/w64devkit-${{matrix.arch}}/bin/" >> ${GITHUB_PATH}
+      - name: Build
+        shell: sh -l {0}
+        run: |
+          cd ${GITHUB_WORKSPACE}
+          export CPATH="${GITHUB_WORKSPACE}/buildenv/dep/curl/include;${GITHUB_WORKSPACE}/buildenv/dep/openal-soft/include;${GITHUB_WORKSPACE}/buildenv/dep/vulkan-sdk/include"
+          export PKG_CONFIG_PATH="${GITHUB_WORKSPACE}/buildenv/dep/SDL3/${{matrix.family}}-w64-mingw32/lib/pkgconfig"
+          # Public runners come with 4 CPUs.
+          make -j4
+      - name: Create testbuild package
+        shell: bash
+        run: |
+          # Create release directory tree
+          mkdir -p publish/ref_vk-${{matrix.winapi}}-${{github.sha}}/misc/docs
+          # Copy release assets
+          cp -r release/* publish/ref_vk-${{matrix.winapi}}-${{github.sha}}/
+          # Copy misc assets
+          cp LICENSE publish/ref_vk-${{matrix.winapi}}-${{github.sha}}/misc/docs/LICENSE.txt
+          cp README.md publish/ref_vk-${{matrix.winapi}}-${{github.sha}}/misc/docs/README.txt
+      - name: Upload testbuild package
+        uses: actions/upload-artifact@v7
+        with:
+          name: quake2-ref_vk-${{matrix.winapi}}-${{github.sha}}
+          path: publish/
+          if-no-files-found: error
