@@ -186,8 +186,8 @@ DrawVkFlowingPoly(msurface_t *fa, image_t *texture, const float *color)
 static void
 R_DrawTriangleOutlines(void)
 {
-	int			i, j, k;
-	vkpoly_t	*p;
+	vkpoly_t *p;
+	int i, j;
 
 	if (!vk_showtris->value)
 	{
@@ -207,7 +207,8 @@ R_DrawTriangleOutlines(void)
 	VkDescriptorSet uboDescriptorSet;
 	uint8_t *uboData = QVk_GetUniformBuffer(sizeof(r_viewproj_matrix), &uboOffset, &uboDescriptorSet);
 	memcpy(uboData, r_viewproj_matrix, sizeof(r_viewproj_matrix));
-	vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_showTrisPipeline.layout, 0, 1, &uboDescriptorSet, 1, &uboOffset);
+	vkCmdBindDescriptorSets(vk_activeCmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		vk_showTrisPipeline.layout, 0, 1, &uboDescriptorSet, 1, &uboOffset);
 
 	for (i = 0; i < MAX_LIGHTMAPS; i++)
 	{
@@ -218,7 +219,7 @@ R_DrawTriangleOutlines(void)
 			p = surf->polys;
 			for (; p; p = p->chain)
 			{
-				for (j = 2, k = 0; j < p->numverts; j++, k++)
+				for (j = 2; j < p->numverts; j++)
 				{
 					triVert[0].v[0] = p->verts[0][0];
 					triVert[0].v[1] = p->verts[0][1];

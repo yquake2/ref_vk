@@ -582,7 +582,8 @@ void QVk_ReadPixels(uint8_t *dstBuffer, const VkOffset2D *offset, const VkExtent
 Vk_ImageList_f
 ===============
 */
-void	Vk_ImageList_f (void)
+void
+Vk_ImageList_f(void)
 {
 	int		i, used, texels;
 	image_t	*image;
@@ -1181,51 +1182,47 @@ Vk_LoadPic(const char *name, byte *pic, int width, int realwidth,
 }
 
 /*
-===============
-Vk_FindImage
-
-Finds or loads the given image or NULL
-===============
-*/
-image_t	*
-Vk_FindImage(const char *name, imagetype_t type)
+ * Finds or loads the given image or null
+ */
+image_t *
+Vk_FindImage(const char *originname, imagetype_t type)
 {
-	image_t	*image;
-	int	i, len;
-	char *ptr;
-	char namewe[256];
+	char namewe[256], name[256] = {0};
 	const char* ext;
+	image_t *image;
+	size_t len;
+	int i;
 
-	if (!name)
+	if (!originname)
 	{
 		return NULL;
 	}
 
+	Q_strlcpy(name, originname, sizeof(name));
+
+	/* fix backslashes */
+	Q_replacebackslash(name);
+
 	ext = COM_FileExtension(name);
-	if(!ext[0])
+	if (!ext[0])
 	{
 		/* file has no extension */
 		return NULL;
 	}
 
-	len = strlen(name);
-	if (len < 5)
+	/* Remove the extension */
+	len = (ext - name) - 1;
+	if ((len < 1) || (len > sizeof(namewe) - 1))
 	{
+		Com_DPrintf("%s: Bad filename %s\n", __func__, name);
 		return NULL;
 	}
 
-	/* Remove the extension */
-	memset(namewe, 0, sizeof(namewe));
-	memcpy(namewe, name, len - (strlen(ext) + 1));
-
-	/* fix backslashes */
-	while ((ptr = strchr(name, '\\')))
-	{
-		*ptr = '/';
-	}
+	memcpy(namewe, name, len);
+	namewe[len] = 0;
 
 	/* look for it */
-	for (i=0, image=vktextures ; i<numvktextures ; i++,image++)
+	for (i = 0, image = vktextures; i < numvktextures; i++, image++)
 	{
 		if (!strcmp(name, image->name))
 		{
@@ -1256,7 +1253,7 @@ RE_RegisterSkin
 struct image_s *
 RE_RegisterSkin(const char *name)
 {
-	return Vk_FindImage (name, it_skin);
+	return Vk_FindImage(name, it_skin);
 }
 
 qboolean
